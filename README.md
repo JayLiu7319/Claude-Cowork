@@ -21,25 +21,17 @@ With Open Source Claude Cowork, M2.1 takes a concrete step toward our long-term 
 
 ---
 
-# About Open Claude Cowork
+## Agent Cowork
 
-A **desktop AI assistant** that helps you with **programming, file management, and any task you can describe**.
-
-It is **fully compatible with the exact same configuration as Claude Code**, which means you can run it with **any Anthropic-compatible large language model**.
+Agent Cowork is an open-source alternative to Claude Cowork — a desktop AI assistant that helps with programming, file management, and any task you can describe.
 
 > Not just a GUI.  
 > A real AI collaboration partner.  
 > No need to learn the Claude Agent SDK — just create tasks and choose execution paths.
 
-An example of organizing a local folder:
-
-
-https://github.com/user-attachments/assets/8ce58c8b-4024-4c01-82ee-f8d8ed6d4bba
-
-
 ---
 
-## ✨ Why Claude Cowork?
+## ✨ Why Agent Cowork?
 
 Claude Code is powerful — but it **only runs in the terminal**.
 
@@ -53,16 +45,11 @@ That means:
 - 🖥️ Runs as a **native desktop application**
 - 🤖 Acts as your **AI collaboration partner** for any task
 - 🔁 Reuses your **existing `~/.claude/settings.json`**
-- 🧠 **100% compatible** with Claude Code
-
-If Claude Code works on your machine —  
-**Agent Cowork works too.**
+- No development environment or Claude Code installation required.
 
 ---
 
 ## 🚀 Quick Start
-
-Before using Agent Cowork, make sure Claude Code is installed and properly configured.
 
 ### Option 1: Download a Release
 
@@ -74,7 +61,7 @@ Before using Agent Cowork, make sure Claude Code is installed and properly confi
 
 #### Prerequisites
 
-- [Bun](https://bun.sh/) or Node.js 18+
+- [Bun](https://bun.sh/) or Node.js 22+
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and authenticated
 
 bash
@@ -94,7 +81,6 @@ bun run dist:mac-x64      # macOS Intel
 bun run dist:win          # Windows
 bun run dist:linux        # Linux
 `
-
 ---
 
 ## 🧠 Core Capabilities
@@ -109,68 +95,12 @@ Agent Cowork is your AI partner that can:
 * **Answer questions** — about your codebase
 * **Do anything** — as long as you can describe it in natural language
 
----
 
-### 📂 Session Management
+## Example
+An example of organizing a local folder:
 
-* Create sessions with **custom working directories**
-* Resume any previous conversation
-* Complete local session history (stored in SQLite)
-* Safe deletion and automatic persistence
+https://github.com/user-attachments/assets/8ce58c8b-4024-4c01-82ee-f8d8ed6d4bba
 
----
-
-### 🎯 Real-Time Streaming Output
-
-* **Token-by-token streaming output**
-* View Claude’s reasoning process
-* Markdown rendering with syntax-highlighted code
-* Visualized tool calls with status indicators
-
----
-
-### 🔐 Tool Permission Control
-
-* Explicit approval required for sensitive actions
-* Allow or deny per tool
-* Interactive decision panels
-* Full control over what Claude is allowed to do
-
----
-
-## 🔁 Fully Compatible with Claude Code
-
-Agent Cowork **shares configuration with Claude Code**.
-
-It directly reuses:
-
-text
-~/.claude/settings.json
-
-
-This means:
-
-* Same API keys
-* Same base URL
-* Same models
-* Same behavior
-
-> Configure Claude Code once — use it everywhere.
-
----
-
-## 🧩 Architecture Overview
-
-| Layer            | Technology                     |
-| ---------------- | ------------------------------ |
-| Framework        | Electron 39                    |
-| Frontend         | React 19, Tailwind CSS 4       |
-| State Management | Zustand                        |
-| Database         | better-sqlite3 (WAL mode)      |
-| AI               | @anthropic-ai/claude-agent-sdk |
-| Build            | Vite, electron-builder         |
-
----
 
 ## 🛠 Development
 
@@ -188,8 +118,7 @@ bun run build
 
 Planned features:
 
-* GUI-based configuration for models and API keys
-* 🚧 More features coming soon
+todo
 
 ---
 
@@ -201,6 +130,8 @@ Pull requests are welcome.
 2. Create your feature branch
 3. Commit your changes
 4. Open a Pull Request
+
+Please make only minimal changes.
 
 ---
 
