@@ -19,7 +19,7 @@ With Open Source Claude Cowork, M2.1 takes a concrete step toward our long-term 
 
 [Click ](https://platform.minimax.io/subscribe/coding-plan?code=5q2B2ljfdw&source=link) to get an exclusive 12% off the MiniMax Coding Plan
 
----
+
 
 ## Agent Cowork
 
@@ -29,7 +29,7 @@ Agent Cowork is an open-source alternative to Claude Cowork — a desktop AI ass
 > A real AI collaboration partner.  
 > No need to learn the Claude Agent SDK — just create tasks and choose execution paths.
 
----
+
 
 ## ✨ Why Agent Cowork?
 
@@ -47,7 +47,7 @@ That means:
 - 🔁 Reuses your **existing `~/.claude/settings.json`**
 - No development environment or Claude Code installation required.
 
----
+
 
 ## 🚀 Quick Start
 
@@ -55,7 +55,6 @@ That means:
 
 👉 [Go to Releases](https://github.com/DevAgentForge/agent-cowork/releases)
 
----
 
 ### Option 2: Build from Source
 
@@ -84,8 +83,6 @@ bun run dist:win          # Windows
 bun run dist:linux        # Linux
 ```
 
----
-
 ## Example
 An example of organizing a local folder:
 
@@ -101,7 +98,7 @@ bun run dev
 #### Type checking / build
 bun run build
 
----
+
 
 ## 🗺 Roadmap
 
@@ -109,7 +106,7 @@ Planned features:
 
 todo
 
----
+
 
 ## 🤝 Contributing
 
@@ -122,7 +119,7 @@ Pull requests are welcome.
 
 Please make only minimal changes.
 
----
+
 
 ## ⭐ Final Words
 
@@ -136,7 +133,7 @@ This project is built for you.
 
 👉 **If it helps you, please give it a Star.**
 
----
+
 
 ## License
 
