@@ -25,3 +25,6 @@ dist-electron
 *.sw?
 
 .env
+
+# Git worktrees
+.worktrees
