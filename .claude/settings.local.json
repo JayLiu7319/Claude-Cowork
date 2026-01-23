@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:using-git-worktrees)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git worktree add:*)",
+      "Bash(bun install)",
+      "Bash(bun run build)",
+      "Bash(bun add:*)",
+      "Bash(bun run dev)",
+      "Bash(bun run dev:react:*)",
+      "Bash(bun run transpile:electron:*)",
+      "Bash(cross-env NODE_ENV=development electron:*)",
+      "Bash(set NODE_ENV=development)",
+      "Bash(electron .)",
+      "Bash(bunx electron:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx add-skill:*)",
+      "Bash(claude-code:*)",
+      "Bash(git clone:*)",
+      "Bash(git worktree list:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run dev:react:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(npm run dev:electron:*)",
+      "Skill(superpowers:requesting-code-review)",
+      "Bash(git rev-parse:*)",
+      "Bash(dir \"C:\\\\Users\\\\user\\\\.claude\\\\plugins\\\\cache\\\\superpowers-marketplace\\\\superpowers\\\\4.0.3\\\\skills\\\\finishing-a-development-branch\")",
+      "Bash(bun run lint)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "Bash(git branch:*)",
+      "Bash(git worktree remove:*)",
+      "Bash(ls -la:*)"
+    ]
+  }
+}
