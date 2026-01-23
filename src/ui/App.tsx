@@ -57,6 +57,8 @@ function AppShell() {
   const shouldRestoreScrollRef = useRef(false);
   const sessions = useAppStore((s) => s.sessions);
   const activeSessionId = useAppStore((s) => s.activeSessionId);
+  const activeSessionIdRef = useRef(activeSessionId);
+  const previousSessionIdRef = useRef<string | null>(activeSessionId);
   const showStartModal = useAppStore((s) => s.showStartModal);
   const setShowStartModal = useAppStore((s) => s.setShowStartModal);
   const showSettingsModal = useAppStore((s) => s.showSettingsModal);
@@ -86,9 +88,20 @@ function AppShell() {
     }
   };
 
+  // Keep activeSessionIdRef in sync with activeSessionId
+  useEffect(() => {
+    activeSessionIdRef.current = activeSessionId;
+  }, [activeSessionId]);
+
   // Handle partial messages from stream events
   const handlePartialMessages = useCallback((partialEvent: ServerEvent) => {
-    if (partialEvent.type !== "stream.message" || partialEvent.payload.message.type !== "stream_event") return;
+    if (partialEvent.type !== "stream.message") return;
+
+    // CRITICAL: Check if this event belongs to the current active session
+    const currentSessionId = activeSessionIdRef.current;
+    if (partialEvent.payload.sessionId !== currentSessionId) return;
+
+    if (partialEvent.payload.message.type !== "stream_event") return;
 
     const message = partialEvent.payload.message as any;
     if (message.event.type === "content_block_start") {
@@ -226,13 +239,36 @@ function AppShell() {
 
   // Reset scroll state on session change
   useEffect(() => {
+    // Get the previous session ID before updating
+    const previousSessionId = previousSessionIdRef.current;
+
+    // Reset scroll state
     setShouldAutoScroll(true);
     setHasNewMessages(false);
     prevMessagesLengthRef.current = 0;
+
+    // CRITICAL: Only reset partial message when switching to a DIFFERENT session
+    // This prevents clearing streaming state when re-selecting the same session
+    if (previousSessionId !== activeSessionId) {
+      partialMessageRef.current = "";
+      setPartialMessage("");
+
+      // Check if the new session is currently running
+      const newSession = activeSessionId ? sessions[activeSessionId] : undefined;
+      const isNewSessionRunning = newSession?.status === "running";
+
+      // If switching to a running session, keep skeleton visible
+      // Otherwise hide it (normal case)
+      setShowPartialMessage(isNewSessionRunning);
+    }
+
+    // Update the previous session ID ref for next time
+    previousSessionIdRef.current = activeSessionId;
+
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 100);
-  }, [activeSessionId]);
+  }, [activeSessionId, sessions]);
 
   useEffect(() => {
     if (shouldAutoScroll) {
@@ -327,6 +363,7 @@ function AppShell() {
                 <MessageCard
                   key={`${activeSessionId}-msg-${item.originalIndex}`}
                   message={item.message}
+                  allMessages={messages}
                   isLast={idx === visibleMessages.length - 1}
                   isRunning={isRunning}
                   permissionRequest={permissionRequests[0]}

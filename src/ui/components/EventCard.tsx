@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   PermissionResult,
@@ -106,15 +106,93 @@ function extractTagContent(input: string, tag: string): string | null {
   return match ? match[1] : null;
 }
 
+// Inline tool result component (embedded within ToolUseCard)
+const ToolResultInline = ({ messageContent }: { messageContent: ToolResultContent }) => {
+  const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const isFirstRender = useRef(true);
+  let lines: string[] = [];
+
+  if (messageContent.type !== "tool_result") return null;
+
+  const toolUseId = messageContent.tool_use_id;
+  const status: ToolStatus = messageContent.is_error ? "error" : "success";
+  const isError = messageContent.is_error;
+
+  if (messageContent.is_error) {
+    lines = [extractTagContent(String(messageContent.content), "tool_use_error") || String(messageContent.content)];
+  } else {
+    try {
+      if (Array.isArray(messageContent.content)) {
+        lines = messageContent.content.map((item: any) => item.text || "").join("\n").split("\n");
+      } else {
+        lines = String(messageContent.content).split("\n");
+      }
+    } catch { lines = [JSON.stringify(messageContent, null, 2)]; }
+  }
+
+  const isMarkdownContent = isMarkdown(lines.join("\n"));
+  const hasMoreLines = lines.length > MAX_VISIBLE_LINES;
+  const visibleContent = hasMoreLines && !isExpanded ? lines.slice(0, MAX_VISIBLE_LINES).join("\n") : lines.join("\n");
+
+  useEffect(() => { setToolStatus(toolUseId, status); }, [toolUseId, status]);
+  useEffect(() => {
+    if (!hasMoreLines || isFirstRender.current) { isFirstRender.current = false; return; }
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [hasMoreLines, isExpanded]);
+
+  return (
+    <div className={`mt-3 mb-3 rounded-lg ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
+      {/* Header with status indicator */}
+      <div className={`flex items-center gap-2 px-3 py-2 border-b ${isError ? "border-red-200 bg-red-100/50" : "border-ink-900/5 bg-ink-900/[0.02]"}`}>
+        <div className={`flex items-center justify-center w-4 h-4 rounded-full ${isError ? "bg-red-500" : "bg-green-500"}`}>
+          <span className="text-white text-xs font-bold">{isError ? "✕" : "✓"}</span>
+        </div>
+        <span className={`text-xs font-medium ${isError ? "text-red-700" : "text-ink-700"}`}>
+          {t('eventCard.output')}
+        </span>
+        {!isError && lines.length > 0 && (
+          <span className="text-xs text-muted ml-auto">
+            {lines.length} {lines.length === 1 ? 'line' : 'lines'}
+          </span>
+        )}
+      </div>
+
+      {/* Content area */}
+      <div className="px-3 py-2.5">
+        <pre className={`text-[13px] leading-relaxed whitespace-pre-wrap break-words font-mono ${isError ? "text-red-600" : "text-ink-700"}`}>
+          {isMarkdownContent ? <MDContent text={visibleContent} /> : visibleContent}
+        </pre>
+      </div>
+
+      {/* Expand/Collapse button */}
+      {hasMoreLines && (
+        <div className={`px-3 py-2 border-t ${isError ? "border-red-200" : "border-ink-900/5"}`}>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={`text-xs font-medium transition-colors flex items-center gap-1.5 ${isError ? "text-red-600 hover:text-red-700" : "text-accent hover:text-accent-hover"}`}
+          >
+            <span className="text-[10px]">{isExpanded ? "▲" : "▼"}</span>
+            <span>{isExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
+          </button>
+        </div>
+      )}
+      <div ref={bottomRef} />
+    </div>
+  );
+};
+
+// Standalone ToolResult (kept for backward compatibility, but will be hidden in rendering)
 const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
   let lines: string[] = [];
-  
+
   if (messageContent.type !== "tool_result") return null;
-  
+
   const toolUseId = messageContent.tool_use_id;
   const status: ToolStatus = messageContent.is_error ? "error" : "success";
   const isError = messageContent.is_error;
@@ -173,9 +251,18 @@ const AssistantBlockCard = ({ title, text, showIndicator = false }: { title: str
 );
 };
 
-const ToolUseCard = ({ messageContent, showIndicator = false }: { messageContent: MessageContent; showIndicator?: boolean }) => {
+const ToolUseCard = ({
+  messageContent,
+  toolResult,
+  showIndicator = false
+}: {
+  messageContent: MessageContent;
+  toolResult?: ToolResultContent | null;
+  showIndicator?: boolean;
+}) => {
+  const { t } = useTranslation();
   if (messageContent.type !== "tool_use") return null;
-  
+
   const toolStatus = useToolStatus(messageContent.id);
   const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
@@ -206,6 +293,11 @@ const ToolUseCard = ({ messageContent, showIndicator = false }: { messageContent
           <span className="text-sm text-muted truncate">{getToolInfo()}</span>
         </div>
       </div>
+
+      {/* Inline tool result display */}
+      {toolResult && (
+        <ToolResultInline messageContent={toolResult} />
+      )}
     </div>
   );
 };
@@ -294,14 +386,40 @@ const UserMessageCard = ({ message, showIndicator = false }: { message: { type: 
 );
 };
 
-export function MessageCard({
+// Build a lookup map for tool results (performance optimization)
+// Rule: js-cache-function-results - Cache expensive computations
+function buildToolResultMap(messages: StreamMessage[]): Map<string, ToolResultContent> {
+  const map = new Map<string, ToolResultContent>();
+
+  for (const msg of messages) {
+    if (msg.type === "user_prompt") continue;
+
+    const sdkMsg = msg as SDKMessage;
+    if (sdkMsg.type === "user") {
+      const contents = sdkMsg.message.content;
+      for (const content of contents) {
+        if (content.type === "tool_result") {
+          map.set(content.tool_use_id, content as ToolResultContent);
+        }
+      }
+    }
+  }
+
+  return map;
+}
+
+// Memoized component to prevent unnecessary re-renders
+// Rule: rerender-memo - Extract expensive work into memoized components
+export const MessageCard = memo(function MessageCard({
   message,
+  allMessages,
   isLast = false,
   isRunning = false,
   permissionRequest,
   onPermissionResult
 }: {
   message: StreamMessage;
+  allMessages?: StreamMessage[];
   isLast?: boolean;
   isRunning?: boolean;
   permissionRequest?: PermissionRequest;
@@ -309,6 +427,12 @@ export function MessageCard({
 }) {
   const { t } = useTranslation();
   const showIndicator = isLast && isRunning;
+
+  // Build tool result lookup map once per messages array change
+  // Rule: js-cache-function-results - Use memoization for expensive computations
+  const toolResultMap = useMemo(() => {
+    return allMessages ? buildToolResultMap(allMessages) : new Map();
+  }, [allMessages]);
 
   if (message.type === "user_prompt") {
     return <UserMessageCard message={message} showIndicator={showIndicator} />;
@@ -350,7 +474,9 @@ export function MessageCard({
             if (content.name === "AskUserQuestion") {
               return <AskUserQuestionCard key={idx} messageContent={content} permissionRequest={permissionRequest} onPermissionResult={onPermissionResult} />;
             }
-            return <ToolUseCard key={idx} messageContent={content} showIndicator={isLastContent && showIndicator} />;
+            // O(1) lookup instead of O(n) search - major performance improvement
+            const toolResult = toolResultMap.get(content.id) || null;
+            return <ToolUseCard key={idx} messageContent={content} toolResult={toolResult} showIndicator={isLastContent && showIndicator} />;
           }
           return null;
         })}
@@ -360,12 +486,16 @@ export function MessageCard({
 
   if (sdkMessage.type === "user") {
     const contents = sdkMessage.message.content;
+    // Hide standalone tool_result rendering - they are now shown inline with tool_use
+    const textContents = contents.filter((c: any) => c.type !== "tool_result");
+    if (textContents.length === 0) {
+      return null; // Pure tool_result messages are not rendered separately
+    }
+    // If there are text contents, render them
     return (
       <>
-        {contents.map((content: ToolResultContent, idx: number) => {
-          if (content.type === "tool_result") {
-            return <ToolResult key={idx} messageContent={content} />;
-          }
+        {textContents.map((content: ToolResultContent, idx: number) => {
+          // Handle other user message types if needed
           return null;
         })}
       </>
@@ -373,6 +503,6 @@ export function MessageCard({
   }
 
   return null;
-}
+});
 
 export { MessageCard as EventCard };
