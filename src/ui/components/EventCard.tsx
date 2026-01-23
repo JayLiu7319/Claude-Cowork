@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   PermissionResult,
   SDKAssistantMessage,
@@ -68,25 +69,26 @@ const StatusDot = ({ variant = "accent", isActive = false, isVisible = true }: {
 };
 
 const SessionResult = ({ message }: { message: SDKResultMessage }) => {
-  const formatMinutes = (ms: number | undefined) => typeof ms !== "number" ? "-" : `${(ms / 60000).toFixed(2)} min`;
+  const { t } = useTranslation();
+  const formatMinutes = (ms: number | undefined) => typeof ms !== "number" ? "-" : `${(ms / 60000).toFixed(2)} ${t('eventCard.minutes')}`;
   const formatUsd = (usd: number | undefined) => typeof usd !== "number" ? "-" : usd.toFixed(2);
   const formatMillions = (tokens: number | undefined) => typeof tokens !== "number" ? "-" : `${(tokens / 1_000_000).toFixed(4)} M`;
 
   return (
     <div className="flex flex-col gap-2 mt-4">
-      <div className="header text-accent">Session Result</div>
+      <div className="header text-accent">{t('eventCard.sessionResult')}</div>
       <div className="flex flex-col rounded-xl px-4 py-3 border border-ink-900/10 bg-surface-secondary space-y-2">
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
-          <span className="font-normal">Duration</span>
+          <span className="font-normal">{t('eventCard.duration')}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{formatMinutes(message.duration_ms)}</span>
-          <span className="font-normal">API</span>
+          <span className="font-normal">{t('eventCard.api')}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{formatMinutes(message.duration_api_ms)}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
-          <span className="font-normal">Usage</span>
-          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">Cost ${formatUsd(message.total_cost_usd)}</span>
-          <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">Input {formatMillions(message.usage?.input_tokens)}</span>
-          <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">Output {formatMillions(message.usage?.output_tokens)}</span>
+          <span className="font-normal">{t('eventCard.usage')}</span>
+          <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">{t('eventCard.cost')} ${formatUsd(message.total_cost_usd)}</span>
+          <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{t('eventCard.input')} {formatMillions(message.usage?.input_tokens)}</span>
+          <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">{t('eventCard.output')} {formatMillions(message.usage?.output_tokens)}</span>
         </div>
       </div>
     </div>
@@ -105,6 +107,7 @@ function extractTagContent(input: string, tag: string): string | null {
 }
 
 const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
@@ -140,7 +143,7 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
 
   return (
     <div className="flex flex-col mt-4">
-      <div className="header text-accent">Output</div>
+      <div className="header text-accent">{t('eventCard.output')}</div>
       <div className="mt-2 rounded-xl bg-surface-tertiary p-3">
         <pre className={`text-sm whitespace-pre-wrap break-words font-mono ${isError ? "text-red-500" : "text-ink-700"}`}>
           {isMarkdownContent ? <MDContent text={visibleContent} /> : visibleContent}
@@ -148,7 +151,7 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
         {hasMoreLines && (
           <button onClick={() => setIsExpanded(!isExpanded)} className="mt-2 text-sm text-accent hover:text-accent-hover transition-colors flex items-center gap-1">
             <span>{isExpanded ? "▲" : "▼"}</span>
-            <span>{isExpanded ? "Collapse" : `Show ${lines.length - MAX_VISIBLE_LINES} more lines`}</span>
+            <span>{isExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
           </button>
         )}
         <div ref={bottomRef} />
@@ -157,15 +160,18 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
   );
 };
 
-const AssistantBlockCard = ({ title, text, showIndicator = false }: { title: string; text: string; showIndicator?: boolean }) => (
+const AssistantBlockCard = ({ title, text, showIndicator = false }: { title: string; text: string; showIndicator?: boolean }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex flex-col mt-4">
     <div className="header text-accent flex items-center gap-2">
       <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
-      {title}
+      {title === 'Thinking' ? t('eventCard.thinking') : title === 'Assistant' ? t('eventCard.assistant') : title}
     </div>
     <MDContent text={text} />
   </div>
 );
+};
 
 const ToolUseCard = ({ messageContent, showIndicator = false }: { messageContent: MessageContent; showIndicator?: boolean }) => {
   if (messageContent.type !== "tool_use") return null;
@@ -213,6 +219,7 @@ const AskUserQuestionCard = ({
   permissionRequest?: PermissionRequest;
   onPermissionResult?: (toolUseId: string, result: PermissionResult) => void;
 }) => {
+  const { t } = useTranslation();
   if (messageContent.type !== "tool_use") return null;
   
   const input = messageContent.input as AskUserQuestionInput | null;
@@ -236,7 +243,7 @@ const AskUserQuestionCard = ({
     <div className="flex flex-col gap-2 rounded-[1rem] bg-surface-tertiary px-3 py-2 mt-4">
       <div className="flex flex-row items-center gap-2">
         <StatusDot variant="success" isActive={false} isVisible={true} />
-        <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium">AskUserQuestion</span>
+        <span className="inline-flex items-center rounded-md text-accent py-0.5 text-sm font-medium">{t('eventCard.askUserQuestion')}</span>
       </div>
       {questions.map((q, idx) => (
         <div key={idx} className="text-sm text-ink-700 ml-4">{q.question}</div>
@@ -246,6 +253,7 @@ const AskUserQuestionCard = ({
 };
 
 const SystemInfoCard = ({ message, showIndicator = false }: { message: SDKMessage; showIndicator?: boolean }) => {
+  const { t } = useTranslation();
   if (message.type !== "system" || !("subtype" in message) || message.subtype !== "init") return null;
   
   const systemMsg = message as any;
@@ -261,27 +269,30 @@ const SystemInfoCard = ({ message, showIndicator = false }: { message: SDKMessag
     <div className="flex flex-col gap-2 mt-2">
       <div className="header text-accent flex items-center gap-2">
         <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
-        System Init
+        {t('eventCard.systemInit')}
       </div>
       <div className="flex flex-col rounded-xl px-4 py-2 border border-ink-900/10 bg-surface-secondary space-y-1">
-        <InfoItem name="Session ID" value={systemMsg.session_id || "-"} />
-        <InfoItem name="Model Name" value={systemMsg.model || "-"} />
-        <InfoItem name="Permission Mode" value={systemMsg.permissionMode || "-"} />
-        <InfoItem name="Working Directory" value={systemMsg.cwd || "-"} />
+        <InfoItem name={t('eventCard.sessionId')} value={systemMsg.session_id || "-"} />
+        <InfoItem name={t('eventCard.modelName')} value={systemMsg.model || "-"} />
+        <InfoItem name={t('eventCard.permissionMode')} value={systemMsg.permissionMode || "-"} />
+        <InfoItem name={t('eventCard.workingDirectory')} value={systemMsg.cwd || "-"} />
       </div>
     </div>
   );
 };
 
-const UserMessageCard = ({ message, showIndicator = false }: { message: { type: "user_prompt"; prompt: string }; showIndicator?: boolean }) => (
+const UserMessageCard = ({ message, showIndicator = false }: { message: { type: "user_prompt"; prompt: string }; showIndicator?: boolean }) => {
+  const { t } = useTranslation();
+  return (
   <div className="flex flex-col mt-4">
     <div className="header text-accent flex items-center gap-2">
       <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} />
-      User
+      {t('eventCard.user')}
     </div>
     <MDContent text={message.prompt} />
   </div>
 );
+};
 
 export function MessageCard({
   message,
@@ -296,6 +307,7 @@ export function MessageCard({
   permissionRequest?: PermissionRequest;
   onPermissionResult?: (toolUseId: string, result: PermissionResult) => void;
 }) {
+  const { t } = useTranslation();
   const showIndicator = isLast && isRunning;
 
   if (message.type === "user_prompt") {
@@ -314,7 +326,7 @@ export function MessageCard({
     }
     return (
       <div className="flex flex-col gap-2 mt-4">
-        <div className="header text-error">Session Error</div>
+        <div className="header text-error">{t('eventCard.sessionError')}</div>
         <div className="rounded-xl bg-error-light p-3">
           <pre className="text-sm text-error whitespace-pre-wrap">{JSON.stringify(sdkMessage, null, 2)}</pre>
         </div>

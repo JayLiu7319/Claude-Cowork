@@ -40,3 +40,18 @@ export type ClientEvent =
   | { type: "session.list" }
   | { type: "session.history"; payload: { sessionId: string } }
   | { type: "permission.response"; payload: { sessionId: string; toolUseId: string; result: PermissionResult } };
+
+// IPC Event Payload Mapping for type-safe IPC communication
+export type EventPayloadMapping = {
+  "getStaticData": any;
+  "client-event": ClientEvent;
+  "server-event": any;
+  "statistics": any;
+  "generate-session-title": string;
+  "get-recent-cwds": string[];
+  "select-directory": string | null;
+  "get-api-config": any;
+  "save-api-config": { success: boolean; error?: string };
+  "check-api-config": { hasConfig: boolean; config: any };
+  "get-language": string;
+};

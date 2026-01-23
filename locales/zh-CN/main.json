@@ -1,0 +1,12 @@
+{
+  "session": {
+    "noLongerExists": "会话已不存在。",
+    "noResumeId": "会话暂无恢复 ID。"
+  },
+  "api": {
+    "configurationNotFound": "未找到 API 配置。请配置 API 设置。"
+  },
+  "sessionAborted": "会话已中止",
+  "userCanceled": "用户取消了问题",
+  "userDenied": "用户拒绝了请求"
+}

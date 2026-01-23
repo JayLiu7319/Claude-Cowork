@@ -4,6 +4,7 @@ import { runClaude, type RunnerHandle } from "./libs/runner.js";
 import { SessionStore } from "./libs/session-store.js";
 import { app } from "electron";
 import { join } from "path";
+import { t } from "./i18n.js";
 
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
@@ -145,7 +146,7 @@ export function handleClientEvent(event: ClientEvent) {
       emit({ type: "session.deleted", payload: { sessionId: event.payload.sessionId } });
       emit({
         type: "runner.error",
-        payload: { sessionId: event.payload.sessionId, message: "Session no longer exists." }
+        payload: { sessionId: event.payload.sessionId, message: t('session.noLongerExists') }
       });
       return;
     }
@@ -153,7 +154,7 @@ export function handleClientEvent(event: ClientEvent) {
     if (!session.claudeSessionId) {
       emit({
         type: "runner.error",
-        payload: { sessionId: session.id, message: "Session has no resume id yet." }
+        payload: { sessionId: session.id, message: t('session.noResumeId') }
       });
       return;
     }

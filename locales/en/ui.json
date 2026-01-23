@@ -1,0 +1,81 @@
+{
+  "sidebar": {
+    "newTask": "+ New Task",
+    "noSessions": "No sessions yet. Click \"+ New Task\" to start.",
+    "deleteSession": "Delete this session",
+    "resumeInClaudeCode": "Resume in Claude Code",
+    "resumeTitle": "Resume",
+    "workingDirUnavailable": "Working dir unavailable"
+  },
+  "promptInput": {
+    "placeholder": {
+      "disabled": "Create/select a task to start...",
+      "enabled": "Describe what you want agent to handle..."
+    },
+    "stopSession": "Stop session",
+    "sendPrompt": "Send prompt",
+    "titleError": "Failed to get session title.",
+    "sessionRunning": "Session is still running. Please wait for it to finish.",
+    "cwdRequired": "Working Directory is required to start a session."
+  },
+  "settings": {
+    "title": "API Configuration",
+    "description": "Supports Anthropic's official API as well as third-party APIs compatible with the Anthropic format.",
+    "baseUrl": "Base URL",
+    "apiKey": "API Key",
+    "modelName": "Model Name",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loadError": "Failed to load configuration",
+    "saveError": "Failed to save configuration",
+    "apiKeyRequired": "API Key is required",
+    "baseUrlRequired": "Base URL is required",
+    "modelRequired": "Model is required",
+    "invalidBaseUrl": "Invalid Base URL format",
+    "saveSuccess": "Configuration saved successfully!"
+  },
+  "startSession": {
+    "title": "Start Session",
+    "description": "Create a new session to start interacting with agent.",
+    "workingDirectory": "Working Directory",
+    "browse": "Browse...",
+    "recent": "Recent",
+    "prompt": "Prompt",
+    "startButton": "Start Session"
+  },
+  "eventCard": {
+    "sessionResult": "Session Result",
+    "duration": "Duration",
+    "api": "API",
+    "usage": "Usage",
+    "cost": "Cost",
+    "input": "Input",
+    "output": "Output",
+    "minutes": "min",
+    "million": "M",
+    "sessionError": "Session Error",
+    "collapse": "Collapse",
+    "showMoreLines": "Show {{count}} more lines",
+    "thinking": "Thinking",
+    "assistant": "Assistant",
+    "user": "User",
+    "systemInit": "System Init",
+    "sessionId": "Session ID",
+    "modelName": "Model Name",
+    "permissionMode": "Permission Mode",
+    "workingDirectory": "Working Directory",
+    "askUserQuestion": "AskUserQuestion"
+  },
+  "decisionPanel": {
+    "questionFromClaude": "Question from Claude",
+    "other": "Other",
+    "typeAnswer": "Type your answer...",
+    "multipleSelections": "Multiple selections allowed.",
+    "submitAnswers": "Submit answers",
+    "cancel": "Cancel",
+    "permissionRequest": "Permission Request",
+    "claudeWantsToUse": "Claude wants to use:",
+    "allow": "Allow",
+    "deny": "Deny"
+  }
+}
