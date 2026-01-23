@@ -146,9 +146,9 @@ const ToolResultInline = ({ messageContent }: { messageContent: ToolResultConten
     <div className={`mt-3 mb-3 rounded-lg ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
       {/* Header with status indicator */}
       <div className={`flex items-center gap-2 px-3 py-2 border-b ${isError ? "border-red-200 bg-red-100/50" : "border-ink-900/5 bg-ink-900/[0.02]"}`}>
-        <div className={`flex items-center justify-center w-4 h-4 rounded-full ${isError ? "bg-red-500" : "bg-green-500"}`}>
-          <span className="text-white text-xs font-bold">{isError ? "✕" : "✓"}</span>
-        </div>
+        <span role="img" aria-label={isError ? t('eventCard.error') : t('eventCard.success')} className={`flex items-center justify-center w-4 h-4 rounded-full ${isError ? "bg-red-500" : "bg-green-500"}`}>
+          <span aria-hidden="true" className="text-white text-xs font-bold">{isError ? "✕" : "✓"}</span>
+        </span>
         <span className={`text-xs font-medium ${isError ? "text-red-700" : "text-ink-700"}`}>
           {t('eventCard.output')}
         </span>
@@ -171,9 +171,11 @@ const ToolResultInline = ({ messageContent }: { messageContent: ToolResultConten
         <div className={`px-3 py-2 border-t ${isError ? "border-red-200" : "border-ink-900/5"}`}>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? t('eventCard.collapse') : `${t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}`}
             className={`text-xs font-medium transition-colors flex items-center gap-1.5 ${isError ? "text-red-600 hover:text-red-700" : "text-accent hover:text-accent-hover"}`}
           >
-            <span className="text-[10px]">{isExpanded ? "▲" : "▼"}</span>
+            <span aria-hidden="true" className="text-[10px]">{isExpanded ? "▲" : "▼"}</span>
             <span>{isExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
           </button>
         </div>
@@ -227,8 +229,13 @@ const ToolResult = ({ messageContent }: { messageContent: ToolResultContent }) =
           {isMarkdownContent ? <MDContent text={visibleContent} /> : visibleContent}
         </pre>
         {hasMoreLines && (
-          <button onClick={() => setIsExpanded(!isExpanded)} className="mt-2 text-sm text-accent hover:text-accent-hover transition-colors flex items-center gap-1">
-            <span>{isExpanded ? "▲" : "▼"}</span>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? t('eventCard.collapse') : `${t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}`}
+            className="mt-2 text-sm text-accent hover:text-accent-hover transition-colors flex items-center gap-1"
+          >
+            <span aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
             <span>{isExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
           </button>
         )}

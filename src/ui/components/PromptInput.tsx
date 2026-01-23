@@ -126,6 +126,7 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
       <div className="mx-auto flex w-full max-w-full items-end gap-3 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card lg:max-w-3xl">
         <textarea
           rows={1}
+          autoComplete="off"
           className="flex-1 resize-none bg-transparent py-1.5 text-sm text-ink-800 placeholder:text-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           placeholder={disabled ? t('promptInput.placeholder.disabled') : t('promptInput.placeholder.enabled')}
           value={prompt}
