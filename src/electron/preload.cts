@@ -1,7 +1,8 @@
 import electron from "electron";
+import type { EventPayloadMapping } from "./types.js";
 
 electron.contextBridge.exposeInMainWorld("electron", {
-    subscribeStatistics: (callback) =>
+    subscribeStatistics: (callback: any) =>
         ipcOn("statistics", stats => {
             callback(stats);
         }),
@@ -34,8 +35,10 @@ electron.contextBridge.exposeInMainWorld("electron", {
     saveApiConfig: (config: any) => 
         ipcInvoke("save-api-config", config),
     checkApiConfig: () =>
-        ipcInvoke("check-api-config")
-} satisfies Window['electron'])
+        ipcInvoke("check-api-config"),
+    getLanguage: () =>
+        ipcInvoke("get-language")
+})
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {
     return electron.ipcRenderer.invoke(key, ...args);

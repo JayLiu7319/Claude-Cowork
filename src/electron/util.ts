@@ -1,6 +1,7 @@
 import { ipcMain, WebContents, WebFrameMain } from "electron";
 import { getUIPath } from "./pathResolver.js";
 import { pathToFileURL } from "url";
+import type { EventPayloadMapping } from "./types.js";
 export const DEV_PORT = 5173;
 
 // Checks if you are in development mode

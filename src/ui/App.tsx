@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import { I18nextProvider } from 'react-i18next';
+import type { i18n } from 'i18next';
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useAppStore } from "./store/useAppStore";
@@ -10,10 +12,38 @@ import { SettingsModal } from "./components/SettingsModal";
 import { PromptInput, usePromptActions } from "./components/PromptInput";
 import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";
+import { initI18n } from "./i18n";
 
 const SCROLL_THRESHOLD = 50;
 
 function App() {
+  const [i18nReady, setI18nReady] = useState(false);
+  const [i18nInstance, setI18nInstance] = useState<i18n | null>(null);
+
+  // Initialize i18n
+  useEffect(() => {
+    initI18n().then((instance) => {
+      setI18nInstance(instance);
+      setI18nReady(true);
+    }).catch((err: Error) => {
+      console.error("Failed to initialize i18n:", err);
+      setI18nReady(true); // Continue anyway to prevent blocking
+    });
+  }, []);
+
+  // Don't render until i18n is ready
+  if (!i18nReady || !i18nInstance) {
+    return null;
+  }
+
+  return (
+    <I18nextProvider i18n={i18nInstance}>
+      <AppShell />
+    </I18nextProvider>
+  );
+}
+
+function AppShell() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
@@ -25,7 +55,6 @@ function App() {
   const prevMessagesLengthRef = useRef(0);
   const scrollHeightBeforeLoadRef = useRef(0);
   const shouldRestoreScrollRef = useRef(false);
-
   const sessions = useAppStore((s) => s.sessions);
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const showStartModal = useAppStore((s) => s.showStartModal);
@@ -243,7 +272,7 @@ function App() {
   }, [resetToLatest]);
 
   return (
-    <div className="flex h-screen bg-surface">
+      <div className="flex h-screen bg-surface">
       <Sidebar
         connected={connected}
         onNewSession={handleNewSession}
@@ -375,7 +404,7 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      </div>
   );
 }
 

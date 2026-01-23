@@ -4,6 +4,7 @@ import type { Session } from "./session-store.js";
 
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath} from "./claude-settings.js";
 import { getEnhancedEnv } from "./util.js";
+import { t } from "../i18n.js";
 
 
 export type RunnerOptions = {
@@ -48,7 +49,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       if (!config) {
         onEvent({
           type: "session.status",
-          payload: { sessionId: session.id, status: "error", title: session.title, cwd: session.cwd, error: "API configuration not found. Please configure API settings." }
+          payload: { sessionId: session.id, status: "error", title: session.title, cwd: session.cwd, error: t('api.configurationNotFound') }
         });
         return;
       }
@@ -94,7 +95,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
                 // Handle abort
                 signal.addEventListener("abort", () => {
                   session.pendingPermissions.delete(toolUseId);
-                  resolve({ behavior: "deny", message: "Session aborted" });
+                  resolve({ behavior: "deny", message: t('sessionAborted') });
                 });
               });
             }

@@ -7,6 +7,7 @@ import { handleClientEvent, sessions, cleanupAllSessions } from "./ipc-handlers.
 import { generateSessionTitle } from "./libs/util.js";
 import { saveApiConfig } from "./libs/config-store.js";
 import { getCurrentApiConfig } from "./libs/claude-settings.js";
+import { initI18n, getLanguage } from "./i18n.js";
 import type { ClientEvent } from "./types.js";
 import "./libs/claude-settings.js";
 
@@ -43,6 +44,9 @@ function handleSignal(): void {
 
 // Initialize everything when app is ready
 app.on("ready", () => {
+    // Initialize i18n for main process
+    initI18n();
+
     Menu.setApplicationMenu(null);
     // Setup event handlers
     app.on("before-quit", cleanup);
@@ -71,8 +75,11 @@ app.on("ready", () => {
         trafficLightPosition: { x: 15, y: 18 }
     });
 
-    if (isDev()) mainWindow.loadURL(`http://localhost:${DEV_PORT}`)
-    else mainWindow.loadFile(getUIPath());
+    if (isDev()) {
+        mainWindow.loadURL(`http://localhost:${DEV_PORT}`)
+    } else {
+        mainWindow.loadFile(getUIPath());
+    }
 
     globalShortcut.register('CommandOrControl+Q', () => {
         cleanup();
@@ -129,10 +136,15 @@ app.on("ready", () => {
             saveApiConfig(config);
             return { success: true };
         } catch (error) {
-            return { 
-                success: false, 
-                error: error instanceof Error ? error.message : String(error) 
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : String(error)
             };
         }
+    });
+
+    // Handle language request from renderer process
+    ipcMainHandle("get-language", () => {
+        return getLanguage();
     });
 })

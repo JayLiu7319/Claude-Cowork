@@ -1,0 +1,12 @@
+{
+  "session": {
+    "noLongerExists": "Session no longer exists.",
+    "noResumeId": "Session has no resume id yet."
+  },
+  "api": {
+    "configurationNotFound": "API configuration not found. Please configure API settings."
+  },
+  "sessionAborted": "Session aborted",
+  "userCanceled": "User canceled the question",
+  "userDenied": "User denied the request"
+}
