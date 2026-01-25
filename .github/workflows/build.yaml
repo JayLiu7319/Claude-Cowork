@@ -49,13 +49,13 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build Desktop
-        run: |
-          if [ -n "${{ matrix.command }}" ]; then
-            ${{ matrix.command }}
-          else
-            bun run ${{ matrix.script }}
-          fi
+      - name: Build Desktop (custom command)
+        if: ${{ matrix.command != '' }}
+        run: ${{ matrix.command }}
+
+      - name: Build Desktop (script)
+        if: ${{ matrix.command == '' }}
+        run: bun run ${{ matrix.script }}
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
