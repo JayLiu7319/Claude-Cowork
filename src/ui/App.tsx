@@ -13,6 +13,7 @@ import { PromptInput } from "./components/PromptInput";
 import { usePromptActions } from "./hooks/usePromptActions";
 import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";
+import { SkeletonLoader } from "./components/SkeletonLoader";
 import { initI18n } from "./i18n";
 
 const SCROLL_THRESHOLD = 50;
@@ -389,14 +390,18 @@ function AppShell() {
             )}
 
             {visibleMessages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-                <h2 className="text-xl font-semibold text-ink-700 mb-2">
-                  {t('emptyState.title')}
-                </h2>
-                <p className="text-sm text-muted">
-                  {t('emptyState.description')}
-                </p>
-              </div>
+              (activeSession && !activeSession.hydrated) ? (
+                <SkeletonLoader />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                  <h2 className="text-xl font-semibold text-ink-700 mb-2">
+                    {t('emptyState.title')}
+                  </h2>
+                  <p className="text-sm text-muted">
+                    {t('emptyState.description')}
+                  </p>
+                </div>
+              )
             ) : (
               visibleMessages.map((item, idx) => {
                 return (
@@ -412,7 +417,8 @@ function AppShell() {
                   />
                 );
               })
-            )}
+            )
+            }
 
             {/* Partial message display with skeleton loading */}
             <div className="partial-message">
