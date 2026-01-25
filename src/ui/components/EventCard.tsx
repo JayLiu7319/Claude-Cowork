@@ -358,12 +358,14 @@ const SystemInfoCard = ({ message, showIndicator = false, prefersReducedMotion =
 const UserMessageCard = ({ message, showIndicator = false, prefersReducedMotion = false }: { message: { type: "user_prompt"; prompt: string }; showIndicator?: boolean; prefersReducedMotion?: boolean }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col mt-4">
-      <div className="header text-accent flex items-center gap-2">
+    <div className="flex flex-col mt-4 items-end">
+      <div className="header text-accent flex items-center gap-2 mb-2 flex-row-reverse">
         <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} prefersReducedMotion={prefersReducedMotion} />
         {t('eventCard.user')}
       </div>
-      <MDContent text={message.prompt} />
+      <div className="rounded-2xl px-4 py-3 bg-surface-secondary border border-ink-900/10 max-w-[85%] text-left [&>:first-child]:mt-0">
+        <MDContent text={message.prompt} />
+      </div>
     </div>
   );
 };
