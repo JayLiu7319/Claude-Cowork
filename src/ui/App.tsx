@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
+import type { PermissionResult, SDKAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import type { i18n } from 'i18next';
 import { useIPC } from "./hooks/useIPC";
@@ -319,6 +319,27 @@ function AppShell() {
     resetToLatest();
   }, [resetToLatest]);
 
+  const showSkeleton = useMemo(() => {
+    if (showPartialMessage) return true;
+    if (!isRunning) return false;
+
+    // Check if the last message in the list handles its own loading state (specifically Tool Use)
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.type === 'assistant') {
+      const content = (lastMessage as SDKAssistantMessage).message?.content;
+      if (Array.isArray(content) && content.length > 0) {
+        const lastContent = content[content.length - 1];
+        // If the last content is a tool use, it has its own spinner in EventCard, so hide skeleton
+        if (lastContent.type === 'tool_use') {
+          return false;
+        }
+      }
+    }
+
+    // Default to showing skeleton if running and no specific reason to hide
+    return true;
+  }, [showPartialMessage, isRunning, messages]);
+
   return (
     <div className="flex h-screen bg-surface">
       <Sidebar
@@ -396,7 +417,7 @@ function AppShell() {
             {/* Partial message display with skeleton loading */}
             <div className="partial-message">
               <MDContent text={partialMessage} />
-              {showPartialMessage && (
+              {showSkeleton && (
                 <div className="mt-3 flex flex-col gap-2 px-1">
                   <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
                     {!prefersReducedMotion && (

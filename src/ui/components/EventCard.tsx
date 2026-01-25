@@ -57,9 +57,21 @@ const useToolStatus = (toolUseId: string | undefined) => {
 };
 
 const StatusDot = ({ variant = "accent", isActive = false, isVisible = true, prefersReducedMotion = false }: {
-  variant?: "accent" | "success" | "error"; isActive?: boolean; isVisible?: boolean; prefersReducedMotion?: boolean;
+  variant?: "accent" | "success" | "error" | "pending"; isActive?: boolean; isVisible?: boolean; prefersReducedMotion?: boolean;
 }) => {
   if (!isVisible) return null;
+
+  if (variant === "pending") {
+    return (
+      <span className="relative flex h-2 w-2 items-center justify-center">
+        {!prefersReducedMotion && (
+          <span className="absolute inline-flex h-full w-full animate-pulse-scale rounded-full bg-accent opacity-50" />
+        )}
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+      </span>
+    );
+  }
+
   const colorClass = variant === "success" ? "bg-success" : variant === "error" ? "bg-error" : "bg-accent";
   return (
     <span className="relative flex h-2 w-2">
@@ -263,9 +275,12 @@ const ToolUseCard = ({
   const toolUseId = messageContent.type === "tool_use" ? messageContent.id : undefined;
 
   const toolStatus = useToolStatus(toolUseId);
-  const statusVariant = toolStatus === "error" ? "error" : "success";
   const isPending = !toolStatus || toolStatus === "pending";
-  const shouldShowDot = toolStatus === "success" || toolStatus === "error" || showIndicator;
+  const statusVariant = toolStatus === "error" ? "error" : (isPending ? "pending" : "success");
+
+  // For pending state, we always show the dot (it handles its own animation).
+  // For other states, we show it if explicitly requested (showIndicator) or if finished (success/error).
+  const shouldShowDot = isPending || toolStatus === "success" || toolStatus === "error" || showIndicator;
 
   useEffect(() => {
     if (messageContent.type === "tool_use" && messageContent?.id && !toolStatusMap.has(messageContent.id)) {

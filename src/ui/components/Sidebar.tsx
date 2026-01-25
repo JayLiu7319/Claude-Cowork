@@ -105,13 +105,13 @@ export function Sidebar({
       >
         <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
-            className="flex-1 rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors shadow-sm"
+            className="flex-1 rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"
             onClick={onNewSession}
           >
             {t('sidebar.newTask')}
           </button>
           <button
-            className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors shadow-sm"
+            className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"
             onClick={() => useAppStore.getState().setShowSettingsModal(true)}
             aria-label="Settings"
           >
@@ -149,8 +149,8 @@ export function Sidebar({
             <div
               key={session.id}
               className={`group relative cursor-pointer rounded-xl border px-3 py-3 text-left transition-all ${activeSessionId === session.id
-                  ? "border-accent/30 bg-accent-subtle shadow-sm"
-                  : "border-transparent bg-transparent hover:bg-ink-900/5"
+                ? "border-accent/30 bg-accent-subtle shadow-sm"
+                : "border-transparent bg-transparent hover:bg-ink-900/5"
                 }`}
               onClick={() => setActiveSessionId(session.id)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveSessionId(session.id); } }}
@@ -160,8 +160,8 @@ export function Sidebar({
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col min-w-0 flex-1 overflow-hidden mr-1">
                   <div className={`text-[13px] font-medium truncate mb-0.5 ${session.status === "running" ? "text-info" :
-                      session.status === "completed" ? "text-success" :
-                        session.status === "error" ? "text-error" : "text-ink-800"
+                    session.status === "completed" ? "text-success" :
+                      session.status === "error" ? "text-error" : "text-ink-800"
                     }`} title={session.title}>
                     {session.title || "Untitled Task"}
                   </div>
