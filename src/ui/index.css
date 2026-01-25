@@ -7,7 +7,7 @@
   --color-surface-secondary: #F5F4F1;
   --color-surface-tertiary: #EFEEE9;
   --color-surface-cream: #FAF9F6;
-  
+
   /* Ink colors */
   --color-ink-900: #1A1915;
   --color-ink-800: #2D2D2A;
@@ -15,17 +15,17 @@
   --color-ink-600: #666661;
   --color-ink-500: #7A7A75;
   --color-ink-400: #9B9B96;
-  
+
   /* Muted colors */
   --color-muted: #6B6B66;
   --color-muted-light: #9B9B96;
-  
+
   /* Accent colors (Claude orange) */
   --color-accent: #D97757;
   --color-accent-hover: #CC785C;
   --color-accent-light: #F5D0C5;
   --color-accent-subtle: #FDF4F1;
-  
+
   /* Status colors */
   --color-error: #DC2626;
   --color-error-light: #FEE2E2;
@@ -33,14 +33,14 @@
   --color-success-light: #DCFCE7;
   --color-info: #2563EB;
   --color-info-light: #DBEAFE;
-  
+
   /* Background colors */
   --color-bg-000: #FFFFFF;
   --color-bg-100: #FAF9F6;
   --color-bg-200: #F5F4F1;
   --color-bg-300: #EFEEE9;
   --color-bg-400: #E5E4DF;
-  
+
   /* Shadows */
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.08);
@@ -75,12 +75,18 @@ hr {
 }
 
 @media (max-width: 768px) {
-  input, textarea, select {
+
+  input,
+  textarea,
+  select {
     font-size: 16px;
   }
 }
 
-code, pre, textarea.mono, input.mono {
+code,
+pre,
+textarea.mono,
+input.mono {
   font-family: "Söhne Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
@@ -103,17 +109,39 @@ code, pre, textarea.mono, input.mono {
 }
 
 /* Touch optimization - disable tap highlight and double-tap zoom */
-button, a {
+button,
+a {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
 
 /* Shimmer animation for partial message loading */
 @keyframes shimmer {
-  0% { transform: translateX(-120%); }
-  100% { transform: translateX(120%); }
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-shimmer {
-  animation: shimmer 1.4s linear infinite;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes enter-animation {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: enter-animation 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

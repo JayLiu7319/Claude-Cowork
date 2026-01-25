@@ -111,9 +111,14 @@ function extractTagContent(input: string, tag: string): string | null {
 }
 
 // Inline tool result component (embedded within ToolUseCard)
-const ToolResultInline = ({ messageContent }: { messageContent: ToolResultContent }) => {
+const ToolResultInline = ({ messageContent, isLatest }: { messageContent: ToolResultContent; isLatest: boolean }) => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = useState(false);
+  // State for content truncation (show more lines)
+  const [contentExpanded, setContentExpanded] = useState(false);
+  // State for the entire block visibility (collapse/expand)
+  // null means "follow default" (which is !isLatest -> collapsed)
+  const [manualCollapsed, setManualCollapsed] = useState<boolean | null>(null);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const isFirstRender = useRef(true);
   let lines: string[] = [];
@@ -145,19 +150,42 @@ const ToolResultInline = ({ messageContent }: { messageContent: ToolResultConten
 
   useEffect(() => {
     if (!hasMoreLines || isFirstRender.current) { isFirstRender.current = false; return; }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [hasMoreLines, isExpanded]);
+    if (contentExpanded) { // Only scroll if expanding content
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [hasMoreLines, contentExpanded]);
 
   if (!isToolResult) return null;
 
   const isError = messageContent.is_error;
   const isMarkdownContent = isMarkdown(lines.join("\n"));
-  const visibleContent = hasMoreLines && !isExpanded ? lines.slice(0, MAX_VISIBLE_LINES).join("\n") : lines.join("\n");
+  const visibleContent = hasMoreLines && !contentExpanded ? lines.slice(0, MAX_VISIBLE_LINES).join("\n") : lines.join("\n");
+
+  // Logic identifying if the block is collapsed
+  // Default: if it's NOT the latest message, it is collapsed.
+  // Manual override takes precedence.
+  const isCollapsed = manualCollapsed !== null ? manualCollapsed : !isLatest;
+
+  const toggleCollapse = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setManualCollapsed(!isCollapsed);
+  };
 
   return (
-    <div className={`mt-3 mb-3 rounded-lg ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
-      {/* Header with status indicator */}
-      <div className={`flex items-center gap-2 px-3 py-2 border-b ${isError ? "border-red-200 bg-red-100/50" : "border-ink-900/5 bg-ink-900/[0.02]"}`}>
+    <div className={`mt-3 mb-1 rounded-lg transition-all duration-300 ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
+      {/* Header with status indicator - Clickable for collapse/expand */}
+      <div
+        onClick={toggleCollapse}
+        className={`flex items-center gap-2 px-3 py-2 border-b cursor-pointer select-none transition-colors 
+            ${isError ? "border-red-200 bg-red-100/50 hover:bg-red-100" : "border-ink-900/5 bg-ink-900/[0.02] hover:bg-ink-900/[0.04]"}
+            ${isCollapsed ? "border-b-0 rounded-lg" : ""}`} // Remove border when collapsed
+      >
+        <div className={`transition-transform duration-300 ${isCollapsed ? "-rotate-90" : "rotate-0"}`}>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg" className={isError ? "text-red-700" : "text-ink-500"}>
+            <path d="M5 9L1 1L9 1L5 9Z" fill="currentColor" />
+          </svg>
+        </div>
+
         <span role="img" aria-label={isError ? t('eventCard.error') : t('eventCard.success')} className={`flex items-center justify-center w-4 h-4 rounded-full ${isError ? "bg-red-500" : "bg-green-500"}`}>
           <span aria-hidden="true" className="text-white text-xs font-bold">{isError ? "✕" : "✓"}</span>
         </span>
@@ -171,28 +199,34 @@ const ToolResultInline = ({ messageContent }: { messageContent: ToolResultConten
         )}
       </div>
 
-      {/* Content area */}
-      <div className="px-3 py-2.5">
-        <pre className={`text-[13px] leading-relaxed whitespace-pre-wrap break-words font-mono ${isError ? "text-red-600" : "text-ink-700"}`}>
-          {isMarkdownContent ? <MDContent text={visibleContent} /> : visibleContent}
-        </pre>
-      </div>
+      {/* Content area with animation */}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-out ${isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="px-3 py-2.5">
+            <pre className={`text-[13px] leading-relaxed whitespace-pre-wrap break-words font-mono ${isError ? "text-red-600" : "text-ink-700"}`}>
+              {isMarkdownContent ? <MDContent text={visibleContent} /> : visibleContent}
+            </pre>
+          </div>
 
-      {/* Expand/Collapse button */}
-      {hasMoreLines && (
-        <div className={`px-3 py-2 border-t ${isError ? "border-red-200" : "border-ink-900/5"}`}>
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? t('eventCard.collapse') : `${t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}`}
-            className={`text-xs font-medium transition-colors flex items-center gap-1.5 ${isError ? "text-red-600 hover:text-red-700" : "text-accent hover:text-accent-hover"}`}
-          >
-            <span aria-hidden="true" className="text-[10px]">{isExpanded ? "▲" : "▼"}</span>
-            <span>{isExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
-          </button>
+          {/* Expand/Collapse content button (Show more lines) */}
+          {hasMoreLines && (
+            <div className={`px-3 py-2 border-t ${isError ? "border-red-200" : "border-ink-900/5"}`}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setContentExpanded(!contentExpanded); }}
+                aria-expanded={contentExpanded}
+                aria-label={contentExpanded ? t('eventCard.collapse') : `${t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}`}
+                className={`text-xs font-medium transition-colors flex items-center gap-1.5 ${isError ? "text-red-600 hover:text-red-700" : "text-accent hover:text-accent-hover"}`}
+              >
+                <span aria-hidden="true" className="text-[10px]">{contentExpanded ? "▲" : "▼"}</span>
+                <span>{contentExpanded ? t('eventCard.collapse') : t('eventCard.showMoreLines', { count: lines.length - MAX_VISIBLE_LINES })}</span>
+              </button>
+            </div>
+          )}
+          <div ref={bottomRef} />
         </div>
-      )}
-      <div ref={bottomRef} />
+      </div>
     </div>
   );
 };
@@ -216,12 +250,14 @@ const ToolUseCard = ({
   messageContent,
   toolResult,
   showIndicator = false,
-  prefersReducedMotion = false
+  prefersReducedMotion = false,
+  isLatest = false
 }: {
   messageContent: MessageContent;
   toolResult?: ToolResultContent | null;
   showIndicator?: boolean;
   prefersReducedMotion?: boolean;
+  isLatest?: boolean;
 }) => {
   // Move check inside hooks or after hooks
   const toolUseId = messageContent.type === "tool_use" ? messageContent.id : undefined;
@@ -259,7 +295,7 @@ const ToolUseCard = ({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-[1rem] bg-surface-tertiary px-3 py-2 mt-4 overflow-hidden">
+    <div className="flex flex-col gap-2 rounded-[1rem] bg-surface-tertiary px-3 py-2 mt-4 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="flex flex-row items-center gap-2 min-w-0">
         <StatusDot variant={statusVariant} isActive={isPending && showIndicator} isVisible={shouldShowDot} prefersReducedMotion={prefersReducedMotion} />
         <div className="flex flex-row items-center gap-2 tool-use-item min-w-0 flex-1">
@@ -269,9 +305,9 @@ const ToolUseCard = ({
       </div>
 
       {/* Inline tool result display with smooth transition */}
-      <div className="transition-[max-height,opacity] duration-300 ease-out overflow-hidden" style={{ maxHeight: toolResult ? '1000px' : '0', opacity: toolResult ? 1 : 0 }}>
+      <div className="transition-[max-height,opacity] duration-300 ease-out overflow-hidden" style={{ maxHeight: toolResult ? '2000px' : '0', opacity: toolResult ? 1 : 0 }}>
         {toolResult && (
-          <ToolResultInline messageContent={toolResult} />
+          <ToolResultInline messageContent={toolResult} isLatest={isLatest} />
         )}
       </div>
     </div>
@@ -462,7 +498,7 @@ export const MessageCard = memo(function MessageCard({
             }
             // O(1) lookup instead of O(n) search - major performance improvement
             const toolResult = toolResultMap.get(content.id) || null;
-            return <ToolUseCard key={idx} messageContent={content} toolResult={toolResult} showIndicator={isLastContent && showIndicator} prefersReducedMotion={prefersReducedMotion} />;
+            return <ToolUseCard key={idx} messageContent={content} toolResult={toolResult} showIndicator={isLastContent && showIndicator} prefersReducedMotion={prefersReducedMotion} isLatest={isLast} />;
           }
           return null;
         })}
