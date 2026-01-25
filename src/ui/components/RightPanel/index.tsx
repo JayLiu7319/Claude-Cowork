@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import type { TodoItemData, FileChangeData } from "../../types";
 import { Header } from "./Header";
 import { TasksFilesPanel } from "./TasksFilesPanel";
@@ -11,7 +11,7 @@ type RightPanelProps = {
   onOpenFile: (path: string) => void;
 };
 
-export function RightPanel({
+export const RightPanel = memo(function RightPanel({
   todos,
   fileChanges,
   sessionCwd,
@@ -53,5 +53,5 @@ export function RightPanel({
       </div>
     </aside>
   );
-}
+});
 

@@ -150,16 +150,18 @@ export const DirectorySection = memo(function DirectorySection({
     onOpenFile
 }: DirectorySectionProps) {
     const { t } = useTranslation("ui");
-    const [directoryTree, setDirectoryTree] = useState<DirectoryEntry[] | null>(null);
+    const [directoryData, setDirectoryData] = useState<{
+        tree: DirectoryEntry[] | null;
+        cwd: string | undefined;
+    }>({ tree: null, cwd: undefined });
     const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-
-    // Reset state when not expanded or no cwd (render-time update pattern)
-    if ((!sessionCwd || !isExpanded) && directoryTree !== null) {
-        setDirectoryTree(null);
-    }
+    // Derive actual tree to display - reset when cwd changes or section collapses
+    const directoryTree = sessionCwd === directoryData.cwd && isExpanded
+        ? directoryData.tree
+        : null;
 
     // Load directory contents when cwd changes or section expands
     useEffect(() => {
@@ -173,7 +175,7 @@ export const DirectorySection = memo(function DirectorySection({
 
         window.electron.readDirectoryTree(sessionCwd, 2) // Load 2 levels deep initially
             .then((tree) => {
-                setDirectoryTree(tree);
+                setDirectoryData({ tree, cwd: sessionCwd });
                 setIsLoading(false);
             })
             .catch((err) => {

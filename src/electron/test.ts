@@ -1,8 +1,9 @@
 import osUtils from "os-utils";
 import fs from "fs"
 import os from "os"
-import { BrowserWindow } from "electron";
+import { BrowserWindow, app } from "electron";
 import { ipcWebContentsSend } from "./util.js";
+import path from "path";
 
 const POLLING_INTERVAL = 500;
 
@@ -57,7 +58,9 @@ function getRamUsage() {
 }
 
 function getStorageData() {
-    const stats = fs.statfsSync(process.platform === 'win32' ? 'C://' : '/');
+    const userDataPath = app.getPath("userData");
+    const rootPath = path.parse(userDataPath).root;
+    const stats = fs.statfsSync(rootPath);
     const total = stats.bsize * stats.blocks;
     const free = stats.bsize * stats.bfree;
 

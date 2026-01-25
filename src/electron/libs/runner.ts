@@ -3,8 +3,10 @@ import type { ServerEvent } from "../types.js";
 import type { Session } from "./session-store.js";
 
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "./claude-settings.js";
+import path from "path";
 import { getEnhancedEnv } from "./util.js";
 import { t } from "../i18n.js";
+import { getResourcesPath } from "../pathResolver.js";
 
 
 export type RunnerOptions = {
@@ -22,9 +24,35 @@ export type RunnerHandle = {
 const DEFAULT_CWD = process.cwd();
 
 
+/**
+ * Build the system context prompt for the first message in a new conversation.
+ * This prompt is prepended to the user's actual message to provide important context.
+ * It is NOT sent to the frontend and NOT rendered in the UI.
+ */
+function buildFirstMessageSystemContext(cwd: string): string {
+  return `<SYSTEM_CONTEXT>
+当前工作路径: ${cwd}
+
+重要规则：
+1. 所有文件写入操作必须且只能在工作路径 "${cwd}" 或其子目录下执行
+2. 所有文件删除操作必须且只能在工作路径 "${cwd}" 或其子目录下执行
+3. 禁止在工作路径之外的任何位置进行写入或删除操作
+4. 读取操作可以访问系统其他位置，但写入和删除必须严格限制在工作路径内
+</SYSTEM_CONTEXT>
+
+`;
+}
+
 export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
   const { prompt, session, resumeSessionId, onEvent, onSessionUpdate } = options;
   const abortController = new AbortController();
+
+  // For the first message in a new conversation (no resumeSessionId),
+  // prepend system context about the working directory
+  const cwd = session.cwd ?? DEFAULT_CWD;
+  const effectivePrompt = !resumeSessionId
+    ? buildFirstMessageSystemContext(cwd) + prompt
+    : prompt;
 
   const sendMessage = (message: SDKMessage) => {
     onEvent({
@@ -61,8 +89,12 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         ...env
       };
 
+
+      // Resolve bundled plugins path
+      const bundledPluginsPath = path.join(getResourcesPath(), 'resources', 'builtin-plugins');
+
       const q = query({
-        prompt,
+        prompt: effectivePrompt,
         options: {
           cwd: session.cwd ?? DEFAULT_CWD,
           resume: resumeSessionId,
@@ -72,6 +104,10 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           permissionMode: "bypassPermissions",
           includePartialMessages: true,
           allowDangerouslySkipPermissions: true,
+          plugins: [
+            { type: "local", path: path.join(bundledPluginsPath, 'startup-business-analyst') },
+            { type: "local", path: path.join(bundledPluginsPath, 'core-skills') }
+          ],
           canUseTool: async (toolName, input, { signal }) => {
             // For AskUserQuestion, we need to wait for user response
             if (toolName === "AskUserQuestion") {

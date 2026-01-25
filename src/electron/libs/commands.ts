@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import type { Command } from "../types.js";
+import { getResourcesPath } from "../pathResolver.js";
 
 /**
  * Parse YAML frontmatter from a markdown file content
@@ -43,52 +44,87 @@ export function getGlobalCommandsPath(): string {
 /**
  * Load all available slash commands from the global ~/.claude/commands directory
  */
+
+
+/**
+ * Load all available slash commands from global config and bundled plugins
+ */
 export async function loadGlobalCommands(): Promise<Command[]> {
     const commandsDir = getGlobalCommandsPath();
     const commands: Command[] = [];
 
+    // 1. Load from ~/.claude/commands
     try {
-        await fs.access(commandsDir);
-    } catch {
-        // Directory doesn't exist, return empty array
-        return commands;
-    }
+        if (await fs.stat(commandsDir).then(s => s.isDirectory()).catch(() => false)) {
+            const entries = await fs.readdir(commandsDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (!entry.isFile()) continue;
+                const ext = path.extname(entry.name).toLowerCase();
+                if (ext !== '.md' && ext !== '.txt') continue;
 
-    try {
-        const entries = await fs.readdir(commandsDir, { withFileTypes: true });
-
-        for (const entry of entries) {
-            if (!entry.isFile()) continue;
-
-            // Support .md and .txt files
-            const ext = path.extname(entry.name).toLowerCase();
-            if (ext !== '.md' && ext !== '.txt') continue;
-
-            const filePath = path.join(commandsDir, entry.name);
-            const commandName = path.basename(entry.name, ext);
-
-            try {
-                const content = await fs.readFile(filePath, 'utf-8');
-                const frontmatter = parseFrontmatter(content);
-
-                commands.push({
-                    name: commandName,
-                    description: frontmatter.description || undefined,
-                    argumentHint: frontmatter['argument-hint'] || undefined,
-                    filePath
-                });
-            } catch (err) {
-                console.error(`Failed to read command file ${filePath}:`, err);
+                await loadCommandFromFile(path.join(commandsDir, entry.name), commands);
             }
         }
     } catch (err) {
-        console.error("Failed to read commands directory:", err);
+        console.error("Failed to read global commands directory:", err);
+    }
+
+    // 2. Load from bundled plugins
+    try {
+        const resourcesPath = getResourcesPath();
+        const bundledPluginsPath = path.join(resourcesPath, 'resources', 'builtin-plugins');
+
+        if (await fs.stat(bundledPluginsPath).then(s => s.isDirectory()).catch(() => false)) {
+            // Read all plugin directories
+            const pluginDirs = await fs.readdir(bundledPluginsPath, { withFileTypes: true });
+
+            for (const pluginDir of pluginDirs) {
+                if (!pluginDir.isDirectory()) continue;
+
+                // Check for commands subdirectory
+                const commandsPath = path.join(bundledPluginsPath, pluginDir.name, 'commands');
+                if (await fs.stat(commandsPath).then(s => s.isDirectory()).catch(() => false)) {
+                    const commandEntries = await fs.readdir(commandsPath, { withFileTypes: true });
+
+                    for (const entry of commandEntries) {
+                        if (!entry.isFile()) continue;
+                        const ext = path.extname(entry.name).toLowerCase();
+                        if (ext !== '.md' && ext !== '.txt') continue;
+
+                        await loadCommandFromFile(path.join(commandsPath, entry.name), commands);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Failed to read bundled plugins commands:", err);
     }
 
     // Sort commands by name
     commands.sort((a, b) => a.name.localeCompare(b.name));
 
     return commands;
+}
+
+async function loadCommandFromFile(filePath: string, commands: Command[]) {
+    try {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const frontmatter = parseFrontmatter(content);
+
+        const commandName = path.basename(filePath, path.extname(filePath));
+        // If inside a plugin, we might want to namespace it, but for now match exact filename?
+        // Actually, the user requirement implied "startup-business-analyst" commands.
+        // Let's keep the filename as the command name.
+
+        commands.push({
+            name: commandName,
+            description: frontmatter.description || undefined,
+            argumentHint: frontmatter['argument-hint'] || undefined,
+            filePath
+        });
+    } catch (err) {
+        console.error(`Failed to read command file ${filePath}:`, err);
+    }
 }
 
 /**

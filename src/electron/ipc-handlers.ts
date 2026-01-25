@@ -252,6 +252,20 @@ export function handleClientEvent(event: ClientEvent) {
     return;
   }
 
+  if (event.type === "session.rename") {
+    const session = sessions.getSession(event.payload.sessionId);
+    if (!session) {
+      emit({ type: "session.deleted", payload: { sessionId: event.payload.sessionId } });
+      return;
+    }
+    sessions.updateSession(session.id, { title: event.payload.title });
+    emit({
+      type: "session.status",
+      payload: { sessionId: session.id, status: session.status, title: event.payload.title, cwd: session.cwd }
+    });
+    return;
+  }
+
   if (event.type === "session.continue") {
     const session = sessions.getSession(event.payload.sessionId);
     if (!session) {

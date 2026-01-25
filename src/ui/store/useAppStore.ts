@@ -178,17 +178,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           get().setActiveSessionId(null);
         }
 
-        if (!state.activeSessionId && event.payload.sessions.length > 0) {
-          const sorted = [...event.payload.sessions].sort((a, b) => {
-            const aTime = a.updatedAt ?? a.createdAt ?? 0;
-            const bTime = b.updatedAt ?? b.createdAt ?? 0;
-            return aTime - bTime;
-          });
-          const latestSession = sorted[sorted.length - 1];
-          if (latestSession) {
-            get().setActiveSessionId(latestSession.id);
-          }
-        } else if (state.activeSessionId) {
+        if (state.activeSessionId) {
           const stillExists = event.payload.sessions.some(
             (session) => session.id === state.activeSessionId
           );
@@ -201,12 +191,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       case "session.history": {
         const { sessionId, messages, status } = event.payload;
+        const filteredMessages = messages.filter((msg) => msg.type !== "stream_event");
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
           return {
             sessions: {
               ...state.sessions,
-              [sessionId]: { ...existing, status, messages, hydrated: true }
+              [sessionId]: { ...existing, status, messages: filteredMessages, hydrated: true }
             }
           };
         });
@@ -267,6 +258,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       case "stream.message": {
         const { sessionId, message } = event.payload;
+        if (message.type === "stream_event") {
+          break;
+        }
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
           return {

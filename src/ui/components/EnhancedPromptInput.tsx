@@ -8,6 +8,8 @@ import { usePromptActions } from "../hooks/usePromptActions";
 const MAX_ROWS = 12;
 const LINE_HEIGHT = 21;
 const MAX_HEIGHT = MAX_ROWS * LINE_HEIGHT;
+// Stable noop function reference to prevent unnecessary re-renders
+const NOOP_SEND_EVENT = () => {};
 
 interface EnhancedPromptInputProps {
     onStartSession: () => void;
@@ -29,11 +31,8 @@ export function EnhancedPromptInput({ onStartSession, sendEvent }: EnhancedPromp
     const promptRef = useRef<HTMLTextAreaElement | null>(null);
     const inputContainerRef = useRef<HTMLDivElement>(null);
 
-    // Use prompt actions if sendEvent is provided (for existing session)
-    // Always call the hook, using a no-op if sendEvent is undefined
-    // This fixes "Rendered more hooks than during the previous render" error
-    const noopSendEvent = useCallback(() => { }, []);
-    const promptActions = usePromptActions(sendEvent || noopSendEvent);
+    // Use stable noop function reference instead of creating new one each render
+    const promptActions = usePromptActions(sendEvent || NOOP_SEND_EVENT);
     const isRunning = promptActions.isRunning;
 
     // Load commands when component mounts

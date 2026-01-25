@@ -68,6 +68,7 @@ export type ServerEvent =
 // Client -> Server events
 export type ClientEvent =
   | { type: "session.start"; payload: { title: string; prompt: string; cwd?: string; allowedTools?: string } }
+  | { type: "session.rename"; payload: { sessionId: string; title: string } }
   | { type: "session.continue"; payload: { sessionId: string; prompt: string } }
   | { type: "session.stop"; payload: { sessionId: string } }
   | { type: "file.open"; payload: { sessionId: string; path: string } }

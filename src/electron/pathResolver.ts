@@ -2,17 +2,26 @@ import { isDev } from "./util.js"
 import path from "path"
 import { app } from "electron"
 
+export function getResourcesPath(): string {
+    return app.isPackaged ? process.resourcesPath : app.getAppPath();
+}
+
 export function getPreloadPath() {
+    if (app.isPackaged) {
+        return path.join(getResourcesPath(), 'preload.cjs');
+    }
     const basePath = isDev() ? app.getAppPath() : path.join(app.getAppPath(), '..');
     return path.join(basePath, 'dist-electron', 'src', 'electron', 'preload.cjs');
 }
 
 export function getUIPath() {
-    const basePath = isDev() ? app.getAppPath() : path.join(app.getAppPath(), '..');
+    const basePath = app.getAppPath();
     return path.join(basePath, 'dist-react', 'index.html');
 }
 
 export function getIconPath() {
-    const basePath = isDev() ? app.getAppPath() : path.join(app.getAppPath(), '..');
-    return path.join(basePath, 'templateIcon.png');
+    if (app.isPackaged) {
+        return path.join(getResourcesPath(), 'app-icon.png');
+    }
+    return path.join(app.getAppPath(), 'app-icon.png');
 }

@@ -16,9 +16,12 @@ const MDContent = memo(function MDContent({ text }: { text: string }) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw, rehypeHighlight]}
       components={{
-        h1: (props) => <h1 className="mt-4 text-xl font-semibold text-ink-900" {...props} />,
-        h2: (props) => <h2 className="mt-4 text-lg font-semibold text-ink-900" {...props} />,
-        h3: (props) => <h3 className="mt-3 text-base font-semibold text-ink-800" {...props} />,
+        h1: (props) => <h1 className="mb-4 mt-8 text-3xl font-bold tracking-tight text-ink-900 first:mt-0" {...props} />,
+        h2: (props) => <h2 className="mb-4 mt-6 text-2xl font-bold tracking-tight text-ink-900" {...props} />,
+        h3: (props) => <h3 className="mb-3 mt-5 text-xl font-bold text-ink-900" {...props} />,
+        h4: (props) => <h4 className="mb-2 mt-4 text-lg font-bold text-ink-900" {...props} />,
+        h5: (props) => <h5 className="mb-2 mt-4 text-base font-bold text-ink-900" {...props} />,
+        h6: (props) => <h6 className="mb-2 mt-4 text-sm font-bold uppercase tracking-wider text-ink-500" {...props} />,
         p: (props) => <p className="mt-2 text-base leading-relaxed text-ink-700" {...props} />,
         ul: (props) => <ul className="mt-2 ml-4 grid list-disc gap-1" {...props} />,
         ol: (props) => <ol className="mt-2 ml-4 grid list-decimal gap-1" {...props} />,
@@ -45,7 +48,27 @@ const MDContent = memo(function MDContent({ text }: { text: string }) {
               {children}
             </code>
           );
-        }
+        },
+        table: (props) => (
+          <div className="my-4 w-full overflow-x-auto rounded-lg border border-surface-tertiary">
+            <table className="w-full border-collapse text-left text-sm" {...props} />
+          </div>
+        ),
+        thead: (props) => (
+          <thead className="bg-surface-secondary text-ink-900" {...props} />
+        ),
+        tbody: (props) => (
+          <tbody className="divide-y divide-surface-tertiary bg-surface" {...props} />
+        ),
+        tr: (props) => (
+          <tr className="transition-colors hover:bg-surface-cream/50" {...props} />
+        ),
+        th: (props) => (
+          <th className="px-4 py-3 font-semibold" {...props} />
+        ),
+        td: (props) => (
+          <td className="px-4 py-3 text-ink-700" {...props} />
+        )
       }}
     >
       {String(text ?? "")}

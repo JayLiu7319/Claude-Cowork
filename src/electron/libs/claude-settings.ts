@@ -11,7 +11,11 @@ export function getClaudeCodePath(): string {
     // The path should point to the unpackaged asar.unpacked directory
     return join(
       process.resourcesPath,
-      'app.asar.unpacked/node_modules/@anthropic-ai/claude-agent-sdk/cli.js'
+      "app.asar.unpacked",
+      "node_modules",
+      "@anthropic-ai",
+      "claude-agent-sdk",
+      "cli.js"
     );
   }
   // In development, use node_modules CLI

@@ -4,6 +4,14 @@ import { useAppStore } from "../store/useAppStore";
 import type { ClientEvent } from "../types";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
+const MAX_FALLBACK_TITLE_WORDS = 6;
+
+function buildFallbackTitle(prompt: string) {
+    const trimmed = prompt.trim();
+    if (!trimmed) return "New Session";
+    const words = trimmed.split(/\s+/).slice(0, MAX_FALLBACK_TITLE_WORDS);
+    return words.join(" ");
+}
 
 export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     const { t } = useTranslation();
@@ -22,20 +30,27 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
         if (!prompt.trim()) return;
 
         if (!activeSessionId) {
-            let title = "";
+            const fallbackTitle = buildFallbackTitle(prompt);
             try {
                 setPendingStart(true);
-                title = await window.electron.generateSessionTitle(prompt);
             } catch (error) {
                 console.error(error);
-                setPendingStart(false);
-                setGlobalError(t('promptInput.titleError'));
-                return;
             }
             sendEvent({
                 type: "session.start",
-                payload: { title, prompt, cwd: cwd.trim() || undefined, allowedTools: DEFAULT_ALLOWED_TOOLS }
+                payload: { title: fallbackTitle, prompt, cwd: cwd.trim() || undefined, allowedTools: DEFAULT_ALLOWED_TOOLS }
             });
+            (async () => {
+
+                try {
+                    const title = await window.electron.generateSessionTitle(prompt);
+                    const currentSessionId = useAppStore.getState().activeSessionId;
+                    if (!currentSessionId || !title.trim() || title === fallbackTitle) return;
+                    sendEvent({ type: "session.rename", payload: { sessionId: currentSessionId, title } });
+                } catch (error) {
+                    console.error(error);
+                }
+            })();
         } else {
             if (activeSession?.status === "running") {
                 setGlobalError(t('promptInput.sessionRunning'));

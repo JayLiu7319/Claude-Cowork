@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import type { PermissionResult, SDKAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import type { i18n } from 'i18next';
+import { useShallow } from 'zustand/shallow';
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useAppStore } from "./store/useAppStore";
@@ -62,23 +63,32 @@ function AppShell() {
   // RAF throttling for partial message updates
   const rafIdRef = useRef<number | null>(null);
   const pendingPartialUpdateRef = useRef(false);
-  const sessions = useAppStore((s) => s.sessions);
+
+  // Merge data selectors with shallow comparison to prevent unnecessary re-renders
+  // This reduces subscriptions and only re-renders when actually used state changes
+  const { sessions, historyRequested } = useAppStore(
+    useShallow((s) => ({
+      sessions: s.sessions,
+      historyRequested: s.historyRequested
+    }))
+  );
   const activeSessionId = useAppStore((s) => s.activeSessionId);
+  const showSettingsModal = useAppStore((s) => s.showSettingsModal);
+  const globalError = useAppStore((s) => s.globalError);
+  const cwd = useAppStore((s) => s.cwd);
+  const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
+
   const activeSessionIdRef = useRef(activeSessionId);
   const previousSessionIdRef = useRef<string | null>(activeSessionId);
-  const showSettingsModal = useAppStore((s) => s.showSettingsModal);
+
+  // Separate stable function selectors - these never change so no re-render risk
   const setShowSettingsModal = useAppStore((s) => s.setShowSettingsModal);
-  const globalError = useAppStore((s) => s.globalError);
   const setGlobalError = useAppStore((s) => s.setGlobalError);
-  const historyRequested = useAppStore((s) => s.historyRequested);
   const markHistoryRequested = useAppStore((s) => s.markHistoryRequested);
   const resolvePermissionRequest = useAppStore((s) => s.resolvePermissionRequest);
   const handleServerEvent = useAppStore((s) => s.handleServerEvent);
-  const cwd = useAppStore((s) => s.cwd);
   const setCwd = useAppStore((s) => s.setCwd);
-  const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
-
   const setDefaultCwd = useAppStore((s) => s.setDefaultCwd);
 
   // Check user's motion preference
@@ -307,6 +317,13 @@ function AppShell() {
   useEffect(() => {
     // Get the previous session ID before updating
     const previousSessionId = previousSessionIdRef.current;
+    const didChangeSession = previousSessionId !== activeSessionId;
+
+    if (!didChangeSession) return;
+
+    const state = useAppStore.getState();
+    const newSession = activeSessionId ? state.sessions[activeSessionId] : undefined;
+    const isNewSessionRunning = newSession?.status === "running";
 
     // Reset scroll state
     // Defer state updates to avoid synchronous setState in effect
@@ -315,20 +332,12 @@ function AppShell() {
       setShouldAutoScroll(true);
       setHasNewMessages(false);
       prevMessagesLengthRef.current = 0;
-
-      if (previousSessionId !== activeSessionId) {
-        setPartialMessage("");
-        // Check if the new session is currently running
-        const newSession = activeSessionId ? sessions[activeSessionId] : undefined;
-        const isNewSessionRunning = newSession?.status === "running";
-        setShowPartialMessage(isNewSessionRunning);
-      }
+      setPartialMessage("");
+      setShowPartialMessage(isNewSessionRunning);
     }, 0);
 
     // CRITICAL: Only reset partial message ref when switching to a DIFFERENT session
-    if (previousSessionId !== activeSessionId) {
-      partialMessageRef.current = "";
-    }
+    partialMessageRef.current = "";
 
     // Update the previous session ID ref for next time
     previousSessionIdRef.current = activeSessionId;
@@ -336,7 +345,7 @@ function AppShell() {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 100);
-  }, [activeSessionId, sessions]);
+  }, [activeSessionId]);
 
   useEffect(() => {
     if (shouldAutoScroll) {
@@ -558,7 +567,7 @@ function AppShell() {
             <button
               onClick={scrollToBottom}
               aria-label="Scroll to bottom to view new messages"
-              className={`fixed bottom-28 left-1/2 ml-[140px] z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
+              className={`fixed bottom-28 left-1/2 z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
               style={!prefersReducedMotion ? {} : { transform: 'translateX(-50%)' }}
             >
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">

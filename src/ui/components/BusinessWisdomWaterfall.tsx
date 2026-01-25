@@ -1,0 +1,103 @@
+import { useState } from "react";
+
+const BUSINESS_MODELS = [
+    "SWOT 分析", "PESTLE 模型", "波特五力模型", "波士顿矩阵 (BCG)", "安索夫矩阵",
+    "第一性原理", "金字塔原理", "MVP 最小可行性产品", "PMF 产品市场匹配", "AARRR 增长模型",
+    "奥卡姆剃刀", "帕累托法则 (80/20)", "长尾理论", "蓝海战略", "第二曲线",
+    "飞轮效应", "网络效应", "摩尔定律", "梅特卡夫定律", "双边市场",
+    "SaaS 漏斗", "LTV/CAC 比率", "北极星指标", "OKR 目标管理", "KPI 关键绩效指标",
+    "SMART 原则", "PDCA 循环", "5W2H 分析法", "六顶思考帽", "头脑风暴",
+    "SCQA 模型", "MECE 原则", "逻辑树", "复利效应", "沉没成本谬误",
+    "机会成本", "边际效用递减", "囚徒困境", "纳什均衡", "锚定效应",
+    "幸存者偏差", "达克效应", "墨菲定律", "彼得原理", "破窗效应",
+    "羊群效应", "黑天鹅事件", "灰犀牛事件", "反脆弱", "熵增定律",
+    "跨越鸿沟", "创新者的窘境", "颠覆式创新", "精益创业", "设计思维",
+    "用户旅程地图", "同理心地图", "KANO 模型", "RFM 模型", "A/B 测试",
+    "NPS 净推荐值", "STP 营销战略", "4P 营销理论", "4C 营销理论", "AIDMA 模型",
+    "AISAS 模型", "病毒式营销", "品牌原型", "USP 独特卖点", "电梯演讲",
+    "黄金圈法则 (Why-How-What)", "西蒙·斯涅克圆环", "马斯洛需求层次", "心流理论", "刻意练习",
+    "一万小时定律", "费曼学习法", "艾森豪威尔矩阵", "番茄工作法", "GTD 时间管理",
+    "SCRUM 敏捷开发", "看板管理", "丰田生产方式", "JIT 准时制", "六西格玛",
+    "价值链分析", "核心竞争力", "护城河理论", "规模经济", "范围经济",
+    "博弈论", "红皇后效应", "认知失调", "证实偏差", "框架效应",
+    "损失厌恶", "禀赋效应", "心理账户", "互惠原理", "稀缺效应"
+];
+
+const COLUMN_COUNT = 6;
+
+// Shuffle function
+function shuffle<T>(array: T[]): T[] {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+}
+
+interface Column {
+    id: number;
+    items: string[];
+    speed: number;
+    delay: number;
+}
+
+export function BusinessWisdomWaterfall() {
+    // Generate columns with randomized content and speeds
+    // We use a state initializer to ensure this only runs once and stays stable
+    const [columns] = useState<Column[]>(() => {
+        return Array.from({ length: COLUMN_COUNT }).map((_, i) => ({
+            id: i,
+            items: shuffle([...BUSINESS_MODELS, ...BUSINESS_MODELS]),
+            speed: 40 + Math.random() * 40, // Random speed between 40s and 80s
+            delay: -Math.random() * 40, // Random start offset
+        }));
+    });
+
+    if (columns.length === 0) return null;
+
+    return (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0 opacity-[0.12]">
+            <style>
+                {`
+                    @keyframes waterfall-scroll {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-50%); }
+                    }
+                `}
+            </style>
+
+            {/* Gradient Masks */}
+            <div className="absolute inset-0 z-10 bg-gradient-to-b from-surface-cream via-transparent to-surface-cream" />
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-surface-cream to-transparent z-10" />
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-surface-cream to-transparent z-10" />
+
+            <div className="flex justify-between w-full h-[200%] -mt-10">
+                {columns.map((col) => (
+                    <div
+                        key={col.id}
+                        className="flex flex-col items-center gap-8 py-4"
+                        style={{
+                            animation: `waterfall-scroll ${col.speed}s linear infinite`,
+                            animationDelay: `${col.delay}s`,
+                            willChange: 'transform',
+                        }}
+                    >
+                        {/* Render items twice to ensure seamless loop */}
+                        {[...col.items, ...col.items].map((item, idx) => (
+                            <div
+                                key={`${col.id}-${idx}`}
+                                className="text-xl font-bold whitespace-nowrap text-ink-900 tracking-wider font-serif"
+                                style={{
+                                    opacity: Math.random() * 0.5 + 0.5, // Subtle opacity variation per item
+                                }}
+                            >
+                                {item}
+                            </div>
+                        ))}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
