@@ -6,7 +6,15 @@
     "resumeInClaudeCode": "Resume in Claude Code",
     "resumeTitle": "Resume",
     "workingDirUnavailable": "Working dir unavailable",
-    "beginningOfConversation": "Beginning of conversation"
+    "beginningOfConversation": "Beginning of conversation",
+    "searchPlaceholder": "Search sessions...",
+    "searchNoResults": "No matching sessions.",
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago",
+      "hoursAgo": "{{count}}h ago",
+      "daysAgo": "{{count}}d ago"
+    }
   },
   "promptInput": {
     "placeholder": {

@@ -6,7 +6,15 @@
     "resumeInClaudeCode": "在 Claude Code 中恢复",
     "resumeTitle": "恢复",
     "workingDirUnavailable": "工作目录不可用",
-    "beginningOfConversation": "对话开始"
+    "beginningOfConversation": "对话开始",
+    "searchPlaceholder": "搜索历史对话...",
+    "searchNoResults": "无匹配的对话。",
+    "time": {
+      "justNow": "刚刚",
+      "minutesAgo": "{{count}}分钟前",
+      "hoursAgo": "{{count}}小时前",
+      "daysAgo": "{{count}}天前"
+    }
   },
   "promptInput": {
     "placeholder": {
