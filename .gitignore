@@ -28,3 +28,35 @@ dist-electron
 
 # Git worktrees
 .worktrees
+
+# AI Assistant and IDE tool directories
+.agent/
+.agents/
+.cursor/
+.codex/
+.gemini/
+.opencode/
+.windsurf/
+.aider/
+.continue/
+
+# Claude Code skills (user-specific)
+.claude/skills/
+
+# GitHub Copilot workspace
+.github/copilot/
+.github/skills/
+
+# Build and distribution
+out/
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS files
+Thumbs.db
+*.swp
+*.swo
+*~
