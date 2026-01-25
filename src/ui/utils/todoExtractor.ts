@@ -1,4 +1,4 @@
-import type { SDKMessage, ToolUseBlock } from "@anthropic-ai/claude-agent-sdk";
+import type { SDKMessage } from "@anthropic-ai/claude-agent-sdk";
 import type { TodoItemData, UserPromptMessage, StreamMessage } from "../../electron/types.js";
 
 type AnyMessage = SDKMessage | UserPromptMessage;
@@ -24,11 +24,13 @@ export function extractTodosFromMessage(
 
   for (const block of content) {
     if (block.type === "tool_use" && block.name === "TodoWrite") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const input = block.input as any;
       if (!Array.isArray(input?.todos)) {
         continue;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       input.todos.forEach((todo: any, index: number) => {
         if (todo && todo.content) {
           todos.push({

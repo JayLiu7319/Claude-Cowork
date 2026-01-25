@@ -1,6 +1,7 @@
 import type { StreamMessage, FileChangeData, FileTreeNode } from "../../electron/types.js";
 import { findNodeByPath } from "./fileTreeBuilder.js";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyMessage = any;
 
 export function extractFileOperation(
@@ -29,6 +30,7 @@ export function extractFileOperation(
     }
 
     const toolName = block.name as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const input = block.input as any;
     let filePath: string | null = null;
     let operationType: "create" | "modify" | "delete" | null = null;

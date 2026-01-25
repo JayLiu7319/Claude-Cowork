@@ -1,5 +1,6 @@
 import type { StreamMessage, TodoItemData } from "../types.js";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyMessage = any;
 
 export function extractTodosFromMessage(
@@ -23,11 +24,13 @@ export function extractTodosFromMessage(
 
   for (const block of content) {
     if (block.type === "tool_use" && block.name === "TodoWrite") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const input = block.input as any;
       if (!Array.isArray(input?.todos)) {
         continue;
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       input.todos.forEach((todo: any, index: number) => {
         if (todo && todo.content) {
           todos.push({

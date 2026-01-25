@@ -535,6 +535,32 @@ export const MessageCard = memo(function MessageCard({
   }
 
   return null;
+}, (prevProps, nextProps) => {
+  // Custom memo comparator for better performance during streaming.
+  // We only re-render when truly necessary, not on every allMessages reference change.
+
+  // Always re-render if the message itself changed
+  if (prevProps.message !== nextProps.message) return false;
+
+  // Re-render if visibility/running state changed
+  if (prevProps.isLast !== nextProps.isLast) return false;
+  if (prevProps.isRunning !== nextProps.isRunning) return false;
+
+  // Re-render if permission state changed
+  if (prevProps.permissionRequest !== nextProps.permissionRequest) return false;
+  if (prevProps.onPermissionResult !== nextProps.onPermissionResult) return false;
+
+  // Re-render if accessibility preference changed
+  if (prevProps.prefersReducedMotion !== nextProps.prefersReducedMotion) return false;
+
+  // For allMessages, only re-render if length changed (new messages added)
+  // This prevents re-renders when the array reference changes but content is same
+  const prevLen = prevProps.allMessages?.length ?? 0;
+  const nextLen = nextProps.allMessages?.length ?? 0;
+  if (prevLen !== nextLen) return false;
+
+  // Props are equivalent - skip re-render
+  return true;
 });
 
 export { MessageCard as EventCard };

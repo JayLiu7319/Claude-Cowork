@@ -50,7 +50,7 @@ export function updateFileTreeWithOperations(
   changes: FileChangeData[]
 ): FileTreeNode {
   const newTree = JSON.parse(JSON.stringify(tree)) as FileTreeNode;
-  const timestamp = Date.now();
+
 
   for (const change of changes) {
     const parts = change.filePath.split(/[/\\]/).filter(Boolean);

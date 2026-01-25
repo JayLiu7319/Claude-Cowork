@@ -1,5 +1,5 @@
 import type { FileTreeNode, FileChangeData } from "../types.js";
-import { basename, dirname, normalize } from "path";
+import { basename, normalize } from "path";
 
 export function createEmptyFileTreeNode(
   nodePath: string,

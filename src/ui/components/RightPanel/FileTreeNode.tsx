@@ -1,8 +1,8 @@
 import { memo, useMemo } from "react";
-import type { FileTreeNode } from "../../types";
+import type { FileTreeNode as FileTreeNodeData } from "../../types";
 
 type FileTreeNodeComponentProps = {
-  node: FileTreeNode;
+  node: FileTreeNodeData;
   isRoot?: boolean;
   depth?: number;
   expandedFolders: Set<string>;
@@ -18,7 +18,7 @@ const operationIndicators: Record<string, string> = {
 
 export const FileTreeNode = memo(function FileTreeNode({
   node,
-  isRoot = false,
+
   depth = 0,
   expandedFolders,
   onToggleFolder,
@@ -51,9 +51,8 @@ export const FileTreeNode = memo(function FileTreeNode({
     <div className="flex flex-col text-sm">
       <button
         onClick={handleClick}
-        className={`flex items-center gap-1.5 py-1 px-0 rounded hover:bg-accent/5 transition-colors text-left text-xs ${
-          node.hasRecentOperation ? "text-accent font-medium" : "text-ink-700"
-        } group`}
+        className={`flex items-center gap-1.5 py-1 px-0 rounded hover:bg-accent/5 transition-colors text-left text-xs ${node.hasRecentOperation ? "text-accent font-medium" : "text-ink-700"
+          } group`}
         style={{ paddingLeft: `${depth * 12}px` }}
       >
         {node.isDirectory && hasChildren && (

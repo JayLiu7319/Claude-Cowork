@@ -1,9 +1,16 @@
+import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
-export default function MDContent({ text }: { text: string }) {
+/**
+ * Memoized Markdown content renderer.
+ * Prevents re-parsing markdown when text hasn't changed, significantly
+ * improving performance during streaming where the same content is
+ * rendered multiple times per second.
+ */
+const MDContent = memo(function MDContent({ text }: { text: string }) {
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -43,5 +50,10 @@ export default function MDContent({ text }: { text: string }) {
     >
       {String(text ?? "")}
     </ReactMarkdown>
-  )
-}
+  );
+}, (prevProps, nextProps) => {
+  // Only re-render if text actually changed
+  return prevProps.text === nextProps.text;
+});
+
+export default MDContent;

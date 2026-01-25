@@ -59,6 +59,9 @@ function AppShell() {
   const prevMessagesLengthRef = useRef(0);
   const scrollHeightBeforeLoadRef = useRef(0);
   const shouldRestoreScrollRef = useRef(false);
+  // RAF throttling for partial message updates
+  const rafIdRef = useRef<number | null>(null);
+  const pendingPartialUpdateRef = useRef(false);
   const sessions = useAppStore((s) => s.sessions);
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const activeSessionIdRef = useRef(activeSessionId);
@@ -89,6 +92,40 @@ function AppShell() {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     []
   );
+
+  /**
+   * Flush pending partial message update to state.
+   * This is called by requestAnimationFrame to throttle UI updates to 60fps.
+   */
+  const flushPartialMessage = useCallback(() => {
+    if (pendingPartialUpdateRef.current) {
+      setPartialMessage(partialMessageRef.current);
+      pendingPartialUpdateRef.current = false;
+    }
+    rafIdRef.current = null;
+  }, []);
+
+  /**
+   * Schedule a throttled partial message update.
+   * Instead of updating state on every token (1000+ times/sec), we throttle
+   * to 60fps using requestAnimationFrame for smooth rendering.
+   */
+  const schedulePartialUpdate = useCallback(() => {
+    pendingPartialUpdateRef.current = true;
+
+    if (rafIdRef.current === null) {
+      rafIdRef.current = requestAnimationFrame(flushPartialMessage);
+    }
+  }, [flushPartialMessage]);
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
+  }, []);
 
   // Helper function to extract partial message content
   const getPartialMessageContent = (eventMessage: { delta: unknown }) => {
@@ -127,8 +164,10 @@ function AppShell() {
     }
 
     if (message.event.type === "content_block_delta") {
+      // Accumulate text in ref (always immediate, never dropped)
       partialMessageRef.current += getPartialMessageContent(message.event) || "";
-      setPartialMessage(partialMessageRef.current);
+      // Throttle UI updates to 60fps instead of 1000+ times/sec
+      schedulePartialUpdate();
       if (shouldAutoScroll) {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
       } else {
@@ -137,12 +176,18 @@ function AppShell() {
     }
 
     if (message.event.type === "content_block_stop") {
-      // 立即清空，避免重复显示
+      // Flush any pending update immediately to ensure no text is lost
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      setPartialMessage(partialMessageRef.current);
+      // Then clear for next block
       partialMessageRef.current = "";
       setPartialMessage("");
       setShowPartialMessage(false);
     }
-  }, [shouldAutoScroll]);
+  }, [shouldAutoScroll, schedulePartialUpdate]);
 
   // Combined event handler
   const onEvent = useCallback((event: ServerEvent) => {

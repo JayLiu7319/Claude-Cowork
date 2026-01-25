@@ -11,6 +11,8 @@ import { updateFileTreeWithOperations } from "./libs/file-tree-builder.js";
 
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
+// Debounce timers for right panel updates to avoid excessive aggregation during streaming
+const rightPanelUpdateTimers = new Map<string, NodeJS.Timeout>();
 
 function initializeSessions() {
   if (!sessions) {
@@ -18,6 +20,73 @@ function initializeSessions() {
     sessions = new SessionStore(DB_PATH);
   }
   return sessions;
+}
+
+/**
+ * Schedule a debounced right panel update for a session.
+ * This prevents excessive aggregation during streaming - instead of aggregating
+ * on every token (1000+ times), we aggregate once after 300ms of inactivity.
+ */
+function scheduleRightPanelUpdate(sessionId: string) {
+  // Clear any existing timer for this session
+  const existingTimer = rightPanelUpdateTimers.get(sessionId);
+  if (existingTimer) {
+    clearTimeout(existingTimer);
+  }
+
+  // Schedule aggregation to run after 300ms of no new events
+  const timer = setTimeout(() => {
+    const session = sessions.getSession(sessionId);
+    if (!session) return;
+
+    const history = sessions.getSessionHistory(sessionId);
+    if (!history) return;
+
+    // Perform aggregation once instead of 1000+ times
+    const todos = aggregateTodos(history.messages);
+    const fileChanges = aggregateFileChanges(history.messages, session.fileTree);
+    const fileTree = updateFileTreeWithOperations(session.fileTree, fileChanges);
+
+    // Update session cache
+    session.todos = todos;
+    session.fileChanges = fileChanges;
+    session.fileTree = fileTree;
+
+    // Broadcast updates to UI
+    if (todos.length > 0) {
+      broadcast({
+        type: "rightpanel.todos",
+        payload: { sessionId, todos }
+      });
+    }
+    if (fileChanges.length > 0) {
+      broadcast({
+        type: "rightpanel.filechanges",
+        payload: { sessionId, changes: fileChanges }
+      });
+    }
+    broadcast({
+      type: "rightpanel.filetree",
+      payload: { sessionId, tree: fileTree }
+    });
+
+    // Clean up timer reference
+    rightPanelUpdateTimers.delete(sessionId);
+  }, 300); // 300ms debounce delay
+
+  rightPanelUpdateTimers.set(sessionId, timer);
+}
+
+/**
+ * Cancel any pending right panel update for a session.
+ * Used when session is stopped or deleted to prevent stale updates.
+ */
+function cancelRightPanelUpdate(sessionId: string) {
+  const timer = rightPanelUpdateTimers.get(sessionId);
+  if (timer) {
+    clearTimeout(timer);
+    rightPanelUpdateTimers.delete(sessionId);
+  }
 }
 
 function broadcast(event: ServerEvent) {
@@ -52,40 +121,10 @@ function emit(event: ServerEvent) {
   if (event.type === "stream.message") {
     sessions.recordMessage(event.payload.sessionId, event.payload.message);
 
-    // Update right panel data
-    const session = sessions.getSession(event.payload.sessionId);
-    if (session) {
-      const history = sessions.getSessionHistory(event.payload.sessionId);
-      if (history) {
-        // Aggregate todos and file changes from all messages
-        const todos = aggregateTodos(history.messages);
-        const fileChanges = aggregateFileChanges(history.messages, session.fileTree);
-        const fileTree = updateFileTreeWithOperations(session.fileTree, fileChanges);
-
-        // Update session cache
-        session.todos = todos;
-        session.fileChanges = fileChanges;
-        session.fileTree = fileTree;
-
-        // Broadcast right panel events directly (not through emit to avoid recursion)
-        if (todos.length > 0) {
-          broadcast({
-            type: "rightpanel.todos",
-            payload: { sessionId: event.payload.sessionId, todos }
-          });
-        }
-        if (fileChanges.length > 0) {
-          broadcast({
-            type: "rightpanel.filechanges",
-            payload: { sessionId: event.payload.sessionId, changes: fileChanges }
-          });
-        }
-        broadcast({
-          type: "rightpanel.filetree",
-          payload: { sessionId: event.payload.sessionId, tree: fileTree }
-        });
-      }
-    }
+    // Schedule debounced right panel update instead of immediate aggregation.
+    // This dramatically improves performance during streaming by aggregating
+    // once after streaming stops instead of 1000+ times during streaming.
+    scheduleRightPanelUpdate(event.payload.sessionId);
   }
   if (event.type === "stream.user_prompt") {
     sessions.recordMessage(event.payload.sessionId, {
@@ -275,6 +314,9 @@ export function handleClientEvent(event: ClientEvent) {
     const session = sessions.getSession(event.payload.sessionId);
     if (!session) return;
 
+    // Cancel any pending right panel updates for this session
+    cancelRightPanelUpdate(event.payload.sessionId);
+
     const handle = runnerHandles.get(session.id);
     if (handle) {
       handle.abort();
@@ -291,6 +333,10 @@ export function handleClientEvent(event: ClientEvent) {
 
   if (event.type === "session.delete") {
     const sessionId = event.payload.sessionId;
+
+    // Cancel any pending right panel updates for this session
+    cancelRightPanelUpdate(sessionId);
+
     const handle = runnerHandles.get(sessionId);
     if (handle) {
       handle.abort();

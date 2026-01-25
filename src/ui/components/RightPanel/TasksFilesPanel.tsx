@@ -19,7 +19,7 @@ export function TasksFilesPanel({
   fileStats,
   onScrollToMessage
 }: TasksFilesPanelProps) {
-  const { t } = useTranslation("ui");
+  useTranslation("ui");
   const [tasksExpanded, setTasksExpanded] = useState(true);
   const [filesExpanded, setFilesExpanded] = useState(true);
 
