@@ -22,6 +22,35 @@ export type SessionInfo = {
 
 import type { ApiConfig } from "./libs/config-store.js";
 
+// Right panel data types
+export type TodoItemData = {
+  id: string;                    // Tool use ID
+  taskIndex: number;             // Index in todos array
+  content: string;               // Task description
+  status: "pending" | "in_progress" | "completed";
+  messageIndex: number;          // Index in session messages
+  timestamp: number;
+};
+
+export type FileChangeData = {
+  id: string;                    // Unique ID
+  filePath: string;              // Relative to cwd
+  operationType: "create" | "modify" | "delete";
+  toolName: "Write" | "Edit" | "Bash";
+  messageIndex: number;
+  timestamp: number;
+};
+
+export type FileTreeNode = {
+  path: string;                  // Full file path
+  name: string;                  // File/folder name
+  isDirectory: boolean;
+  children: Record<string, FileTreeNode>;
+  isExpanded: boolean;
+  hasRecentOperation: boolean;
+  lastOperationIndex?: number;   // Message index of last operation
+};
+
 // Server -> Client events
 export type ServerEvent =
   | { type: "stream.message"; payload: { sessionId: string; message: StreamMessage } }
@@ -31,7 +60,10 @@ export type ServerEvent =
   | { type: "session.history"; payload: { sessionId: string; status: SessionStatus; messages: StreamMessage[] } }
   | { type: "session.deleted"; payload: { sessionId: string } }
   | { type: "permission.request"; payload: { sessionId: string; toolUseId: string; toolName: string; input: unknown } }
-  | { type: "runner.error"; payload: { sessionId?: string; message: string } };
+  | { type: "runner.error"; payload: { sessionId?: string; message: string } }
+  | { type: "rightpanel.todos"; payload: { sessionId: string; todos: TodoItemData[] } }
+  | { type: "rightpanel.filechanges"; payload: { sessionId: string; changes: FileChangeData[] } }
+  | { type: "rightpanel.filetree"; payload: { sessionId: string; tree: FileTreeNode } };
 
 // Client -> Server events
 export type ClientEvent =

@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
-import type { SessionStatus, StreamMessage } from "../types.js";
+import type { SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode } from "../types.js";
+import { buildInitialFileTree } from "./file-tree-builder.js";
 
 export type PendingPermission = {
   toolUseId: string;
@@ -18,6 +19,10 @@ export type Session = {
   lastPrompt?: string;
   pendingPermissions: Map<string, PendingPermission>;
   abortController?: AbortController;
+  // Right panel runtime data
+  todos: TodoItemData[];
+  fileChanges: FileChangeData[];
+  fileTree: FileTreeNode;
 };
 
 export type StoredSession = {
@@ -50,14 +55,18 @@ export class SessionStore {
   createSession(options: { cwd?: string; allowedTools?: string; prompt?: string; title: string }): Session {
     const id = crypto.randomUUID();
     const now = Date.now();
+    const cwd = options.cwd || process.cwd();
     const session: Session = {
       id,
       title: options.title,
       status: "idle",
-      cwd: options.cwd,
+      cwd,
       allowedTools: options.allowedTools,
       lastPrompt: options.prompt,
-      pendingPermissions: new Map()
+      pendingPermissions: new Map(),
+      todos: [],
+      fileChanges: [],
+      fileTree: buildInitialFileTree(cwd)
     };
     this.sessions.set(id, session);
     this.db
@@ -249,15 +258,19 @@ export class SessionStore {
       )
       .all();
     for (const row of rows as Array<Record<string, unknown>>) {
+      const cwd = row.cwd ? String(row.cwd) : process.cwd();
       const session: Session = {
         id: String(row.id),
         title: String(row.title),
         claudeSessionId: row.claude_session_id ? String(row.claude_session_id) : undefined,
         status: row.status as SessionStatus,
-        cwd: row.cwd ? String(row.cwd) : undefined,
+        cwd,
         allowedTools: row.allowed_tools ? String(row.allowed_tools) : undefined,
         lastPrompt: row.last_prompt ? String(row.last_prompt) : undefined,
-        pendingPermissions: new Map()
+        pendingPermissions: new Map(),
+        todos: [],
+        fileChanges: [],
+        fileTree: buildInitialFileTree(cwd)
       };
       this.sessions.set(session.id, session);
     }

@@ -7,6 +7,7 @@ import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useAppStore } from "./store/useAppStore";
 import type { ServerEvent } from "./types";
 import { Sidebar } from "./components/Sidebar";
+import { RightPanel } from "./components/RightPanel";
 import { StartSessionModal } from "./components/StartSessionModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { PromptInput } from "./components/PromptInput";
@@ -79,6 +80,9 @@ function AppShell() {
   const pendingStart = useAppStore((s) => s.pendingStart);
   const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
+  const rightPanelActiveTab = useAppStore((s) => s.rightPanelActiveTab);
+  const setRightPanelActiveTab = useAppStore((s) => s.setRightPanelActiveTab);
+  const toggleFolderExpanded = useAppStore((s) => s.toggleFolderExpanded);
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(() =>
@@ -153,6 +157,10 @@ function AppShell() {
   const messages = useMemo(() => activeSession?.messages ?? [], [activeSession?.messages]);
   const permissionRequests = activeSession?.permissionRequests ?? [];
   const isRunning = activeSession?.status === "running";
+  const rightPanelTodos = activeSession?.todos ?? [];
+  const rightPanelFileChanges = activeSession?.fileChanges ?? [];
+  const rightPanelFileTree = activeSession?.fileTree ?? null;
+  const rightPanelExpandedFolders = activeSession?.expandedFolders ?? new Set();
 
   const {
     visibleMessages,
@@ -320,6 +328,31 @@ function AppShell() {
     resetToLatest();
   }, [resetToLatest]);
 
+  const handleScrollToMessage = useCallback((messageIndex: number) => {
+    // Reset to latest first to ensure all messages are loaded and visible
+    resetToLatest();
+
+    // Schedule scroll after state update
+    setTimeout(() => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      // Find the message element
+      const messageElement = document.querySelector(`[data-message-index="${messageIndex}"]`);
+      if (messageElement) {
+        const containerRect = container.getBoundingClientRect();
+        const messageRect = messageElement.getBoundingClientRect();
+        const offset = messageRect.top - containerRect.top + container.scrollTop - 20;
+
+        container.scrollTo({
+          top: offset,
+          behavior: "smooth"
+        });
+        setShouldAutoScroll(false);
+      }
+    }, 100);
+  }, [resetToLatest]);
+
   const showSkeleton = useMemo(() => {
     if (showPartialMessage) return true;
     if (!isRunning) return false;
@@ -349,7 +382,7 @@ function AppShell() {
         onDeleteSession={handleDeleteSession}
       />
 
-      <main className="flex flex-1 flex-col ml-[280px] bg-surface-cream">
+      <main className="flex flex-1 flex-col ml-[280px] mr-[280px] bg-surface-cream">
         <div
           className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
@@ -405,16 +438,17 @@ function AppShell() {
             ) : (
               visibleMessages.map((item, idx) => {
                 return (
-                  <MessageCard
-                    key={`${activeSessionId}-msg-${item.originalIndex}`}
-                    message={item.message}
-                    allMessages={messages}
-                    isLast={idx === visibleMessages.length - 1}
-                    isRunning={isRunning}
-                    permissionRequest={permissionRequests[0]}
-                    onPermissionResult={handlePermissionResult}
-                    prefersReducedMotion={prefersReducedMotion}
-                  />
+                  <div key={`${activeSessionId}-msg-${item.originalIndex}`} data-message-index={item.originalIndex}>
+                    <MessageCard
+                      message={item.message}
+                      allMessages={messages}
+                      isLast={idx === visibleMessages.length - 1}
+                      isRunning={isRunning}
+                      permissionRequest={permissionRequests[0]}
+                      onPermissionResult={handlePermissionResult}
+                      prefersReducedMotion={prefersReducedMotion}
+                    />
+                  </div>
                 );
               })
             )
@@ -474,6 +508,21 @@ function AppShell() {
           </button>
         )}
       </main>
+
+      <RightPanel
+        activeTab={rightPanelActiveTab}
+        onTabChange={setRightPanelActiveTab}
+        todos={rightPanelTodos}
+        fileChanges={rightPanelFileChanges}
+        fileTree={rightPanelFileTree}
+        expandedFolders={rightPanelExpandedFolders}
+        onToggleFolder={(path) => {
+          if (activeSessionId) {
+            toggleFolderExpanded(activeSessionId, path);
+          }
+        }}
+        onScrollToMessage={handleScrollToMessage}
+      />
 
       {showStartModal && (
         <StartSessionModal

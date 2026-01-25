@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode } from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -18,6 +18,11 @@ export type SessionView = {
   createdAt?: number;
   updatedAt?: number;
   hydrated: boolean;
+  // Right panel data
+  todos: TodoItemData[];
+  fileChanges: FileChangeData[];
+  fileTree: FileTreeNode | null;
+  expandedFolders: Set<string>;
 };
 
 interface AppState {
@@ -32,6 +37,7 @@ interface AppState {
   showSettingsModal: boolean;
   historyRequested: Set<string>;
   apiConfigChecked: boolean;
+  rightPanelActiveTab: "tasksfiles" | "tree";
 
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
@@ -41,13 +47,26 @@ interface AppState {
   setShowSettingsModal: (show: boolean) => void;
   setActiveSessionId: (id: string | null) => void;
   setApiConfigChecked: (checked: boolean) => void;
+  setRightPanelActiveTab: (tab: "tasksfiles" | "tree") => void;
   markHistoryRequested: (sessionId: string) => void;
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
+  toggleFolderExpanded: (sessionId: string, folderPath: string) => void;
   handleServerEvent: (event: ServerEvent) => void;
 }
 
 function createSession(id: string): SessionView {
-  return { id, title: "", status: "idle", messages: [], permissionRequests: [], hydrated: false };
+  return {
+    id,
+    title: "",
+    status: "idle",
+    messages: [],
+    permissionRequests: [],
+    hydrated: false,
+    todos: [],
+    fileChanges: [],
+    fileTree: null,
+    expandedFolders: new Set()
+  };
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -62,6 +81,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   showSettingsModal: false,
   historyRequested: new Set(),
   apiConfigChecked: false,
+  rightPanelActiveTab: "tasksfiles",
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
@@ -71,12 +91,35 @@ export const useAppStore = create<AppState>((set, get) => ({
   setShowSettingsModal: (showSettingsModal) => set({ showSettingsModal }),
   setActiveSessionId: (id) => set({ activeSessionId: id }),
   setApiConfigChecked: (apiConfigChecked) => set({ apiConfigChecked }),
+  setRightPanelActiveTab: (rightPanelActiveTab) => set({ rightPanelActiveTab }),
 
   markHistoryRequested: (sessionId) => {
     set((state) => {
       const next = new Set(state.historyRequested);
       next.add(sessionId);
       return { historyRequested: next };
+    });
+  },
+
+  toggleFolderExpanded: (sessionId, folderPath) => {
+    set((state) => {
+      const existing = state.sessions[sessionId];
+      if (!existing) return {};
+      const nextFolders = new Set(existing.expandedFolders);
+      if (nextFolders.has(folderPath)) {
+        nextFolders.delete(folderPath);
+      } else {
+        nextFolders.add(folderPath);
+      }
+      return {
+        sessions: {
+          ...state.sessions,
+          [sessionId]: {
+            ...existing,
+            expandedFolders: nextFolders
+          }
+        }
+      };
     });
   },
 
@@ -252,6 +295,51 @@ export const useAppStore = create<AppState>((set, get) => ({
                 ...existing,
                 permissionRequests: [...existing.permissionRequests, { toolUseId, toolName, input }]
               }
+            }
+          };
+        });
+        break;
+      }
+
+      case "rightpanel.todos": {
+        const { sessionId, todos } = event.payload;
+        set((state) => {
+          const existing = state.sessions[sessionId];
+          if (!existing) return {};
+          return {
+            sessions: {
+              ...state.sessions,
+              [sessionId]: { ...existing, todos }
+            }
+          };
+        });
+        break;
+      }
+
+      case "rightpanel.filechanges": {
+        const { sessionId, changes } = event.payload;
+        set((state) => {
+          const existing = state.sessions[sessionId];
+          if (!existing) return {};
+          return {
+            sessions: {
+              ...state.sessions,
+              [sessionId]: { ...existing, fileChanges: changes }
+            }
+          };
+        });
+        break;
+      }
+
+      case "rightpanel.filetree": {
+        const { sessionId, tree } = event.payload;
+        set((state) => {
+          const existing = state.sessions[sessionId];
+          if (!existing) return {};
+          return {
+            sessions: {
+              ...state.sessions,
+              [sessionId]: { ...existing, fileTree: tree }
             }
           };
         });

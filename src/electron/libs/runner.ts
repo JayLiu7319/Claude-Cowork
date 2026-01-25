@@ -2,7 +2,7 @@ import { query, type SDKMessage, type PermissionResult } from "@anthropic-ai/cla
 import type { ServerEvent } from "../types.js";
 import type { Session } from "./session-store.js";
 
-import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath} from "./claude-settings.js";
+import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "./claude-settings.js";
 import { getEnhancedEnv } from "./util.js";
 import { t } from "../i18n.js";
 
@@ -45,7 +45,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
     try {
       // 获取当前配置
       const config = getCurrentApiConfig();
-      
+
       if (!config) {
         onEvent({
           type: "session.status",
@@ -53,14 +53,14 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         });
         return;
       }
-      
+
       // 使用 Anthropic SDK
       const env = buildEnvForConfig(config);
       const mergedEnv = {
         ...getEnhancedEnv(),
         ...env
       };
-      
+
       const q = query({
         prompt,
         options: {

@@ -95,6 +95,15 @@
     "title": "Ready to Start",
     "description": "Type your prompt below to begin"
   },
+  "rightpanel": {
+    "tasksFiles": "Tasks & Files",
+    "fileTree": "File Tree",
+    "tasks": "Tasks",
+    "fileChanges": "File Changes",
+    "noTasks": "No tasks yet",
+    "noChanges": "No changes yet",
+    "noFileTree": "No file tree available"
+  },
   "common": {
     "loading": "Loading...",
     "newMessages": "New messages"

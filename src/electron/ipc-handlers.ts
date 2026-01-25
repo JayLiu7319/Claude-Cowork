@@ -5,6 +5,9 @@ import { SessionStore } from "./libs/session-store.js";
 import { app } from "electron";
 import { join } from "path";
 import { t } from "./i18n.js";
+import { aggregateTodos } from "./libs/todo-extractor.js";
+import { aggregateFileChanges } from "./libs/file-change-extractor.js";
+import { updateFileTreeWithOperations } from "./libs/file-tree-builder.js";
 
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
@@ -48,6 +51,41 @@ function emit(event: ServerEvent) {
   }
   if (event.type === "stream.message") {
     sessions.recordMessage(event.payload.sessionId, event.payload.message);
+
+    // Update right panel data
+    const session = sessions.getSession(event.payload.sessionId);
+    if (session) {
+      const history = sessions.getSessionHistory(event.payload.sessionId);
+      if (history) {
+        // Aggregate todos and file changes from all messages
+        const todos = aggregateTodos(history.messages);
+        const fileChanges = aggregateFileChanges(history.messages, session.fileTree);
+        const fileTree = updateFileTreeWithOperations(session.fileTree, fileChanges);
+
+        // Update session cache
+        session.todos = todos;
+        session.fileChanges = fileChanges;
+        session.fileTree = fileTree;
+
+        // Broadcast right panel events directly (not through emit to avoid recursion)
+        if (todos.length > 0) {
+          broadcast({
+            type: "rightpanel.todos",
+            payload: { sessionId: event.payload.sessionId, todos }
+          });
+        }
+        if (fileChanges.length > 0) {
+          broadcast({
+            type: "rightpanel.filechanges",
+            payload: { sessionId: event.payload.sessionId, changes: fileChanges }
+          });
+        }
+        broadcast({
+          type: "rightpanel.filetree",
+          payload: { sessionId: event.payload.sessionId, tree: fileTree }
+        });
+      }
+    }
   }
   if (event.type === "stream.user_prompt") {
     sessions.recordMessage(event.payload.sessionId, {
@@ -85,6 +123,40 @@ export function handleClientEvent(event: ClientEvent) {
         messages: history.messages
       }
     });
+
+    // Populate Right Panel Data immediately after loading history
+    const session = sessions.getSession(event.payload.sessionId);
+    if (session) {
+      // Re-aggregate data to ensure it's up to date
+      const todos = aggregateTodos(history.messages);
+      const fileChanges = aggregateFileChanges(history.messages, session.fileTree);
+      const fileTree = updateFileTreeWithOperations(session.fileTree, fileChanges);
+
+      // Update session cache
+      session.todos = todos;
+      session.fileChanges = fileChanges;
+      session.fileTree = fileTree;
+
+      // Broadcast right panel events
+      if (todos.length > 0) {
+        emit({
+          type: "rightpanel.todos",
+          payload: { sessionId: session.id, todos }
+        });
+      }
+      if (fileChanges.length > 0) {
+        emit({
+          type: "rightpanel.filechanges",
+          payload: { sessionId: session.id, changes: fileChanges }
+        });
+      }
+      // Always send file tree, even if empty/null, to ensure UI is in sync
+      emit({
+        type: "rightpanel.filetree",
+        payload: { sessionId: session.id, tree: fileTree }
+      });
+    }
+
     return;
   }
 

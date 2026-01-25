@@ -95,6 +95,14 @@
     "title": "准备开始",
     "description": "在下方输入提示词以开始"
   },
+  "rightpanel": {
+    "tasks": "任务",
+    "files": "文件",
+    "artifacts": "产物",
+    "noTasks": "暂无任务",
+    "noChanges": "暂无产物",
+    "noFileTree": "文件树不可用"
+  },
   "common": {
     "loading": "加载中...",
     "newMessages": "新消息"
