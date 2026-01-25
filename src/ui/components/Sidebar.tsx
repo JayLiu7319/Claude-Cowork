@@ -14,7 +14,37 @@ export function Sidebar({
   onNewSession,
   onDeleteSession
 }: SidebarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const StatusIcon = ({ status }: { status?: string }) => {
+    switch (status) {
+      case "running":
+        return (
+          <div className="h-3.5 w-3.5 relative flex items-center justify-center">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-info/40 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-info"></span>
+          </div>
+        );
+      case "completed":
+        return (
+          <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        );
+      case "error":
+        return (
+          <svg className="h-3.5 w-3.5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        );
+      default:
+        return (
+          <svg className="h-3.5 w-3.5 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+    }
+  };
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
@@ -38,15 +68,13 @@ export function Sidebar({
 
   const getRelativeTime = (timestamp?: number) => {
     if (!timestamp) return "";
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
+    const diff = (timestamp - now) / 1000;
+    const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' });
 
-    if (minutes < 1) return t('sidebar.time.justNow');
-    if (minutes < 60) return t('sidebar.time.minutesAgo', { count: minutes });
-    if (hours < 24) return t('sidebar.time.hoursAgo', { count: hours });
-    return t('sidebar.time.daysAgo', { count: days });
+    if (Math.abs(diff) < 60) return rtf.format(Math.round(diff), 'second');
+    if (Math.abs(diff) < 3600) return rtf.format(Math.round(diff / 60), 'minute');
+    if (Math.abs(diff) < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
+    return rtf.format(Math.round(diff / 86400), 'day');
   };
 
   const sessionList = useMemo(() => {
@@ -126,12 +154,12 @@ export function Sidebar({
         <div className="relative group" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <input
             type="text"
-            className="w-full rounded-lg border border-ink-900/5 bg-surface/50 px-3 py-1.5 pl-8 text-xs text-ink-800 placeholder:text-muted focus:border-ink-900/20 focus:bg-surface focus:outline-none transition-all"
+            className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 pl-10 text-sm text-ink-800 placeholder:text-muted focus:border-ink-900/20 focus:outline-none transition-all"
             placeholder={t('sidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <svg aria-hidden="true" viewBox="0 0 24 24" className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted group-focus-within:text-ink-600 transition-colors" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted group-focus-within:text-ink-600 transition-colors" fill="none" stroke="currentColor" strokeWidth="1.8">
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
@@ -159,11 +187,13 @@ export function Sidebar({
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col min-w-0 flex-1 overflow-hidden mr-1">
-                  <div className={`text-[13px] font-medium truncate mb-0.5 ${session.status === "running" ? "text-info" :
-                    session.status === "completed" ? "text-success" :
-                      session.status === "error" ? "text-error" : "text-ink-800"
-                    }`} title={session.title}>
-                    {session.title || "Untitled Task"}
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <div className="shrink-0 flex items-center justify-center w-3.5 h-3.5 translate-y-[0.5px]">
+                      <StatusIcon status={session.status} />
+                    </div>
+                    <div className="text-[13px] font-medium truncate text-ink-800" title={session.title}>
+                      {session.title || "Untitled Task"}
+                    </div>
                   </div>
                   <div className="flex items-center text-[11px] text-muted">
                     <span className="truncate" title={formatCwd(session.cwd)}>{formatCwd(session.cwd)}</span>
@@ -188,7 +218,7 @@ export function Sidebar({
                       </button>
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Portal>
-                      <DropdownMenu.Content className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg animate-in fade-in zoom-in-95 duration-100" align="end" sideOffset={4}>
+                      <DropdownMenu.Content className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-100" align="end" sideOffset={4}>
                         <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => onDeleteSession(session.id)}>
                           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-error/80" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M4 7h16" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9l1-12" />
@@ -204,7 +234,7 @@ export function Sidebar({
                       </DropdownMenu.Content>
                     </DropdownMenu.Portal>
                   </DropdownMenu.Root>
-                  <span className="text-[10px] text-ink-400 opacity-60 transition-opacity group-hover:opacity-100">{getRelativeTime(session.updatedAt)}</span>
+                  <span className="text-[10px] text-ink-400 opacity-60 transition-opacity group-hover:opacity-100 truncate">{getRelativeTime(session.updatedAt)}</span>
                 </div>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { ClientEvent } from "../types";
 import { usePromptActions } from "../hooks/usePromptActions";
@@ -39,20 +39,9 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
     }
   };
 
-  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
-    const target = e.currentTarget;
-    target.style.height = "auto";
-    const scrollHeight = target.scrollHeight;
-    if (scrollHeight > MAX_HEIGHT) {
-      target.style.height = `${MAX_HEIGHT}px`;
-      target.style.overflowY = "auto";
-    } else {
-      target.style.height = `${scrollHeight}px`;
-      target.style.overflowY = "hidden";
-    }
-  };
 
-  useEffect(() => {
+
+  useLayoutEffect(() => {
     if (!promptRef.current) return;
     promptRef.current.style.height = "auto";
     const scrollHeight = promptRef.current.scrollHeight;
@@ -79,7 +68,7 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
-          onInput={handleInput}
+
           ref={promptRef}
           disabled={disabled && !isRunning}
         />
