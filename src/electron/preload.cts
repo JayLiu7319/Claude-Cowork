@@ -7,7 +7,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
             callback(stats);
         }),
     getStaticData: () => ipcInvoke("getStaticData"),
-    
+
     // Claude Agent IPC APIs
     sendClientEvent: (event: any) => {
         electron.ipcRenderer.send("client-event", event);
@@ -24,20 +24,31 @@ electron.contextBridge.exposeInMainWorld("electron", {
         electron.ipcRenderer.on("server-event", cb);
         return () => electron.ipcRenderer.off("server-event", cb);
     },
-    generateSessionTitle: (userInput: string | null) => 
+    generateSessionTitle: (userInput: string | null) =>
         ipcInvoke("generate-session-title", userInput),
-    getRecentCwds: (limit?: number) => 
+    getRecentCwds: (limit?: number) =>
         ipcInvoke("get-recent-cwds", limit),
-    selectDirectory: () => 
+    selectDirectory: () =>
         ipcInvoke("select-directory"),
-    getApiConfig: () => 
+    getApiConfig: () =>
         ipcInvoke("get-api-config"),
-    saveApiConfig: (config: any) => 
+    saveApiConfig: (config: any) =>
         ipcInvoke("save-api-config", config),
     checkApiConfig: () =>
         ipcInvoke("check-api-config"),
     getLanguage: () =>
-        ipcInvoke("get-language")
+        ipcInvoke("get-language"),
+    // New APIs for welcome page
+    loadCommands: () =>
+        ipcInvoke("load-commands"),
+    readCommandContent: (filePath: string) =>
+        ipcInvoke("read-command-content", filePath),
+    getDefaultCwd: () =>
+        ipcInvoke("get-default-cwd"),
+    setDefaultCwd: (cwd: string) =>
+        ipcInvoke("set-default-cwd", cwd),
+    readDirectoryTree: (dirPath: string, depth?: number) =>
+        ipcInvoke("read-directory-tree", dirPath, depth)
 })
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {

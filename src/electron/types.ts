@@ -76,6 +76,13 @@ export type ClientEvent =
   | { type: "session.history"; payload: { sessionId: string } }
   | { type: "permission.response"; payload: { sessionId: string; toolUseId: string; result: PermissionResult } };
 
+export type Command = {
+  name: string;
+  description?: string;
+  argumentHint?: string;
+  filePath: string;
+};
+
 export type StaticData = {
   totalStorage: number;
   cpuModel: string;
@@ -86,6 +93,14 @@ export type Statistics = {
   cpuUsage: number;
   ramUsage: number;
   storageData: number;
+};
+
+// Directory entry type for file system tree
+export type DirectoryEntry = {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  children?: DirectoryEntry[];
 };
 
 // IPC Event Payload Mapping for type-safe IPC communication
@@ -101,4 +116,10 @@ export type EventPayloadMapping = {
   "save-api-config": { success: boolean; error?: string };
   "check-api-config": { hasConfig: boolean; config: ApiConfig | null };
   "get-language": string;
+  "load-commands": Command[];
+  "read-command-content": string | null;
+  "get-default-cwd": string;
+  "set-default-cwd": void;
+  "read-directory-tree": DirectoryEntry[];
 };
+

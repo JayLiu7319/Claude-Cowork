@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command } from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -30,6 +30,7 @@ interface AppState {
   activeSessionId: string | null;
   prompt: string;
   cwd: string;
+  defaultCwd: string;
   pendingStart: boolean;
   globalError: string | null;
   sessionsLoaded: boolean;
@@ -38,9 +39,12 @@ interface AppState {
   historyRequested: Set<string>;
   apiConfigChecked: boolean;
   rightPanelActiveTab: "tasksfiles" | "tree";
+  planMode: boolean;
+  availableCommands: Command[];
 
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
+  setDefaultCwd: (cwd: string) => void;
   setPendingStart: (pending: boolean) => void;
   setGlobalError: (error: string | null) => void;
   setShowStartModal: (show: boolean) => void;
@@ -48,6 +52,8 @@ interface AppState {
   setActiveSessionId: (id: string | null) => void;
   setApiConfigChecked: (checked: boolean) => void;
   setRightPanelActiveTab: (tab: "tasksfiles" | "tree") => void;
+  setPlanMode: (enabled: boolean) => void;
+  setAvailableCommands: (commands: Command[]) => void;
   markHistoryRequested: (sessionId: string) => void;
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
   toggleFolderExpanded: (sessionId: string, folderPath: string) => void;
@@ -74,6 +80,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSessionId: null,
   prompt: "",
   cwd: "",
+  defaultCwd: "",
   pendingStart: false,
   globalError: null,
   sessionsLoaded: false,
@@ -82,9 +89,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   historyRequested: new Set(),
   apiConfigChecked: false,
   rightPanelActiveTab: "tasksfiles",
+  planMode: false,
+  availableCommands: [],
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
+  setDefaultCwd: (defaultCwd) => set({ defaultCwd }),
   setPendingStart: (pendingStart) => set({ pendingStart }),
   setGlobalError: (globalError) => set({ globalError }),
   setShowStartModal: (showStartModal) => set({ showStartModal }),
@@ -92,6 +102,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setActiveSessionId: (id) => set({ activeSessionId: id }),
   setApiConfigChecked: (apiConfigChecked) => set({ apiConfigChecked }),
   setRightPanelActiveTab: (rightPanelActiveTab) => set({ rightPanelActiveTab }),
+  setPlanMode: (planMode) => set({ planMode }),
+  setAvailableCommands: (availableCommands) => set({ availableCommands }),
 
   markHistoryRequested: (sessionId) => {
     set((state) => {

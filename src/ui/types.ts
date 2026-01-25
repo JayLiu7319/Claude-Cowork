@@ -5,6 +5,13 @@ export type UserPromptMessage = {
   prompt: string;
 };
 
+export type Command = {
+  name: string;
+  description?: string;
+  argumentHint?: string;
+  filePath: string;
+};
+
 export type StreamMessage = SDKMessage | UserPromptMessage;
 
 export type SessionStatus = "idle" | "running" | "completed" | "error";

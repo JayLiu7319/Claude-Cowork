@@ -26,13 +26,11 @@
             "@/*": [
                 "./src/*"
             ]
-        },
-        "types": [
-            "./types"
-        ]
+        }
     },
     "include": [
-        "src"
+        "src",
+        "types.d.ts"
     ],
     "exclude": [
         "src/electron"

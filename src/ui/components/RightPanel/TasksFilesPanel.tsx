@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { TodoItemData, FileChangeData } from "../../types";
 import { TasksSection } from "./TasksSection";
 import { FileChangesSection } from "./FileChangesSection";
+import { DirectorySection } from "./DirectorySection";
 
 type TasksFilesPanelProps = {
   todos: TodoItemData[];
@@ -26,6 +27,7 @@ export function TasksFilesPanel({
   useTranslation("ui");
   const [tasksExpanded, setTasksExpanded] = useState(true);
   const [filesExpanded, setFilesExpanded] = useState(true);
+  const [directoryExpanded, setDirectoryExpanded] = useState(true);
 
   return (
     <div className="flex flex-col gap-0 h-full overflow-y-auto px-4 pb-4">
@@ -46,6 +48,14 @@ export function TasksFilesPanel({
         onScrollToMessage={onScrollToMessage}
         onOpenFile={onOpenFile}
       />
+      <div className="h-px bg-ink-900/5" />
+      <DirectorySection
+        sessionCwd={sessionCwd}
+        isExpanded={directoryExpanded}
+        onToggleExpand={() => setDirectoryExpanded(!directoryExpanded)}
+        onOpenFile={onOpenFile}
+      />
     </div>
   );
 }
+

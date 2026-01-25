@@ -99,10 +99,15 @@
     "tasksFiles": "Tasks & Files",
     "fileTree": "File Tree",
     "tasks": "Tasks",
+    "artifacts": "Artifacts",
+    "directory": "Directory",
     "fileChanges": "File Changes",
     "noTasks": "No tasks yet",
     "noChanges": "No changes yet",
-    "noFileTree": "No file tree available"
+    "noFileTree": "No file tree available",
+    "noCwd": "No working directory",
+    "emptyDirectory": "Empty directory",
+    "showInFolder": "Show in Folder"
   },
   "common": {
     "loading": "Loading...",

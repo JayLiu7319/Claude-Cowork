@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import type { FileChangeData } from "../../types";
 import { formatPathForDisplay } from "../../utils/formatters";
 
@@ -44,6 +45,7 @@ export const FileChangeItem = memo(function FileChangeItem({
   onScrollToMessage,
   onOpenFile
 }: FileChangeItemProps) {
+  const { t } = useTranslation("ui");
   const icon = getOperationIcon(change.operationType);
   const displayPath = formatPathForDisplay(change.filePath, sessionCwd);
   const fileName = displayPath.split('/').pop() || displayPath;
@@ -67,7 +69,7 @@ export const FileChangeItem = memo(function FileChangeItem({
           onOpenFile(change.filePath);
         }}
         className="flex-shrink-0 p-1 hover:bg-ink-900/10 rounded transition-all text-ink-400 hover:text-ink-700"
-        title="Show in Folder"
+        title={t("rightpanel.showInFolder") || "Show in Folder"}
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />

@@ -8,7 +8,7 @@ import { useAppStore } from "./store/useAppStore";
 import type { ServerEvent } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
-import { StartSessionModal } from "./components/StartSessionModal";
+import { WelcomePage } from "./components/WelcomePage";
 import { SettingsModal } from "./components/SettingsModal";
 import { PromptInput } from "./components/PromptInput";
 import { usePromptActions } from "./hooks/usePromptActions";
@@ -66,8 +66,6 @@ function AppShell() {
   const activeSessionId = useAppStore((s) => s.activeSessionId);
   const activeSessionIdRef = useRef(activeSessionId);
   const previousSessionIdRef = useRef<string | null>(activeSessionId);
-  const showStartModal = useAppStore((s) => s.showStartModal);
-  const setShowStartModal = useAppStore((s) => s.setShowStartModal);
   const showSettingsModal = useAppStore((s) => s.showSettingsModal);
   const setShowSettingsModal = useAppStore((s) => s.setShowSettingsModal);
   const globalError = useAppStore((s) => s.globalError);
@@ -76,16 +74,12 @@ function AppShell() {
   const markHistoryRequested = useAppStore((s) => s.markHistoryRequested);
   const resolvePermissionRequest = useAppStore((s) => s.resolvePermissionRequest);
   const handleServerEvent = useAppStore((s) => s.handleServerEvent);
-  const prompt = useAppStore((s) => s.prompt);
-  const setPrompt = useAppStore((s) => s.setPrompt);
   const cwd = useAppStore((s) => s.cwd);
   const setCwd = useAppStore((s) => s.setCwd);
-  const pendingStart = useAppStore((s) => s.pendingStart);
   const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
-  const rightPanelActiveTab = useAppStore((s) => s.rightPanelActiveTab);
-  const setRightPanelActiveTab = useAppStore((s) => s.setRightPanelActiveTab);
-  const toggleFolderExpanded = useAppStore((s) => s.toggleFolderExpanded);
+
+  const setDefaultCwd = useAppStore((s) => s.setDefaultCwd);
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(() =>
@@ -204,8 +198,7 @@ function AppShell() {
   const isRunning = activeSession?.status === "running";
   const rightPanelTodos = activeSession?.todos ?? [];
   const rightPanelFileChanges = activeSession?.fileChanges ?? [];
-  const rightPanelFileTree = activeSession?.fileTree ?? null;
-  const rightPanelExpandedFolders = activeSession?.expandedFolders ?? new Set();
+
 
   const {
     visibleMessages,
@@ -216,9 +209,18 @@ function AppShell() {
     totalMessages,
   } = useMessageWindow(messages, activeSessionId);
 
-  // 启动时检查 API 配置
+  // 启动时检查 API 配置和加载默认工作目录
   useEffect(() => {
     if (!apiConfigChecked) {
+      // Load default cwd
+      window.electron.getDefaultCwd().then((defaultCwd) => {
+        setDefaultCwd(defaultCwd);
+        if (!cwd) {
+          setCwd(defaultCwd);
+        }
+      }).catch(console.error);
+
+      // Check API config
       window.electron.checkApiConfig().then((result) => {
         setApiConfigChecked(true);
         if (!result.hasConfig) {
@@ -229,7 +231,7 @@ function AppShell() {
         setApiConfigChecked(true);
       });
     }
-  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal]);
+  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd]);
 
   useEffect(() => {
     if (connected) sendEvent({ type: "session.list" });
@@ -354,8 +356,8 @@ function AppShell() {
 
   const handleNewSession = useCallback(() => {
     useAppStore.getState().setActiveSessionId(null);
-    setShowStartModal(true);
-  }, [setShowStartModal]);
+    // No longer show modal, welcome page is displayed automatically
+  }, []);
 
   const handleDeleteSession = useCallback((sessionId: string) => {
     sendEvent({ type: "session.delete", payload: { sessionId } });
@@ -433,161 +435,150 @@ function AppShell() {
         onDeleteSession={handleDeleteSession}
       />
 
-      <main className="flex flex-1 flex-col ml-[280px] mr-[280px] bg-surface-cream">
-        <div
-          className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
-          style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-        >
-          <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
-            {activeSession?.title || "Agent Cowork"}
-          </span>
-        </div>
+      {/* Main content area - show WelcomePage when no active session */}
+      {!activeSessionId ? (
+        <WelcomePage onStartSession={handleStartFromModal} />
+      ) : (
+        <main className="flex flex-1 flex-col ml-[280px] mr-[280px] bg-surface-cream">
+          <div className="flex flex-col">
+            <div
+              className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
+              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+            >
+              <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
+                {activeSession?.title || "Agent Cowork"}
+              </span>
+            </div>
+            <div className="h-0.5 bg-accent/50 transition-transform duration-300" />
+          </div>
 
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-8 pb-40 pt-6"
-        >
-          <div className="mx-auto max-w-3xl">
-            <div ref={topSentinelRef} className="h-1" />
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto px-8 pb-40 pt-6"
+          >
+            <div className="mx-auto max-w-3xl">
+              <div ref={topSentinelRef} className="h-1" />
 
-            {!hasMoreHistory && totalMessages > 0 && (
-              <div className="flex items-center justify-center py-4 mb-4">
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <div className="h-px w-12 bg-ink-900/10" />
-                  <span>{t('sidebar.beginningOfConversation')}</span>
-                  <div className="h-px w-12 bg-ink-900/10" />
-                </div>
-              </div>
-            )}
-
-            {isLoadingHistory && (
-              <div className="flex items-center justify-center py-4 mb-4" role="status" aria-live="polite">
-                <div className="flex items-center gap-2 text-xs text-muted">
-                  <svg aria-hidden="true" className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  <span>{t('common.loading')}</span>
-                </div>
-              </div>
-            )}
-
-            {visibleMessages.length === 0 ? (
-              (activeSession && !activeSession.hydrated) ? (
-                <SkeletonLoader />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-                  <h2 className="text-xl font-semibold text-ink-700 mb-2">
-                    {t('emptyState.title')}
-                  </h2>
-                  <p className="text-sm text-muted">
-                    {t('emptyState.description')}
-                  </p>
-                </div>
-              )
-            ) : (
-              visibleMessages.map((item, idx) => {
-                return (
-                  <div key={`${activeSessionId}-msg-${item.originalIndex}`} data-message-index={item.originalIndex}>
-                    <MessageCard
-                      message={item.message}
-                      allMessages={messages}
-                      isLast={idx === visibleMessages.length - 1}
-                      isRunning={isRunning}
-                      permissionRequest={permissionRequests[0]}
-                      onPermissionResult={handlePermissionResult}
-                      prefersReducedMotion={prefersReducedMotion}
-                    />
-                  </div>
-                );
-              })
-            )
-            }
-
-            {/* Partial message display with skeleton loading */}
-            <div className="partial-message">
-              <MDContent text={partialMessage} />
-              {showSkeleton && (
-                <div className="mt-3 flex flex-col gap-2 px-1">
-                  <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
-                    {!prefersReducedMotion && (
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                    )}
-                  </div>
-                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    {!prefersReducedMotion && (
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                    )}
-                  </div>
-                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    {!prefersReducedMotion && (
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                    )}
-                  </div>
-                  <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    {!prefersReducedMotion && (
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                    )}
-                  </div>
-                  <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-ink-900/10">
-                    {!prefersReducedMotion && (
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                    )}
+              {!hasMoreHistory && totalMessages > 0 && (
+                <div className="flex items-center justify-center py-4 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <div className="h-px w-12 bg-ink-900/10" />
+                    <span>{t('sidebar.beginningOfConversation')}</span>
+                    <div className="h-px w-12 bg-ink-900/10" />
                   </div>
                 </div>
               )}
+
+              {isLoadingHistory && (
+                <div className="flex items-center justify-center py-4 mb-4" role="status" aria-live="polite">
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <svg aria-hidden="true" className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>{t('common.loading')}</span>
+                  </div>
+                </div>
+              )}
+
+              {visibleMessages.length === 0 ? (
+                (activeSession && !activeSession.hydrated) ? (
+                  <SkeletonLoader />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                    <h2 className="text-xl font-semibold text-ink-700 mb-2">
+                      {t('emptyState.title')}
+                    </h2>
+                    <p className="text-sm text-muted">
+                      {t('emptyState.description')}
+                    </p>
+                  </div>
+                )
+              ) : (
+                visibleMessages.map((item, idx) => {
+                  return (
+                    <div key={`${activeSessionId}-msg-${item.originalIndex}`} data-message-index={item.originalIndex}>
+                      <MessageCard
+                        message={item.message}
+                        allMessages={messages}
+                        isLast={idx === visibleMessages.length - 1}
+                        isRunning={isRunning}
+                        permissionRequest={permissionRequests[0]}
+                        onPermissionResult={handlePermissionResult}
+                        prefersReducedMotion={prefersReducedMotion}
+                      />
+                    </div>
+                  );
+                })
+              )
+              }
+
+              {/* Partial message display with skeleton loading */}
+              <div className="partial-message">
+                <MDContent text={partialMessage} />
+                {showSkeleton && (
+                  <div className="mt-3 flex flex-col gap-2 px-1">
+                    <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
+                      {!prefersReducedMotion && (
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                      )}
+                    </div>
+                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
+                      {!prefersReducedMotion && (
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                      )}
+                    </div>
+                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
+                      {!prefersReducedMotion && (
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                      )}
+                    </div>
+                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
+                      {!prefersReducedMotion && (
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                      )}
+                    </div>
+                    <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-ink-900/10">
+                      {!prefersReducedMotion && (
+                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div ref={messagesEndRef} />
             </div>
-
-            <div ref={messagesEndRef} />
           </div>
-        </div>
 
-        <PromptInput sendEvent={sendEvent} onSendMessage={handleSendMessage} disabled={visibleMessages.length === 0} />
+          <PromptInput sendEvent={sendEvent} onSendMessage={handleSendMessage} disabled={visibleMessages.length === 0} />
 
-        {hasNewMessages && !shouldAutoScroll && (
-          <button
-            onClick={scrollToBottom}
-            aria-label="Scroll to bottom to view new messages"
-            className={`fixed bottom-28 left-1/2 ml-[140px] z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
-            style={!prefersReducedMotion ? {} : { transform: 'translateX(-50%)' }}
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-            <span>{t('common.newMessages')}</span>
-          </button>
-        )}
-      </main>
+          {hasNewMessages && !shouldAutoScroll && (
+            <button
+              onClick={scrollToBottom}
+              aria-label="Scroll to bottom to view new messages"
+              className={`fixed bottom-28 left-1/2 ml-[140px] z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
+              style={!prefersReducedMotion ? {} : { transform: 'translateX(-50%)' }}
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12l7 7 7-7" />
+              </svg>
+              <span>{t('common.newMessages')}</span>
+            </button>
+          )}
+        </main>
+      )}
 
       <RightPanel
-        activeTab={rightPanelActiveTab}
-        onTabChange={setRightPanelActiveTab}
         todos={rightPanelTodos}
         fileChanges={rightPanelFileChanges}
-        fileTree={rightPanelFileTree}
-        expandedFolders={rightPanelExpandedFolders}
-        sessionCwd={activeSession?.cwd}
-        onToggleFolder={(path) => {
-          if (activeSessionId) {
-            toggleFolderExpanded(activeSessionId, path);
-          }
-        }}
+        sessionCwd={activeSession?.cwd || cwd}
         onScrollToMessage={handleScrollToMessage}
         onOpenFile={handleOpenFile}
       />
 
-      {showStartModal && (
-        <StartSessionModal
-          cwd={cwd}
-          prompt={prompt}
-          pendingStart={pendingStart}
-          onCwdChange={setCwd}
-          onPromptChange={setPrompt}
-          onStart={handleStartFromModal}
-          onClose={() => setShowStartModal(false)}
-        />
-      )}
+
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />

@@ -13,5 +13,11 @@ interface Window {
     saveApiConfig: (config: import('../electron/libs/config-store').ApiConfig) => Promise<{ success: boolean; error?: string }>;
     checkApiConfig: () => Promise<{ hasConfig: boolean; config: import('../electron/libs/config-store').ApiConfig | null }>;
     getLanguage: () => Promise<string>;
+    // Welcome page APIs
+    loadCommands: () => Promise<import('./types').Command[]>;
+    readCommandContent: (filePath: string) => Promise<string | null>;
+    getDefaultCwd: () => Promise<string>;
+    setDefaultCwd: (cwd: string) => Promise<void>;
+    readDirectoryTree: (dirPath: string, depth?: number) => Promise<import('../electron/types').DirectoryEntry[]>;
   };
 }

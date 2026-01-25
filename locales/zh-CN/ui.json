@@ -99,8 +99,12 @@
     "tasks": "任务",
     "files": "文件",
     "artifacts": "产物",
+    "directory": "目录",
     "noTasks": "暂无任务",
     "noChanges": "暂无产物",
+    "noCwd": "无工作目录",
+    "emptyDirectory": "空目录",
+    "showInFolder": "在文件夹中显示",
     "noFileTree": "文件树不可用"
   },
   "common": {
