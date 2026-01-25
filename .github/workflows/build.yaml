@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-desktop:
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -20,12 +21,12 @@ jobs:
           - os: windows-latest
             platform: win
             arch: x64
-            script: dist:win
+            command: bun run transpile:electron && bun run build && bunx electron-builder --win --x64 --config.win.signAndEditExecutable=false
           - os: macos-latest
             platform: mac
             arch: arm64
             script: dist:mac-arm64
-          - os: macos-15-large
+          - os: macos-13
             platform: mac
             arch: x64
             script: dist:mac-x64
@@ -33,6 +34,9 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,7 +50,12 @@ jobs:
         run: bun install
 
       - name: Build Desktop
-        run: bun run ${{ matrix.script }}
+        run: |
+          if [ -n "${{ matrix.command }}" ]; then
+            ${{ matrix.command }}
+          else
+            bun run ${{ matrix.script }}
+          fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
