@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
-import { I18nextProvider } from 'react-i18next';
+import { I18nextProvider, useTranslation } from 'react-i18next';
 import type { i18n } from 'i18next';
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
@@ -9,7 +9,8 @@ import type { ServerEvent } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { StartSessionModal } from "./components/StartSessionModal";
 import { SettingsModal } from "./components/SettingsModal";
-import { PromptInput, usePromptActions } from "./components/PromptInput";
+import { PromptInput } from "./components/PromptInput";
+import { usePromptActions } from "./hooks/usePromptActions";
 import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";
 import { initI18n } from "./i18n";
@@ -44,6 +45,7 @@ function App() {
 }
 
 function AppShell() {
+  const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const topSentinelRef = useRef<HTMLDivElement>(null);
@@ -78,10 +80,12 @@ function AppShell() {
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
 
   // Helper function to extract partial message content
-  const getPartialMessageContent = (eventMessage: any) => {
+  const getPartialMessageContent = (eventMessage: { delta: unknown }) => {
     try {
-      const realType = eventMessage.delta.type.split("_")[0];
-      return eventMessage.delta[realType];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const delta = eventMessage.delta as { type: string;[key: string]: any };
+      const realType = delta.type.split("_")[0];
+      return delta[realType];
     } catch (error) {
       console.error(error);
       return "";
@@ -103,6 +107,7 @@ function AppShell() {
 
     if (partialEvent.payload.message.type !== "stream_event") return;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const message = partialEvent.payload.message as any;
     if (message.event.type === "content_block_start") {
       partialMessageRef.current = "";
@@ -121,11 +126,10 @@ function AppShell() {
     }
 
     if (message.event.type === "content_block_stop") {
+      // 立即清空，避免重复显示
+      partialMessageRef.current = "";
+      setPartialMessage("");
       setShowPartialMessage(false);
-      setTimeout(() => {
-        partialMessageRef.current = "";
-        setPartialMessage(partialMessageRef.current);
-      }, 500);
     }
   }, [shouldAutoScroll]);
 
@@ -139,7 +143,7 @@ function AppShell() {
   const { handleStartFromModal } = usePromptActions(sendEvent);
 
   const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
-  const messages = activeSession?.messages ?? [];
+  const messages = useMemo(() => activeSession?.messages ?? [], [activeSession?.messages]);
   const permissionRequests = activeSession?.permissionRequests ?? [];
   const isRunning = activeSession?.status === "running";
 
@@ -150,7 +154,7 @@ function AppShell() {
     loadMoreMessages,
     resetToLatest,
     totalMessages,
-  } = useMessageWindow(messages, permissionRequests, activeSessionId);
+  } = useMessageWindow(messages, activeSessionId);
 
   // 启动时检查 API 配置
   useEffect(() => {
@@ -243,23 +247,25 @@ function AppShell() {
     const previousSessionId = previousSessionIdRef.current;
 
     // Reset scroll state
-    setShouldAutoScroll(true);
-    setHasNewMessages(false);
-    prevMessagesLengthRef.current = 0;
+    // Defer state updates to avoid synchronous setState in effect
+    // Reset scroll state and partial message
+    setTimeout(() => {
+      setShouldAutoScroll(true);
+      setHasNewMessages(false);
+      prevMessagesLengthRef.current = 0;
 
-    // CRITICAL: Only reset partial message when switching to a DIFFERENT session
-    // This prevents clearing streaming state when re-selecting the same session
+      if (previousSessionId !== activeSessionId) {
+        setPartialMessage("");
+        // Check if the new session is currently running
+        const newSession = activeSessionId ? sessions[activeSessionId] : undefined;
+        const isNewSessionRunning = newSession?.status === "running";
+        setShowPartialMessage(isNewSessionRunning);
+      }
+    }, 0);
+
+    // CRITICAL: Only reset partial message ref when switching to a DIFFERENT session
     if (previousSessionId !== activeSessionId) {
       partialMessageRef.current = "";
-      setPartialMessage("");
-
-      // Check if the new session is currently running
-      const newSession = activeSessionId ? sessions[activeSessionId] : undefined;
-      const isNewSessionRunning = newSession?.status === "running";
-
-      // If switching to a running session, keep skeleton visible
-      // Otherwise hide it (normal case)
-      setShowPartialMessage(isNewSessionRunning);
     }
 
     // Update the previous session ID ref for next time
@@ -274,7 +280,7 @@ function AppShell() {
     if (shouldAutoScroll) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     } else if (messages.length > prevMessagesLengthRef.current && prevMessagesLengthRef.current > 0) {
-      setHasNewMessages(true);
+      setTimeout(() => setHasNewMessages(true), 0);
     }
     prevMessagesLengthRef.current = messages.length;
   }, [messages, partialMessage, shouldAutoScroll]);
@@ -308,7 +314,7 @@ function AppShell() {
   }, [resetToLatest]);
 
   return (
-      <div className="flex h-screen bg-surface">
+    <div className="flex h-screen bg-surface">
       <Sidebar
         connected={connected}
         onNewSession={handleNewSession}
@@ -317,10 +323,12 @@ function AppShell() {
 
       <main className="flex flex-1 flex-col ml-[280px] bg-surface-cream">
         <div
-          className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none"
+          className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
           style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
         >
-          <span className="text-sm font-medium text-ink-700">{activeSession?.title || "Agent Cowork"}</span>
+          <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
+            {activeSession?.title || "Agent Cowork"}
+          </span>
         </div>
 
         <div
@@ -354,9 +362,13 @@ function AppShell() {
             )}
 
             {visibleMessages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <div className="text-lg font-medium text-ink-700">No messages yet</div>
-                <p className="mt-2 text-sm text-muted">Start a conversation with agent cowork</p>
+              <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                <h2 className="text-xl font-semibold text-ink-700 mb-2">
+                  {t('emptyState.title')}
+                </h2>
+                <p className="text-sm text-muted">
+                  {t('emptyState.description')}
+                </p>
               </div>
             ) : (
               visibleMessages.map((item, idx) => (
@@ -446,7 +458,7 @@ function AppShell() {
           </div>
         </div>
       )}
-      </div>
+    </div>
   );
 }
 

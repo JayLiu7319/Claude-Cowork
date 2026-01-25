@@ -102,6 +102,12 @@ code, pre, textarea.mono, input.mono {
   background: #9B9B96;
 }
 
+/* Touch optimization - disable tap highlight and double-tap zoom */
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 /* Shimmer animation for partial message loading */
 @keyframes shimmer {
   0% { transform: translateX(-120%); }

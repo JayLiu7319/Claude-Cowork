@@ -54,7 +54,6 @@
     "minutes": "分钟",
     "million": "M",
     "sessionError": "会话错误",
-    "output": "输出",
     "collapse": "收起",
     "showMoreLines": "显示更多 {{count}} 行",
     "thinking": "思考中",
@@ -65,7 +64,9 @@
     "modelName": "模型名称",
     "permissionMode": "权限模式",
     "workingDirectory": "工作目录",
-    "askUserQuestion": "询问用户"
+    "askUserQuestion": "询问用户",
+    "error": "错误",
+    "success": "成功"
   },
   "decisionPanel": {
     "questionFromClaude": "来自 Claude 的问题",
@@ -78,5 +79,9 @@
     "claudeWantsToUse": "Claude 想要使用：",
     "allow": "允许",
     "deny": "拒绝"
+  },
+  "emptyState": {
+    "title": "准备开始",
+    "description": "在下方输入提示词以开始"
   }
 }
