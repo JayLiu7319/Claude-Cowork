@@ -377,18 +377,20 @@ function AppShell() {
                 </p>
               </div>
             ) : (
-              visibleMessages.map((item, idx) => (
-                <MessageCard
-                  key={`${activeSessionId}-msg-${item.originalIndex}`}
-                  message={item.message}
-                  allMessages={messages}
-                  isLast={idx === visibleMessages.length - 1}
-                  isRunning={isRunning}
-                  permissionRequest={permissionRequests[0]}
-                  onPermissionResult={handlePermissionResult}
-                  prefersReducedMotion={prefersReducedMotion}
-                />
-              ))
+              visibleMessages.map((item, idx) => {
+                return (
+                  <MessageCard
+                    key={`${activeSessionId}-msg-${item.originalIndex}`}
+                    message={item.message}
+                    allMessages={messages}
+                    isLast={idx === visibleMessages.length - 1}
+                    isRunning={isRunning}
+                    permissionRequest={permissionRequests[0]}
+                    onPermissionResult={handlePermissionResult}
+                    prefersReducedMotion={prefersReducedMotion}
+                  />
+                );
+              })
             )}
 
             {/* Partial message display with skeleton loading */}

@@ -197,14 +197,16 @@ const ToolResultInline = ({ messageContent }: { messageContent: ToolResultConten
   );
 };
 
-const AssistantBlockCard = ({ title, text, showIndicator = false, prefersReducedMotion = false }: { title: string; text: string; showIndicator?: boolean; prefersReducedMotion?: boolean }) => {
+const AssistantBlockCard = ({ title, text, showIndicator = false, prefersReducedMotion = false, hideTitle = false }: { title: string; text: string; showIndicator?: boolean; prefersReducedMotion?: boolean; hideTitle?: boolean }) => {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col mt-4">
-      <div className="header text-accent flex items-center gap-2">
-        <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} prefersReducedMotion={prefersReducedMotion} />
-        {title === 'Thinking' ? t('eventCard.thinking') : title === 'Assistant' ? t('eventCard.assistant') : title}
-      </div>
+    <div className={`flex flex-col ${hideTitle ? "mt-2" : "mt-4"}`}>
+      {!hideTitle && (
+        <div className="header text-accent flex items-center gap-2">
+          <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} prefersReducedMotion={prefersReducedMotion} />
+          {title === 'Thinking' ? t('eventCard.thinking') : title === 'Assistant' ? t('eventCard.assistant') : title}
+        </div>
+      )}
       <MDContent text={text} />
     </div>
   );
@@ -341,7 +343,7 @@ const SystemInfoCard = ({ message, showIndicator = false, prefersReducedMotion =
     <div className="flex flex-col gap-2 mt-2">
       <div className="header text-accent flex items-center gap-2">
         <StatusDot variant="success" isActive={showIndicator} isVisible={showIndicator} prefersReducedMotion={prefersReducedMotion} />
-        {t('eventCard.systemInit')}
+        {t('eventCard.assistant')}
       </div>
       <div className="flex flex-col rounded-xl px-4 py-2 border border-ink-900/10 bg-surface-secondary space-y-1">
         <InfoItem name={t('eventCard.sessionId')} value={systemMsg.session_id || "-"} />
@@ -450,7 +452,7 @@ export const MessageCard = memo(function MessageCard({
             return <AssistantBlockCard key={idx} title="Thinking" text={content.thinking} showIndicator={isLastContent && showIndicator} prefersReducedMotion={prefersReducedMotion} />;
           }
           if (content.type === "text") {
-            return <AssistantBlockCard key={idx} title="Assistant" text={content.text} showIndicator={isLastContent && showIndicator} prefersReducedMotion={prefersReducedMotion} />;
+            return <AssistantBlockCard key={idx} title="Assistant" text={content.text} showIndicator={isLastContent && showIndicator} prefersReducedMotion={prefersReducedMotion} hideTitle={true} />;
           }
           if (content.type === "tool_use") {
             if (content.name === "AskUserQuestion") {
