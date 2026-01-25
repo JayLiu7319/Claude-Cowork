@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { FileChangeData } from "../../types";
 import { FileChangeItem } from "./FileChangeItem";
@@ -8,7 +8,9 @@ type FileChangesSectionProps = {
   stats: { created: number; modified: number; deleted: number; total: number };
   isExpanded: boolean;
   onToggleExpand: () => void;
+  sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
+  onOpenFile: (path: string) => void;
 };
 
 export const FileChangesSection = memo(function FileChangesSection({
@@ -16,9 +18,20 @@ export const FileChangesSection = memo(function FileChangesSection({
   stats,
   isExpanded,
   onToggleExpand,
-  onScrollToMessage
+  sessionCwd,
+  onScrollToMessage,
+  onOpenFile
 }: FileChangesSectionProps) {
   const { t } = useTranslation("ui");
+
+  // Sort file changes alphabetically by file name
+  const sortedFileChanges = useMemo(() => {
+    return [...fileChanges].sort((a, b) => {
+      const nameA = a.filePath.split(/[/\\]/).pop() || a.filePath;
+      const nameB = b.filePath.split(/[/\\]/).pop() || b.filePath;
+      return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }, [fileChanges]);
 
   return (
     <div className="flex flex-col border-b border-ink-900/5">
@@ -45,17 +58,19 @@ export const FileChangesSection = memo(function FileChangesSection({
       </button>
 
       {isExpanded && (
-        <div className="pb-3 space-y-2 grid grid-rows-[1fr] overflow-hidden transition-all duration-200">
+        <div className="pb-3 flex flex-col gap-1">
           {stats.total === 0 ? (
             <div className="py-2 text-xs text-ink-500">
               {t("rightpanel.noChanges") || "No changes yet"}
             </div>
           ) : (
-            fileChanges.map((change) => (
+            sortedFileChanges.map((change) => (
               <FileChangeItem
                 key={change.id}
                 change={change}
+                sessionCwd={sessionCwd}
                 onScrollToMessage={onScrollToMessage}
+                onOpenFile={onOpenFile}
               />
             ))
           )}

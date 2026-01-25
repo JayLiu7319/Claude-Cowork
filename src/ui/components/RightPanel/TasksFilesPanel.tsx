@@ -9,7 +9,9 @@ type TasksFilesPanelProps = {
   taskStats: { completed: number; inProgress: number; pending: number; total: number };
   fileChanges: FileChangeData[];
   fileStats: { created: number; modified: number; deleted: number; total: number };
+  sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
+  onOpenFile: (path: string) => void;
 };
 
 export function TasksFilesPanel({
@@ -17,14 +19,16 @@ export function TasksFilesPanel({
   taskStats,
   fileChanges,
   fileStats,
-  onScrollToMessage
+  sessionCwd,
+  onScrollToMessage,
+  onOpenFile
 }: TasksFilesPanelProps) {
   useTranslation("ui");
   const [tasksExpanded, setTasksExpanded] = useState(true);
   const [filesExpanded, setFilesExpanded] = useState(true);
 
   return (
-    <div className="flex flex-col gap-0 h-full overflow-y-auto">
+    <div className="flex flex-col gap-0 h-full overflow-y-auto px-4 pb-4">
       <TasksSection
         todos={todos}
         stats={taskStats}
@@ -38,7 +42,9 @@ export function TasksFilesPanel({
         stats={fileStats}
         isExpanded={filesExpanded}
         onToggleExpand={() => setFilesExpanded(!filesExpanded)}
+        sessionCwd={sessionCwd}
         onScrollToMessage={onScrollToMessage}
+        onOpenFile={onOpenFile}
       />
     </div>
   );

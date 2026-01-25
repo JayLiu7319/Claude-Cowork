@@ -398,6 +398,12 @@ function AppShell() {
     }, 100);
   }, [resetToLatest]);
 
+  const handleOpenFile = useCallback((path: string) => {
+    if (activeSessionId) {
+      sendEvent({ type: "file.open", payload: { sessionId: activeSessionId, path } });
+    }
+  }, [activeSessionId, sendEvent]);
+
   const showSkeleton = useMemo(() => {
     if (showPartialMessage) return true;
     if (!isRunning) return false;
@@ -561,12 +567,14 @@ function AppShell() {
         fileChanges={rightPanelFileChanges}
         fileTree={rightPanelFileTree}
         expandedFolders={rightPanelExpandedFolders}
+        sessionCwd={activeSession?.cwd}
         onToggleFolder={(path) => {
           if (activeSessionId) {
             toggleFolderExpanded(activeSessionId, path);
           }
         }}
         onScrollToMessage={handleScrollToMessage}
+        onOpenFile={handleOpenFile}
       />
 
       {showStartModal && (

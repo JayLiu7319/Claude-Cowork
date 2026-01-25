@@ -70,3 +70,99 @@ export function formatDuration(ms: number): string {
   }
   return `${seconds}s`;
 }
+
+/**
+ * Formats a file path for display in the UI as a relative path
+ *
+ * Handles various path formats:
+ * - Relative paths: returned as-is
+ * - Absolute paths under cwd: converted to relative paths from cwd
+ * - Absolute paths outside cwd: simplified for display
+ * - Unix-style paths on Windows (/d/projects/...): normalized to relative format
+ *
+ * @param filePath - The file path to format (can be relative or absolute)
+ * @param cwd - The current working directory (optional)
+ * @returns A relative-style path for display
+ */
+export function formatPathForDisplay(filePath: string, cwd?: string): string {
+  // Normalize path separators to forward slashes for consistent processing
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  const normalizedCwd = cwd?.replace(/\\/g, '/');
+
+  // Helper function to check if path is absolute
+  const isAbsolute = (path: string): boolean => {
+    // Windows absolute: C:/ or D:/
+    if (/^[a-zA-Z]:\//.test(path)) return true;
+    // Unix absolute: /
+    if (path.startsWith('/')) return true;
+    return false;
+  };
+
+  // If path is already relative, return as-is
+  if (!isAbsolute(normalizedPath)) {
+    return normalizedPath;
+  }
+
+  // If we have a cwd, try to make the path relative to it
+  if (normalizedCwd && isAbsolute(normalizedCwd)) {
+    // Normalize both paths for comparison
+    let pathToCompare = normalizedPath;
+    let cwdToCompare = normalizedCwd;
+
+    // Handle Unix-style paths on Windows (e.g., /d/projects -> D:/projects)
+    if (/^\/[a-zA-Z]\//.test(pathToCompare)) {
+      pathToCompare = pathToCompare[1].toUpperCase() + ':' + pathToCompare.substring(2);
+    }
+    if (/^\/[a-zA-Z]\//.test(cwdToCompare)) {
+      cwdToCompare = cwdToCompare[1].toUpperCase() + ':' + cwdToCompare.substring(2);
+    }
+
+    // Ensure cwd ends with /
+    if (!cwdToCompare.endsWith('/')) {
+      cwdToCompare += '/';
+    }
+
+    // If path starts with cwd, make it relative
+    if (pathToCompare.startsWith(cwdToCompare)) {
+      const relativePath = pathToCompare.substring(cwdToCompare.length);
+      return relativePath || '.';
+    }
+
+    // Check case-insensitive on Windows
+    if (pathToCompare.toLowerCase().startsWith(cwdToCompare.toLowerCase())) {
+      const relativePath = pathToCompare.substring(cwdToCompare.length);
+      return relativePath || '.';
+    }
+  }
+
+  // For absolute paths not under cwd, simplify the display:
+  // - Remove Unix-style drive mount points (/d/projects -> projects)
+  // - Keep special directories like .claude, node_modules visible
+
+  let displayPath = normalizedPath;
+
+  // Handle Unix-style paths on Windows: /d/projects/... -> projects/...
+  if (/^\/[a-zA-Z]\//.test(displayPath)) {
+    displayPath = displayPath.substring(3); // Remove /d/
+  }
+  // Handle Windows absolute paths: C:/Users/... -> Users/...
+  else if (/^[a-zA-Z]:\//.test(displayPath)) {
+    displayPath = displayPath.substring(3); // Remove C:/
+  }
+  // Handle Unix absolute paths: try to shorten by removing leading parts
+  else if (displayPath.startsWith('/')) {
+    // Keep paths starting with special directories
+    const parts = displayPath.split('/').filter(Boolean);
+    // If path contains .claude, node_modules, or other special dirs, keep from there
+    const specialDirs = ['.claude', 'node_modules', '.config', '.local'];
+    const specialIndex = parts.findIndex(p => specialDirs.includes(p));
+    if (specialIndex !== -1) {
+      displayPath = parts.slice(specialIndex).join('/');
+    } else if (parts.length > 2) {
+      // Otherwise, remove the first directory level
+      displayPath = parts.slice(1).join('/');
+    }
+  }
+
+  return displayPath;
+}

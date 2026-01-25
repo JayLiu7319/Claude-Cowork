@@ -1,9 +1,12 @@
 import { memo } from "react";
 import type { FileChangeData } from "../../types";
+import { formatPathForDisplay } from "../../utils/formatters";
 
 type FileChangeItemProps = {
   change: FileChangeData;
+  sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
+  onOpenFile: (path: string) => void;
 };
 
 const getOperationIcon = (type: "create" | "modify" | "delete") => {
@@ -37,24 +40,41 @@ const getOperationIcon = (type: "create" | "modify" | "delete") => {
 
 export const FileChangeItem = memo(function FileChangeItem({
   change,
-  onScrollToMessage
+  sessionCwd,
+  onScrollToMessage,
+  onOpenFile
 }: FileChangeItemProps) {
   const icon = getOperationIcon(change.operationType);
-  const fileName = change.filePath.split(/[/\\]/).pop() || change.filePath;
-  const filePath = change.filePath;
+  const displayPath = formatPathForDisplay(change.filePath, sessionCwd);
+  const fileName = displayPath.split('/').pop() || displayPath;
 
   return (
-    <button
-      onClick={() => onScrollToMessage(change.messageIndex)}
-      className="flex items-start gap-2 px-2 py-1.5 rounded hover:bg-accent/5 transition-colors text-left text-xs text-ink-700 hover:text-accent group"
-      title={filePath}
-    >
-      <span className="flex-shrink-0 mt-0.5">{icon}</span>
-      <div className="flex-1 min-w-0">
-        <div className="line-clamp-1 text-xs font-medium">{fileName}</div>
-        <div className="text-xs text-ink-500 line-clamp-1">{filePath}</div>
-      </div>
-      <span className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-    </button>
+    <div className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/5 transition-colors text-left text-xs text-ink-700">
+      <button
+        onClick={() => onScrollToMessage(change.messageIndex)}
+        className="flex items-start gap-2 flex-1 min-w-0 hover:text-accent text-left overflow-hidden"
+        title={change.filePath}
+      >
+        <span className="flex-shrink-0 mt-0.5">{icon}</span>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <div className="truncate text-xs font-medium">{fileName}</div>
+          <div className="text-xs text-ink-500 truncate">{displayPath}</div>
+        </div>
+      </button>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpenFile(change.filePath);
+        }}
+        className="flex-shrink-0 p-1 hover:bg-ink-900/10 rounded transition-all text-ink-400 hover:text-ink-700"
+        title="Show in Folder"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          <line x1="12" y1="11" x2="12" y2="17" />
+          <polyline points="9 14 12 11 15 14" />
+        </svg>
+      </button>
+    </div>
   );
 });

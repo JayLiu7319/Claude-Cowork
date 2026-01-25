@@ -1,4 +1,4 @@
-import { BrowserWindow } from "electron";
+import { BrowserWindow, shell } from "electron";
 import type { ClientEvent, ServerEvent } from "./types.js";
 import { runClaude, type RunnerHandle } from "./libs/runner.js";
 import { SessionStore } from "./libs/session-store.js";
@@ -8,6 +8,7 @@ import { t } from "./i18n.js";
 import { aggregateTodos } from "./libs/todo-extractor.js";
 import { aggregateFileChanges } from "./libs/file-change-extractor.js";
 import { updateFileTreeWithOperations } from "./libs/file-tree-builder.js";
+import { resolveFilePath } from "./util.js";
 
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
@@ -360,6 +361,16 @@ export function handleClientEvent(event: ClientEvent) {
     const pending = session.pendingPermissions.get(event.payload.toolUseId);
     if (pending) {
       pending.resolve(event.payload.result);
+    }
+    return;
+  }
+
+  if (event.type === "file.open") {
+    const session = sessions.getSession(event.payload.sessionId);
+    if (session && session.cwd) {
+      // Use resolveFilePath to handle both relative and absolute paths correctly
+      const absolutePath = resolveFilePath(event.payload.path, session.cwd);
+      shell.showItemInFolder(absolutePath);
     }
     return;
   }
