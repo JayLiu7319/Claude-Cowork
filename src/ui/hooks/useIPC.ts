@@ -10,9 +10,9 @@ export function useIPC(onEvent: (event: ServerEvent) => void) {
     const unsubscribe = window.electron.onServerEvent((event: ServerEvent) => {
       onEvent(event);
     });
-    
+
     unsubscribeRef.current = unsubscribe;
-    setConnected(true);
+    setTimeout(() => setConnected(true), 0);
 
     return () => {
       if (unsubscribeRef.current) {

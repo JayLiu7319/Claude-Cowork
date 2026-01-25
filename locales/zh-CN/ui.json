@@ -5,7 +5,8 @@
     "deleteSession": "删除此会话",
     "resumeInClaudeCode": "在 Claude Code 中恢复",
     "resumeTitle": "恢复",
-    "workingDirUnavailable": "工作目录不可用"
+    "workingDirUnavailable": "工作目录不可用",
+    "beginningOfConversation": "对话开始"
   },
   "promptInput": {
     "placeholder": {
@@ -66,7 +67,9 @@
     "workingDirectory": "工作目录",
     "askUserQuestion": "询问用户",
     "error": "错误",
-    "success": "成功"
+    "success": "成功",
+    "line": "行",
+    "lines": "行"
   },
   "decisionPanel": {
     "questionFromClaude": "来自 Claude 的问题",
@@ -83,5 +86,9 @@
   "emptyState": {
     "title": "准备开始",
     "description": "在下方输入提示词以开始"
+  },
+  "common": {
+    "loading": "加载中...",
+    "newMessages": "新消息"
   }
 }

@@ -50,6 +50,7 @@ export function StartSessionModal({
             <div className="flex gap-2">
               <input
                 type="text"
+                name="cwd"
                 autoComplete="off"
                 className="flex-1 rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
                 placeholder="/path/to/project"
@@ -88,6 +89,7 @@ export function StartSessionModal({
             <span className="text-xs font-medium text-muted">{t('startSession.prompt')}</span>
             <textarea
               rows={4}
+              name="prompt"
               autoComplete="off"
               className="rounded-xl border border-ink-900/10 bg-surface-secondary p-3 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors resize-none"
               placeholder="Describe the task you want agent to handle..."

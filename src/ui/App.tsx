@@ -79,6 +79,12 @@ function AppShell() {
   const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
 
+  // Check user's motion preference
+  const prefersReducedMotion = useMemo(() =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
+
   // Helper function to extract partial message content
   const getPartialMessageContent = (eventMessage: { delta: unknown }) => {
     try {
@@ -343,7 +349,7 @@ function AppShell() {
               <div className="flex items-center justify-center py-4 mb-4">
                 <div className="flex items-center gap-2 text-xs text-muted">
                   <div className="h-px w-12 bg-ink-900/10" />
-                  <span>Beginning of conversation</span>
+                  <span>{t('sidebar.beginningOfConversation')}</span>
                   <div className="h-px w-12 bg-ink-900/10" />
                 </div>
               </div>
@@ -356,7 +362,7 @@ function AppShell() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  <span>Loading...</span>
+                  <span>{t('common.loading')}</span>
                 </div>
               </div>
             )}
@@ -380,6 +386,7 @@ function AppShell() {
                   isRunning={isRunning}
                   permissionRequest={permissionRequests[0]}
                   onPermissionResult={handlePermissionResult}
+                  prefersReducedMotion={prefersReducedMotion}
                 />
               ))
             )}
@@ -390,19 +397,29 @@ function AppShell() {
               {showPartialMessage && (
                 <div className="mt-3 flex flex-col gap-2 px-1">
                   <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    {!prefersReducedMotion && (
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    )}
                   </div>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    {!prefersReducedMotion && (
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    )}
                   </div>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    {!prefersReducedMotion && (
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    )}
                   </div>
                   <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    {!prefersReducedMotion && (
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    )}
                   </div>
                   <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-ink-900/10">
-                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    {!prefersReducedMotion && (
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
+                    )}
                   </div>
                 </div>
               )}
@@ -418,12 +435,13 @@ function AppShell() {
           <button
             onClick={scrollToBottom}
             aria-label="Scroll to bottom to view new messages"
-            className="fixed bottom-28 left-1/2 ml-[140px] z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:bg-accent-hover hover:scale-105 animate-bounce-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            className={`fixed bottom-28 left-1/2 ml-[140px] z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
+            style={!prefersReducedMotion ? {} : { transform: 'translateX(-50%)' }}
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12l7 7 7-7" />
             </svg>
-            <span>New messages</span>
+            <span>{t('common.newMessages')}</span>
           </button>
         )}
       </main>

@@ -20,6 +20,8 @@ export type SessionInfo = {
   updatedAt: number;
 };
 
+import type { ApiConfig } from "./libs/config-store.js";
+
 // Server -> Client events
 export type ServerEvent =
   | { type: "stream.message"; payload: { sessionId: string; message: StreamMessage } }
@@ -41,17 +43,29 @@ export type ClientEvent =
   | { type: "session.history"; payload: { sessionId: string } }
   | { type: "permission.response"; payload: { sessionId: string; toolUseId: string; result: PermissionResult } };
 
+export type StaticData = {
+  totalStorage: number;
+  cpuModel: string;
+  totalMemoryGB: number;
+};
+
+export type Statistics = {
+  cpuUsage: number;
+  ramUsage: number;
+  storageData: number;
+};
+
 // IPC Event Payload Mapping for type-safe IPC communication
 export type EventPayloadMapping = {
-  "getStaticData": any;
+  "getStaticData": StaticData;
   "client-event": ClientEvent;
-  "server-event": any;
-  "statistics": any;
+  "server-event": ServerEvent;
+  "statistics": Statistics;
   "generate-session-title": string;
   "get-recent-cwds": string[];
   "select-directory": string | null;
-  "get-api-config": any;
+  "get-api-config": ApiConfig | null;
   "save-api-config": { success: boolean; error?: string };
-  "check-api-config": { hasConfig: boolean; config: any };
+  "check-api-config": { hasConfig: boolean; config: ApiConfig | null };
   "get-language": string;
 };

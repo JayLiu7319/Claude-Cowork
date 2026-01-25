@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { ClientEvent } from "../types";
-import { useAppStore } from "../store/useAppStore";
+import { usePromptActions } from "../hooks/usePromptActions";
 
-const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 const MAX_ROWS = 12;
 const LINE_HEIGHT = 21;
 const MAX_HEIGHT = MAX_ROWS * LINE_HEIGHT;
@@ -14,62 +13,7 @@ interface PromptInputProps {
   disabled?: boolean;
 }
 
-export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
-  const { t } = useTranslation();
-  const prompt = useAppStore((state) => state.prompt);
-  const cwd = useAppStore((state) => state.cwd);
-  const activeSessionId = useAppStore((state) => state.activeSessionId);
-  const sessions = useAppStore((state) => state.sessions);
-  const setPrompt = useAppStore((state) => state.setPrompt);
-  const setPendingStart = useAppStore((state) => state.setPendingStart);
-  const setGlobalError = useAppStore((state) => state.setGlobalError);
 
-  const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
-  const isRunning = activeSession?.status === "running";
-
-  const handleSend = useCallback(async () => {
-    if (!prompt.trim()) return;
-
-    if (!activeSessionId) {
-      let title = "";
-      try {
-        setPendingStart(true);
-        title = await window.electron.generateSessionTitle(prompt);
-      } catch (error) {
-        console.error(error);
-        setPendingStart(false);
-        setGlobalError(t('promptInput.titleError'));
-        return;
-      }
-      sendEvent({
-        type: "session.start",
-        payload: { title, prompt, cwd: cwd.trim() || undefined, allowedTools: DEFAULT_ALLOWED_TOOLS }
-      });
-    } else {
-      if (activeSession?.status === "running") {
-        setGlobalError(t('promptInput.sessionRunning'));
-        return;
-      }
-      sendEvent({ type: "session.continue", payload: { sessionId: activeSessionId, prompt } });
-    }
-    setPrompt("");
-  }, [activeSession, activeSessionId, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt]);
-
-  const handleStop = useCallback(() => {
-    if (!activeSessionId) return;
-    sendEvent({ type: "session.stop", payload: { sessionId: activeSessionId } });
-  }, [activeSessionId, sendEvent]);
-
-  const handleStartFromModal = useCallback(() => {
-    if (!cwd.trim()) {
-      setGlobalError(t('promptInput.cwdRequired'));
-      return;
-    }
-    handleSend();
-  }, [cwd, handleSend, setGlobalError]);
-
-  return { prompt, setPrompt, isRunning, handleSend, handleStop, handleStartFromModal };
-}
 
 export function PromptInput({ sendEvent, onSendMessage, disabled = false }: PromptInputProps) {
   const { t } = useTranslation();
@@ -124,7 +68,10 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
   return (
     <section className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-surface via-surface to-transparent pb-6 px-2 lg:pb-8 pt-8 lg:ml-[280px]">
       <div className="mx-auto flex w-full max-w-full items-end gap-3 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card lg:max-w-3xl">
+        <label htmlFor="prompt-input" className="sr-only">{t('promptInput.sendPrompt')}</label>
         <textarea
+          id="prompt-input"
+          name="prompt"
           rows={1}
           autoComplete="off"
           className="flex-1 resize-none bg-transparent py-1.5 text-sm text-ink-800 placeholder:text-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"

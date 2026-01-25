@@ -28,8 +28,8 @@ interface Window {
         subscribeStatistics: (callback: (statistics: Statistics) => void) => UnsubscribeFunction;
         getStaticData: () => Promise<StaticData>;
         // Claude Agent IPC APIs
-        sendClientEvent: (event: any) => void;
-        onServerEvent: (callback: (event: any) => void) => UnsubscribeFunction;
+        sendClientEvent: (event: import('./src/ui/types').ClientEvent) => void;
+        onServerEvent: (callback: (event: import('./src/ui/types').ServerEvent) => void) => UnsubscribeFunction;
         generateSessionTitle: (userInput: string | null) => Promise<string>;
         getRecentCwds: (limit?: number) => Promise<string[]>;
         selectDirectory: () => Promise<string | null>;

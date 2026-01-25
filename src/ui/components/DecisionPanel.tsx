@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
 import type { PermissionRequest } from "../store/useAppStore";
@@ -26,10 +26,13 @@ export function DecisionPanel({
   const [selectedOptions, setSelectedOptions] = useState<Record<number, string[]>>({});
   const [otherInputs, setOtherInputs] = useState<Record<number, string>>({});
 
-  useEffect(() => {
+  const [prevToolUseId, setPrevToolUseId] = useState(request.toolUseId);
+
+  if (request.toolUseId !== prevToolUseId) {
+    setPrevToolUseId(request.toolUseId);
     setSelectedOptions({});
     setOtherInputs({});
-  }, [request.toolUseId]);
+  }
 
   const toggleOption = (qIndex: number, optionLabel: string, multiSelect?: boolean) => {
     setSelectedOptions((prev) => {
@@ -86,11 +89,10 @@ export function DecisionPanel({
                 return (
                   <button
                     key={optIndex}
-                    className={`rounded-xl border px-4 py-3 text-left text-sm text-ink-700 transition-colors ${
-                      (selectedOptions[qIndex] ?? []).includes(option.label)
-                        ? "border-info/50 bg-info/5"
-                        : "border-ink-900/10 bg-surface hover:border-info/40 hover:bg-surface-tertiary"
-                    }`}
+                    className={`rounded-xl border px-4 py-3 text-left text-sm text-ink-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${(selectedOptions[qIndex] ?? []).includes(option.label)
+                      ? "border-info/50 bg-info/5"
+                      : "border-ink-900/10 bg-surface hover:border-info/40 hover:bg-surface-tertiary"
+                      }`}
                     onClick={() => {
                       if (shouldAutoSubmit) {
                         onSubmit({
@@ -112,7 +114,8 @@ export function DecisionPanel({
               <label className="block text-xs font-medium text-muted">{t('decisionPanel.other')}</label>
               <input
                 type="text"
-                className="mt-1 w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-sm text-ink-700 focus:border-info/50 focus:outline-none"
+                autoComplete="off"
+                className="mt-1 w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-sm text-ink-700 focus:border-info/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
                 placeholder={t('decisionPanel.typeAnswer')}
                 value={otherInputs[qIndex] ?? ""}
                 onChange={(e) => setOtherInputs((prev) => ({ ...prev, [qIndex]: e.target.value }))}
@@ -123,9 +126,8 @@ export function DecisionPanel({
         ))}
         <div className="mt-5 flex flex-wrap gap-3">
           <button
-            className={`rounded-full px-5 py-2 text-sm font-medium text-white shadow-soft transition-colors ${
-              canSubmit ? "bg-accent hover:bg-accent-hover" : "bg-ink-400/40 cursor-not-allowed"
-            }`}
+            className={`rounded-full px-5 py-2 text-sm font-medium text-white shadow-soft transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${canSubmit ? "bg-accent hover:bg-accent-hover" : "bg-ink-400/40 cursor-not-allowed"
+              }`}
             onClick={() => {
               if (!canSubmit) return;
               onSubmit({ behavior: "allow", updatedInput: { ...(input as Record<string, unknown>), answers: buildAnswers() } });
@@ -135,7 +137,7 @@ export function DecisionPanel({
             {t('decisionPanel.submitAnswers')}
           </button>
           <button
-            className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
+            className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             onClick={() => onSubmit({ behavior: "deny", message: t('main.userCanceled') })}
           >
             {t('decisionPanel.cancel')}
@@ -158,13 +160,13 @@ export function DecisionPanel({
       </div>
       <div className="mt-4 flex flex-wrap gap-3">
         <button
-          className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors"
+          className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white shadow-soft hover:bg-accent-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           onClick={() => onSubmit({ behavior: "allow", updatedInput: request.input as Record<string, unknown> })}
         >
           {t('decisionPanel.allow')}
         </button>
         <button
-          className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors"
+          className="rounded-full border border-ink-900/10 bg-surface px-5 py-2 text-sm font-medium text-ink-700 hover:bg-surface-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           onClick={() => onSubmit({ behavior: "deny", message: t('main.userDenied') })}
         >
           {t('decisionPanel.deny')}

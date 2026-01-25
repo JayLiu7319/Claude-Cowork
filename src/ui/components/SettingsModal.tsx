@@ -33,7 +33,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [t]);
 
   const handleSave = async () => {
     // 验证输入
@@ -117,9 +117,10 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <span className="text-xs font-medium text-muted">{t('settings.baseUrl')}</span>
               <input
                 type="url"
+                name="baseUrl"
                 autoComplete="url"
                 className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
-                placeholder="htts://..."
+                placeholder="https://..."
                 value={baseURL}
                 onChange={(e) => setBaseURL(e.target.value)}
                 required
@@ -130,7 +131,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <span className="text-xs font-medium text-muted">{t('settings.apiKey')}</span>
               <input
                 type="password"
-                autoComplete="off"
+                name="apiKey"
+                autoComplete="new-password"
                 className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
                 placeholder="sk-..."
                 value={apiKey}
@@ -143,6 +145,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
               <span className="text-xs font-medium text-muted">{t('settings.modelName')}</span>
               <input
                 type="text"
+                name="model"
                 autoComplete="off"
                 className="rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 placeholder:text-muted-light focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
                 placeholder="claude-3-5-sonnet-20241022"
@@ -185,7 +188,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
                     </svg>
                     <span className="sr-only">Saving...</span>
                   </>
-                ) : t('settings.save')
+                ) : (
+                  t('settings.save')
+                )}
               </button>
             </div>
           </div>

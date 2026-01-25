@@ -33,7 +33,17 @@
       "Bash(git merge:*)",
       "Bash(git branch:*)",
       "Bash(git worktree remove:*)",
-      "Bash(ls -la:*)"
+      "Bash(ls -la:*)",
+      "Bash(git push:*)",
+      "Bash(tree:*)",
+      "Skill(vercel-react-best-practices)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:vercel.com)",
+      "Skill(superpowers:executing-plans)",
+      "Bash(bun test:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(bun run rebuild:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

@@ -36,7 +36,7 @@ export function Sidebar({
   }, [sessions]);
 
   useEffect(() => {
-    setCopied(false);
+    setTimeout(() => setCopied(false), 0);
     if (closeTimerRef.current) {
       window.clearTimeout(closeTimerRef.current);
       closeTimerRef.current = null;
@@ -71,7 +71,7 @@ export function Sidebar({
 
   return (
     <aside className="fixed inset-y-0 left-0 flex h-full w-[280px] flex-col gap-4 border-r border-ink-900/5 bg-[#FAF9F6] px-4 pb-4 pt-12">
-      <div 
+      <div
         className="absolute top-0 left-0 right-0 h-12"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       />
@@ -110,11 +110,11 @@ export function Sidebar({
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
-                <div className={`text-[12px] font-medium ${session.status === "running" ? "text-info" : session.status === "completed" ? "text-success" : session.status === "error" ? "text-error" : "text-ink-800"}`}>
+                <div className={`text-[12px] font-medium truncate ${session.status === "running" ? "text-info" : session.status === "completed" ? "text-success" : session.status === "error" ? "text-error" : "text-ink-800"}`} title={session.title}>
                   {session.title}
                 </div>
                 <div className="flex items-center justify-between mt-0.5 text-xs text-muted">
-                  <span className="truncate">{formatCwd(session.cwd)}</span>
+                  <span className="truncate" title={formatCwd(session.cwd)}>{formatCwd(session.cwd)}</span>
                 </div>
               </div>
               <DropdownMenu.Root>

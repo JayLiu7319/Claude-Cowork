@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu } from "electron"
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu, IpcMainEvent, IpcMainInvokeEvent } from "electron"
 import { execSync } from "child_process";
 import { ipcMainHandle, isDev, DEV_PORT } from "./util.js";
 import { getPreloadPath, getUIPath, getIconPath } from "./pathResolver.js";
@@ -9,6 +9,7 @@ import { saveApiConfig } from "./libs/config-store.js";
 import { getCurrentApiConfig } from "./libs/claude-settings.js";
 import { initI18n, getLanguage } from "./i18n.js";
 import type { ClientEvent } from "./types.js";
+import type { ApiConfig } from "./libs/config-store.js";
 import "./libs/claude-settings.js";
 
 let cleanupComplete = false;
@@ -93,17 +94,17 @@ app.on("ready", () => {
     });
 
     // Handle client events
-    ipcMain.on("client-event", (_: any, event: ClientEvent) => {
+    ipcMain.on("client-event", (_: IpcMainEvent, event: ClientEvent) => {
         handleClientEvent(event);
     });
 
     // Handle session title generation
-    ipcMainHandle("generate-session-title", async (_: any, userInput: string | null) => {
+    ipcMainHandle("generate-session-title", async (_: IpcMainInvokeEvent, userInput: string | null) => {
         return await generateSessionTitle(userInput);
     });
 
     // Handle recent cwds request
-    ipcMainHandle("get-recent-cwds", (_: any, limit?: number) => {
+    ipcMainHandle("get-recent-cwds", (_: IpcMainInvokeEvent, limit?: number) => {
         const boundedLimit = limit ? Math.min(Math.max(limit, 1), 20) : 8;
         return sessions.listRecentCwds(boundedLimit);
     });
@@ -131,7 +132,7 @@ app.on("ready", () => {
         return { hasConfig: config !== null, config };
     });
 
-    ipcMainHandle("save-api-config", (_: any, config: any) => {
+    ipcMainHandle("save-api-config", (_: IpcMainInvokeEvent, config: ApiConfig) => {
         try {
             saveApiConfig(config);
             return { success: true };
