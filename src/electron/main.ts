@@ -131,6 +131,13 @@ app.on("ready", () => {
     process.on("SIGINT", handleSignal);
     process.on("SIGHUP", handleSignal);
 
+    const preloadPath = getPreloadPath();
+    const uiPath = getUIPath();
+    const iconPath = getIconPath();
+    // #region agent log
+    fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/electron/main.ts:134',message:'App ready paths',data:{isPackaged:app.isPackaged,appPath:app.getAppPath(),resourcesPath:process.resourcesPath,uiPath,preloadPath,iconPath},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
     // Create main window
     mainWindow = new BrowserWindow({
         title: "观复君Cowork",
@@ -139,9 +146,9 @@ app.on("ready", () => {
         minWidth: 900,
         minHeight: 600,
         webPreferences: {
-            preload: getPreloadPath(),
+            preload: preloadPath,
         },
-        icon: getIconPath(),
+        icon: iconPath,
         titleBarStyle: "hiddenInset",
         backgroundColor: "#FAF9F6",
         trafficLightPosition: { x: 15, y: 18 }
@@ -150,8 +157,29 @@ app.on("ready", () => {
     if (isDev()) {
         mainWindow.loadURL(`http://localhost:${DEV_PORT}`)
     } else {
-        mainWindow.loadFile(getUIPath());
+        // #region agent log
+        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/electron/main.ts:155',message:'Loading UI file',data:{uiPath},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        mainWindow.loadFile(uiPath);
     }
+
+    mainWindow.webContents.on("did-finish-load", () => {
+        // #region agent log
+        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/electron/main.ts:163',message:'Renderer finished load',data:{url:mainWindow?.webContents.getURL()},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+    });
+
+    mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/electron/main.ts:169',message:'Renderer failed load',data:{errorCode,errorDescription,validatedURL},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+    });
+
+    mainWindow.webContents.on("render-process-gone", (_event, details) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/electron/main.ts:175',message:'Renderer process gone',data:{reason:details.reason,exitCode:details.exitCode},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
+    });
 
     globalShortcut.register('CommandOrControl+Q', () => {
         cleanup();

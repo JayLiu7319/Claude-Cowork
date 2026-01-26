@@ -8,15 +8,18 @@ export function getResourcesPath(): string {
 
 export function getPreloadPath() {
     if (app.isPackaged) {
-        return path.join(getResourcesPath(), 'preload.cjs');
+        const resolvedPath = path.join(app.getAppPath(), 'dist-electron', 'src', 'electron', 'preload.cjs');
+        return resolvedPath;
     }
     const basePath = isDev() ? app.getAppPath() : path.join(app.getAppPath(), '..');
-    return path.join(basePath, 'dist-electron', 'src', 'electron', 'preload.cjs');
+    const resolvedPath = path.join(basePath, 'dist-electron', 'src', 'electron', 'preload.cjs');
+    return resolvedPath;
 }
 
 export function getUIPath() {
     const basePath = app.getAppPath();
-    return path.join(basePath, 'dist-react', 'index.html');
+    const resolvedPath = path.join(basePath, 'dist-react', 'index.html');
+    return resolvedPath;
 }
 
 export function getIconPath() {

@@ -23,20 +23,40 @@ const SCROLL_THRESHOLD = 50;
 function App() {
   const [i18nReady, setI18nReady] = useState(false);
   const [i18nInstance, setI18nInstance] = useState<i18n | null>(null);
+  const initLoggedRef = useRef(false);
+  const nullRenderLoggedRef = useRef(false);
 
   // Initialize i18n
   useEffect(() => {
+    if (!initLoggedRef.current) {
+      initLoggedRef.current = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/ui/App.tsx:32',message:'Init i18n start',data:{hasElectron:typeof window !== 'undefined' && !!(window as any).electron,hasGetLanguage:typeof window !== 'undefined' && typeof (window as any).electron?.getLanguage === 'function'},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+    }
     initI18n().then((instance) => {
       setI18nInstance(instance);
       setI18nReady(true);
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/ui/App.tsx:38',message:'Init i18n success',data:{language:instance.language,isInitialized:instance.isInitialized},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
     }).catch((err: Error) => {
       console.error("Failed to initialize i18n:", err);
       setI18nReady(true); // Continue anyway to prevent blocking
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/ui/App.tsx:43',message:'Init i18n failure',data:{error:err?.message ?? String(err)},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
     });
   }, []);
 
   // Don't render until i18n is ready
   if (!i18nReady || !i18nInstance) {
+    if (!nullRenderLoggedRef.current) {
+      nullRenderLoggedRef.current = true;
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/ui/App.tsx:53',message:'App render blocked by i18n',data:{i18nReady,hasInstance:!!i18nInstance},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    }
     return null;
   }
 
