@@ -7,6 +7,7 @@ import path from "path";
 import { getEnhancedEnv } from "./util.js";
 import { t } from "../i18n.js";
 import { getResourcesPath } from "../pathResolver.js";
+import { loadBrandConfig } from "./brand-config.js";
 
 
 export type RunnerOptions = {
@@ -93,6 +94,10 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       // Resolve bundled plugins path
       const bundledPluginsPath = path.join(getResourcesPath(), 'resources', 'builtin-plugins');
 
+      // Load plugins based on brand configuration
+      const brandConfig = loadBrandConfig();
+      const pluginNames = brandConfig.plugins ?? ['core-skills'];
+
       const q = query({
         prompt: effectivePrompt,
         options: {
@@ -104,10 +109,10 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           permissionMode: "bypassPermissions",
           includePartialMessages: true,
           allowDangerouslySkipPermissions: true,
-          plugins: [
-            { type: "local", path: path.join(bundledPluginsPath, 'startup-business-analyst') },
-            { type: "local", path: path.join(bundledPluginsPath, 'core-skills') }
-          ],
+          plugins: pluginNames.map(name => ({
+            type: "local" as const,
+            path: path.join(bundledPluginsPath, name)
+          })),
           canUseTool: async (toolName, input, { signal }) => {
             // For AskUserQuestion, we need to wait for user response
             if (toolName === "AskUserQuestion") {
