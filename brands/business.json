@@ -4,6 +4,7 @@
   "displayName": "观复君Cowork",
   "appTitle": "观复君Cowork",
   "subtitle": "商业咨询与分析 · 您的智能参谋",
+  "plugins": ["startup-business-analyst", "core-skills"],
   "colors": {
     "accent": "#D97757",
     "accentHover": "#CC785C",

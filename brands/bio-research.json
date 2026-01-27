@@ -4,6 +4,7 @@
   "displayName": "生物基因CoScientist",
   "appTitle": "生物基因CoScientist",
   "subtitle": "TJU出品 · 生物科研智能助手 · 您的科研伙伴",
+  "plugins": ["claude-scientific-skills", "core-skills"],
   "colors": {
     "accent": "#00528e",
     "accentHover": "#003E6B",
