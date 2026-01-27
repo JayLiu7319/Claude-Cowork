@@ -125,6 +125,7 @@ export interface BrandConfig {
     app: string;
     logo: string;
   };
+  plugins?: string[];  // Plugin names list, e.g. ["startup-business-analyst", "core-skills"]
 }
 
 // IPC Event Payload Mapping for type-safe IPC communication
