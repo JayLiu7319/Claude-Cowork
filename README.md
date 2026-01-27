@@ -100,6 +100,48 @@ bun run build
 
 
 
+## Plugin Configuration
+
+This project supports brand-specific plugin configurations. Each brand can load different sets of plugins:
+
+- **Business Brand**: Uses `startup-business-analyst` + `core-skills`
+- **Bio-Research Brand**: Uses `claude-scientific-skills` + `core-skills`
+
+### Automatic Plugin Setup
+
+The `claude-scientific-skills` plugin is automatically cloned during development and build processes. The setup script runs automatically before:
+
+- `bun run dev` - Development mode
+- `bun run build` - Production build
+
+### Manual Plugin Management
+
+```bash
+# Check and clone plugins if needed
+bun run setup-plugins
+
+# Force update existing plugins
+bun run setup-plugins:update
+
+# Skip plugin setup (useful for offline development)
+SKIP_PLUGIN_SETUP=1 bun run dev
+```
+
+### Adding New Plugins
+
+To add a new plugin to a brand:
+
+1. Add the plugin directory to `resources/builtin-plugins/`
+2. Update the brand configuration file (`brands/[brand-name].json`):
+   ```json
+   {
+     "plugins": ["plugin-name-1", "plugin-name-2"]
+   }
+   ```
+3. The plugin will be automatically loaded for that brand
+
+
+
 ## 🗺 Roadmap
 
 Planned features:
