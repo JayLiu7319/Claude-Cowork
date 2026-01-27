@@ -60,3 +60,6 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Auto-downloaded plugins
+resources/builtin-plugins/claude-scientific-skills/
