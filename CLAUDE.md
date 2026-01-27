@@ -40,6 +40,11 @@ Claude-Cowork/
 │   └── index.ts                      # i18n resource loader
 ├── patches/                          # NPM package patches
 │   └── @anthropic-ai%2Fclaude-agent-sdk@0.2.6.patch
+├── resources/                        # Build-time resources
+│   └── builtin-plugins/              # Bundled plugins
+│       ├── startup-business-analyst/ # Business consulting plugin
+│       ├── core-skills/              # Core skills (docx, pptx)
+│       └── claude-scientific-skills/ # Scientific research plugin (auto-cloned)
 ├── src/                              # Source code
 │   ├── electron/                     # Main process (Node.js)
 │   │   ├── libs/                     # Core libraries
@@ -193,6 +198,68 @@ The application supports multiple languages using i18next:
 - **Translation Files**: Organized in `locales/[language]/` directories
 - **Supported Languages**: English (en), Simplified Chinese (zh-CN)
 - **Namespaces**: `common` (shared), `main` (main process), `ui` (renderer process)
+
+## Plugin Configuration
+
+### Brand-Specific Plugins
+
+The application supports loading different plugin sets based on the active brand:
+
+**Configuration Location:** `brands/[brand-id].json`
+
+```json
+{
+  "plugins": ["plugin-name-1", "plugin-name-2"]
+}
+```
+
+**Default Behavior:** If `plugins` field is not specified, defaults to `["core-skills"]`.
+
+### Plugin Loading Flow
+
+1. **Brand Detection** - `brand-config.ts` reads brand ID from `.brand` file or environment
+2. **Config Loading** - Loads brand configuration JSON file
+3. **Plugin Resolution** - Reads `plugins` array from config
+4. **Path Mapping** - Maps plugin names to `resources/builtin-plugins/[name]`
+5. **SDK Integration** - Passes plugin paths to Claude Agent SDK
+
+### Automatic Plugin Setup
+
+The `scripts/setup-plugins.ts` script automatically manages external plugins:
+
+- **Runs Before:** `dev` and `build` commands
+- **Purpose:** Ensures `claude-scientific-skills` is available for bio-research brand
+- **Behavior:** Clones from GitHub if missing, optionally updates if `--update` flag passed
+- **Environment Control:** `SKIP_PLUGIN_SETUP=1` to skip (for CI or offline development)
+
+### Plugin Structure
+
+Supported plugin structures:
+
+**Standard Structure** (startup-business-analyst, core-skills):
+```
+plugin-name/
+├── .claude-plugin/
+│   └── plugin.json
+├── commands/           # Slash commands
+│   └── *.md
+└── skills/             # Claude skills
+    └── */
+        └── SKILL.md
+```
+
+**Scientific Structure** (claude-scientific-skills):
+```
+claude-scientific-skills/
+├── .claude-plugin/
+│   └── marketplace.json    # Uses marketplace.json instead of plugin.json
+└── scientific-skills/      # 140+ scientific skills
+    └── */
+        ├── SKILL.md
+        └── references/
+```
+
+**Note:** claude-scientific-skills has no `commands/` directory.
 
 ## Coding Standards and Rules
 
