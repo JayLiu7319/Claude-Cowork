@@ -6,9 +6,17 @@ import { WaterfallBackground } from "./WaterfallBackground";
 
 interface WelcomePageProps {
     onStartSession: () => void;
+    onMenuClick?: () => void;
+    onToggleRightPanel?: () => void;
+    isRightPanelOpen?: boolean;
 }
 
-export function WelcomePage({ onStartSession }: WelcomePageProps) {
+export function WelcomePage({
+    onStartSession,
+    onMenuClick,
+    onToggleRightPanel,
+    isRightPanelOpen
+}: WelcomePageProps) {
     const { t } = useTranslation();
     const cwd = useAppStore((s) => s.cwd);
     const setCwd = useAppStore((s) => s.setCwd);
@@ -51,22 +59,36 @@ export function WelcomePage({ onStartSession }: WelcomePageProps) {
     const isCurrentDefault = cwd === defaultCwd;
 
     return (
-        <div className="relative flex flex-1 flex-col h-full bg-surface-cream ml-[280px] mr-[280px] min-w-0 overflow-hidden">
+        <div className="relative flex flex-1 flex-col h-full bg-surface-cream min-w-0 overflow-hidden">
             {/* Background Waterfall Animation */}
             {brandConfig?.waterfall && (
-                <WaterfallBackground 
-                    items={brandConfig.waterfall.items} 
-                    enabled={brandConfig.waterfall.enabled} 
+                <WaterfallBackground
+                    items={brandConfig.waterfall.items}
+                    enabled={brandConfig.waterfall.enabled}
                 />
             )}
 
             {/* Top Directory Bar */}
             <div
-                className="relative z-10 flex items-center h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-6"
+                className="relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 md:px-6"
                 style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             >
                 <div className="flex items-center gap-3 w-full" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                    <span className="text-xs font-medium text-muted shrink-0">
+                    {/* Mobile Menu Button */}
+                    <div className="md:hidden mr-1">
+                        {onMenuClick && (
+                            <button
+                                onClick={onMenuClick}
+                                className="p-1.5 rounded-lg hover:bg-ink-900/5 text-ink-600 transition-colors"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+
+                    <span className="text-xs font-medium text-muted shrink-0 hidden sm:block">
                         {t('welcomePage.cwdLabel', '工作目录')}
                     </span>
                     <div className="flex-1 min-w-0 overflow-hidden">
@@ -94,6 +116,22 @@ export function WelcomePage({ onStartSession }: WelcomePageProps) {
                     >
                         {isCurrentDefault ? t('welcomePage.isDefault', '默认') : t('welcomePage.setAsDefault', '设为默认')}
                     </button>
+                </div>
+
+                {/* Right Panel Toggle - visible on desktop/mobile if needed */}
+                <div className="ml-2 pl-2 border-l border-ink-900/10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    {onToggleRightPanel && (
+                        <button
+                            onClick={onToggleRightPanel}
+                            className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors ${isRightPanelOpen ? 'text-accent bg-accent/5' : 'text-ink-400'}`}
+                            aria-label="Toggle Info Panel"
+                        >
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 4v16" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </div>
             <div className="relative z-10 h-0.5 bg-accent/50" />

@@ -42,6 +42,7 @@ interface AppState {
   planMode: boolean;
   availableCommands: Command[];
   brandConfig: BrandConfig | null;
+  lastFileRefresh: number;
 
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
@@ -94,6 +95,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   planMode: false,
   availableCommands: [],
   brandConfig: null,
+  lastFileRefresh: 0,
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
@@ -268,6 +270,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
           return {
+            lastFileRefresh: Date.now(),
             sessions: {
               ...state.sessions,
               [sessionId]: { ...existing, messages: [...existing.messages, message] }
@@ -332,6 +335,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           const existing = state.sessions[sessionId];
           if (!existing) return {};
           return {
+            lastFileRefresh: Date.now(),
             sessions: {
               ...state.sessions,
               [sessionId]: { ...existing, fileChanges: changes }

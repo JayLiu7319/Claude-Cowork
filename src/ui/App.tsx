@@ -449,27 +449,108 @@ function AppShell() {
     return true;
   }, [showPartialMessage, isRunning, messages]);
 
+  // Responsive state
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isRightPanelOpen, setRightPanelOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Initialize responsive state on mount and listen to resize
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768; // Tailwind md breakpoint
+      setIsMobile(mobile);
+      if (mobile) {
+        setSidebarOpen(false);
+        setRightPanelOpen(false);
+      } else {
+        setSidebarOpen(true);
+        setRightPanelOpen(window.innerWidth >= 1280); // Open right panel only on XL screens by default
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
+  const toggleRightPanel = useCallback(() => setRightPanelOpen(prev => !prev), []);
+
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="flex h-screen bg-surface overflow-hidden relative">
+      {/* Mobile Overlay/Backdrop */}
+      {isMobile && (isSidebarOpen || isRightPanelOpen) && (
+        <div
+          className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-30 transition-opacity"
+          onClick={() => {
+            setSidebarOpen(false);
+            setRightPanelOpen(false);
+          }}
+          aria-hidden="true"
+        />
+      )}
+
       <Sidebar
         connected={connected}
         onNewSession={handleNewSession}
         onDeleteSession={handleDeleteSession}
+        className={`
+          ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-[280px] shadow-2xl' : 'w-[280px] shrink-0'}
+          ${!isSidebarOpen && isMobile ? '-translate-x-full' : 'translate-x-0'}
+          ${!isSidebarOpen && !isMobile ? 'hidden' : 'flex'}
+        `}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main content area - show WelcomePage when no active session */}
+      {/* Main content area */}
       {!activeSessionId ? (
-        <WelcomePage onStartSession={handleStartFromModal} />
+        <WelcomePage
+          onStartSession={handleStartFromModal}
+          onMenuClick={toggleSidebar}
+          onToggleRightPanel={toggleRightPanel}
+          isRightPanelOpen={isRightPanelOpen}
+        />
       ) : (
-        <main className="flex flex-1 flex-col ml-[280px] mr-[280px] bg-surface-cream">
+        <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-all duration-300">
           <div className="flex flex-col">
             <div
-              className="flex items-center justify-center h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
+              className="relative flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
               style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
             >
-              <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
-                {activeSession?.title || "Agent Cowork"}
-              </span>
+              {/* Left Sidebar Toggle */}
+              <div className="flex items-center z-10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <button
+                  onClick={toggleSidebar}
+                  className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
+                  aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4v16" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Centered Title */}
+              <div className="absolute inset-x-0 flex justify-center items-center mx-16 pointer-events-none">
+                <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
+                  {activeSession?.title || "Agent Cowork"}
+                </span>
+              </div>
+
+              {/* Right Panel Toggle */}
+              <div className="flex items-center z-10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <button
+                  onClick={toggleRightPanel}
+                  className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isRightPanelOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
+                  aria-label={isRightPanelOpen ? "Close Info Panel" : "Open Info Panel"}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 4v16" />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="h-0.5 bg-accent/50 transition-transform duration-300" />
           </div>
@@ -477,9 +558,9 @@ function AppShell() {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-8 pb-40 pt-6"
+            className="flex-1 overflow-y-auto px-4 md:px-8 pb-40 pt-6"
           >
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-3xl w-full transition-all duration-300">
               <div ref={topSentinelRef} className="h-1" />
 
               {!hasMoreHistory && totalMessages > 0 && (
@@ -598,9 +679,14 @@ function AppShell() {
         sessionCwd={activeSession?.cwd || cwd}
         onScrollToMessage={handleScrollToMessage}
         onOpenFile={handleOpenFile}
+        lastFileRefresh={useAppStore(s => s.lastFileRefresh)}
+        className={`
+          ${isMobile ? 'fixed inset-y-0 right-0 z-40 w-[280px] shadow-2xl' : 'w-[280px] shrink-0'}
+          ${!isRightPanelOpen && isMobile ? 'translate-x-full' : 'translate-x-0'}
+          ${!isRightPanelOpen && !isMobile ? 'hidden' : 'flex'}
+        `}
+        onClose={() => setRightPanelOpen(false)}
       />
-
-
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />

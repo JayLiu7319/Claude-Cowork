@@ -55,8 +55,8 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
   }, [prompt]);
 
   return (
-    <section className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-surface via-surface to-transparent pb-6 px-2 lg:pb-8 pt-8 lg:ml-[280px] lg:mr-[280px]">
-      <div className="mx-auto flex w-full max-w-full items-end gap-3 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card lg:max-w-3xl">
+    <section className="w-full shrink-0 pb-6 pt-2 px-4 md:px-8 bg-surface-cream transition-all duration-300">
+      <div className="mx-auto flex w-full max-w-3xl items-end gap-3 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card">
         <label htmlFor="prompt-input" className="sr-only">{t('promptInput.sendPrompt')}</label>
         <textarea
           id="prompt-input"

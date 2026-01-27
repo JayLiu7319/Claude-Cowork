@@ -8,13 +8,21 @@ interface SidebarProps {
   connected: boolean;
   onNewSession: () => void;
   onDeleteSession: (sessionId: string) => void;
+  className?: string;
+  onClose?: () => void;
 }
 
 export function Sidebar({
   onNewSession,
-  onDeleteSession
+  onDeleteSession,
+  className = "",
+  onClose
 }: SidebarProps) {
   const { t, i18n } = useTranslation();
+
+  // Combine default classes with custom className
+  // default: w-[280px] flex-col border-r border-ink-900/5 bg-surface-cream h-full
+  const sidebarClasses = `flex flex-col h-full bg-surface-cream border-r border-ink-900/5 transition-all duration-300 ease-in-out ${className}`;
 
   const StatusIcon = ({ status }: { status?: string }) => {
     switch (status) {
@@ -125,12 +133,24 @@ export function Sidebar({
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 flex h-full w-[280px] flex-col border-r border-ink-900/5 bg-surface-cream">
+    <aside className={sidebarClasses}>
       {/* Header Section */}
       <div
         className="flex flex-col gap-3 px-4 pt-5 pb-2 shrink-0 bg-surface-cream z-10"
         style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
+        {/* Mobile Header with Close Button */}
+        <div className="md:hidden flex items-center justify-between mb-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+          <span className="text-sm font-medium text-ink-700">{t('sidebar.menu', '菜单')}</span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1 rounded-md hover:bg-ink-900/5 text-ink-500"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
+        </div>
         <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
             className="flex-1 rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"

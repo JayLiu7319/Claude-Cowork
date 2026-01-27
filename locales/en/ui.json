@@ -115,6 +115,7 @@
   "rightpanel": {
     "tasksFiles": "Tasks & Files",
     "fileTree": "File Tree",
+    "title": "Workspace",
     "tasks": "Tasks",
     "artifacts": "Artifacts",
     "directory": "Directory",

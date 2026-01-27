@@ -9,6 +9,9 @@ type RightPanelProps = {
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  lastFileRefresh?: number;
+  className?: string;
+  onClose?: () => void;
 };
 
 export const RightPanel = memo(function RightPanel({
@@ -16,7 +19,10 @@ export const RightPanel = memo(function RightPanel({
   fileChanges,
   sessionCwd,
   onScrollToMessage,
-  onOpenFile
+  onOpenFile,
+  lastFileRefresh,
+  className = "",
+  onClose
 }: RightPanelProps) {
   const taskStats = useMemo(() => {
     return {
@@ -36,10 +42,25 @@ export const RightPanel = memo(function RightPanel({
     };
   }, [fileChanges]);
 
-  return (
-    <aside className="fixed inset-y-0 right-0 flex flex-col h-full w-[280px] border-l border-ink-900/10 bg-surface-cream z-20">
-      <Header />
+  // Combined classes
+  const panelClasses = `flex flex-col h-full bg-surface-cream border-l border-ink-900/10 transition-all duration-300 ease-in-out ${className}`;
 
+  return (
+    <aside className={panelClasses}>
+      {/* Mobile header for close button */}
+      <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-ink-900/5">
+        <span className="text-xs font-medium text-muted">Panel</span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md hover:bg-ink-900/5 text-ink-500"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        )}
+      </div>
+
+      <Header />
       <div className="flex-1 overflow-hidden">
         <TasksFilesPanel
           todos={todos}
@@ -49,6 +70,7 @@ export const RightPanel = memo(function RightPanel({
           sessionCwd={sessionCwd}
           onScrollToMessage={onScrollToMessage}
           onOpenFile={onOpenFile}
+          lastFileRefresh={lastFileRefresh}
         />
       </div>
     </aside>

@@ -13,6 +13,7 @@ type TasksFilesPanelProps = {
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  lastFileRefresh?: number;
 };
 
 export function TasksFilesPanel({
@@ -22,7 +23,8 @@ export function TasksFilesPanel({
   fileStats,
   sessionCwd,
   onScrollToMessage,
-  onOpenFile
+  onOpenFile,
+  lastFileRefresh
 }: TasksFilesPanelProps) {
   useTranslation("ui");
   const [tasksExpanded, setTasksExpanded] = useState(true);
@@ -54,6 +56,7 @@ export function TasksFilesPanel({
         isExpanded={directoryExpanded}
         onToggleExpand={() => setDirectoryExpanded(!directoryExpanded)}
         onOpenFile={onOpenFile}
+        lastFileRefresh={lastFileRefresh}
       />
     </div>
   );

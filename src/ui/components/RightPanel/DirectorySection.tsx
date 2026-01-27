@@ -14,6 +14,7 @@ type DirectorySectionProps = {
     isExpanded: boolean;
     onToggleExpand: () => void;
     onOpenFile: (path: string) => void;
+    lastFileRefresh?: number;
 };
 
 // File icon based on extension
@@ -147,7 +148,8 @@ export const DirectorySection = memo(function DirectorySection({
     sessionCwd,
     isExpanded,
     onToggleExpand,
-    onOpenFile
+    onOpenFile,
+    lastFileRefresh
 }: DirectorySectionProps) {
     const { t } = useTranslation("ui");
     const [directoryData, setDirectoryData] = useState<{
@@ -183,7 +185,7 @@ export const DirectorySection = memo(function DirectorySection({
                 setError(String(err));
                 setIsLoading(false);
             });
-    }, [sessionCwd, isExpanded]);
+    }, [sessionCwd, isExpanded, lastFileRefresh]);
 
     const handleTogglePath = useCallback((path: string) => {
         setExpandedPaths(prev => {

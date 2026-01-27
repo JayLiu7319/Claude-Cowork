@@ -113,6 +113,7 @@
     "description": "在下方输入提示词以开始"
   },
   "rightpanel": {
+    "title": "工作区",
     "tasks": "任务",
     "files": "文件",
     "artifacts": "产物",
