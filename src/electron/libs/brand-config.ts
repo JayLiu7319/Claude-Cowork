@@ -13,7 +13,17 @@ function getBrandId(): string {
     return cachedBrandId;
   }
 
-  // Priority 1: Read from .brand file (production builds)
+  const isPackaged = app.isPackaged;
+
+  // Development: prefer environment variable to avoid stale .brand in dist-electron
+  const envBrand = process.env.BRAND;
+  if (envBrand) {
+    cachedBrandId = envBrand;
+    console.log(`Brand ID loaded from environment: ${cachedBrandId}`);
+    return cachedBrandId;
+  }
+
+  // Production builds: read from .brand file
   try {
     const brandFilePath = path.join(moduleDir, '../../../.brand');
     if (fs.existsSync(brandFilePath)) {
@@ -23,14 +33,6 @@ function getBrandId(): string {
     }
   } catch {
     console.log('No .brand file found, checking environment variable');
-  }
-
-  // Priority 2: Read from environment variable (development)
-  const envBrand = process.env.BRAND;
-  if (envBrand) {
-    cachedBrandId = envBrand;
-    console.log(`Brand ID loaded from environment: ${cachedBrandId}`);
-    return cachedBrandId;
   }
 
   // Priority 3: Default to business
@@ -50,10 +52,6 @@ function getBrandsPath(): string {
 
 export function loadBrandConfig(): BrandConfig {
   if (cachedConfig) {
-    console.log('[BrandConfig] Returning cached config:', {
-      id: cachedConfig.id,
-      plugins: cachedConfig.plugins
-    });
     return cachedConfig;
   }
 
@@ -61,19 +59,9 @@ export function loadBrandConfig(): BrandConfig {
   const brandsDir = getBrandsPath();
   const configPath = path.join(brandsDir, `${brandId}.json`);
 
-  console.log('[BrandConfig] Loading config:', {
-    brandId,
-    brandsDir,
-    configPath
-  });
-
   try {
     const configContent = fs.readFileSync(configPath, 'utf-8');
     cachedConfig = JSON.parse(configContent);
-    console.log('[BrandConfig] Config loaded successfully:', {
-      id: cachedConfig!.id,
-      plugins: cachedConfig!.plugins
-    });
     return cachedConfig!;
   } catch (error) {
     console.error(`Failed to load brand config for "${brandId}" from ${configPath}:`, error);

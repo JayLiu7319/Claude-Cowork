@@ -78,6 +78,7 @@ function AppShell() {
   const globalError = useAppStore((s) => s.globalError);
   const cwd = useAppStore((s) => s.cwd);
   const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
+  const lastFileRefresh = useAppStore((s) => s.lastFileRefresh);
 
   const activeSessionIdRef = useRef(activeSessionId);
   const previousSessionIdRef = useRef<string | null>(activeSessionId);
@@ -476,6 +477,17 @@ function AppShell() {
   const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
   const toggleRightPanel = useCallback(() => setRightPanelOpen(prev => !prev), []);
 
+  if (!brandConfig) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-surface-cream text-ink-600">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="h-3 w-3 animate-pulse rounded-full bg-ink-400" />
+          <span>{t('common.loading', '加载中')}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-surface overflow-hidden relative">
       {/* Mobile Overlay/Backdrop */}
@@ -679,7 +691,7 @@ function AppShell() {
         sessionCwd={activeSession?.cwd || cwd}
         onScrollToMessage={handleScrollToMessage}
         onOpenFile={handleOpenFile}
-        lastFileRefresh={useAppStore(s => s.lastFileRefresh)}
+        lastFileRefresh={lastFileRefresh}
         className={`
           ${isMobile ? 'fixed inset-y-0 right-0 z-40 w-[280px] shadow-2xl' : 'w-[280px] shrink-0'}
           ${!isRightPanelOpen && isMobile ? 'translate-x-full' : 'translate-x-0'}

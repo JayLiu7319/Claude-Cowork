@@ -25,6 +25,9 @@ export function WelcomePage({
     const brandConfig = useAppStore((s) => s.brandConfig);
     const [isSettingDefault, setIsSettingDefault] = useState(false);
 
+    const renderedTitle = brandConfig?.appTitle || t('welcomePage.title', 'Agent Cowork');
+    const renderedSubtitle = brandConfig?.subtitle || t('welcomePage.subtitle', '您的智能助手');
+
     // Get logo path from brand config or fallback
     const logoSrc = useMemo(() => {
         if (!brandConfig?.icons.logo) return null;
@@ -150,10 +153,10 @@ export function WelcomePage({
 
                     {/* Welcome Text */}
                     <h1 className="text-4xl font-bold text-ink-900 mb-4 tracking-tight">
-                        {brandConfig?.appTitle || t('welcomePage.title', 'Agent Cowork')}
+                        {renderedTitle}
                     </h1>
                     <p className="text-xl text-ink-500 mb-12 font-medium">
-                        {brandConfig?.subtitle || t('welcomePage.subtitle', '您的智能助手')}
+                        {renderedSubtitle}
                     </p>
 
                     {/* Quick Actions - Brand-specific */}

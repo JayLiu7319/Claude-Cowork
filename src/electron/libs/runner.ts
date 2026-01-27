@@ -4,6 +4,8 @@ import type { Session } from "./session-store.js";
 
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "./claude-settings.js";
 import path from "path";
+import fs from "fs";
+import { app } from "electron";
 import { getEnhancedEnv } from "./util.js";
 import { t } from "../i18n.js";
 import { getResourcesPath } from "../pathResolver.js";
@@ -92,24 +94,89 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 
 
       // Resolve bundled plugins path
-      const bundledPluginsPath = path.join(getResourcesPath(), 'resources', 'builtin-plugins');
+      const resourcesPath = getResourcesPath();
+      const bundledPluginsPath = path.join(resourcesPath, 'resources', 'builtin-plugins');
 
       // Load plugins based on brand configuration
       const brandConfig = loadBrandConfig();
       const pluginNames = brandConfig.plugins ?? ['core-skills'];
 
-      console.log('[Runner] Brand config loaded:', {
-        brandId: brandConfig.id,
-        plugins: pluginNames,
-        bundledPluginsPath
+      const normalizedPluginConfigs = pluginNames.map((name) => {
+        const pluginPath = path.join(bundledPluginsPath, name);
+        const pluginMetaDir = path.join(pluginPath, '.claude-plugin');
+        const pluginJsonPath = path.join(pluginMetaDir, 'plugin.json');
+        const marketplaceJsonPath = path.join(pluginMetaDir, 'marketplace.json');
+        const skillsDir = path.join(pluginPath, 'skills');
+        const scientificSkillsDir = path.join(pluginPath, 'scientific-skills');
+
+        const hasPluginJson = fs.existsSync(pluginJsonPath);
+        const hasMarketplaceJson = fs.existsSync(marketplaceJsonPath);
+        const hasSkillsDir = fs.existsSync(skillsDir);
+        const hasScientificSkillsDir = fs.existsSync(scientificSkillsDir);
+
+        const needsNormalization =
+          (hasMarketplaceJson && !hasPluginJson) ||
+          (!hasSkillsDir && hasScientificSkillsDir);
+
+        if (!needsNormalization) {
+          return { type: "local" as const, path: pluginPath, normalized: false };
+        }
+
+        const normalizedRoot = path.join(app.getPath('userData'), 'normalized-plugins', name);
+        const normalizedMetaDir = path.join(normalizedRoot, '.claude-plugin');
+        fs.mkdirSync(normalizedMetaDir, { recursive: true });
+
+        if (hasMarketplaceJson) {
+          fs.copyFileSync(marketplaceJsonPath, path.join(normalizedMetaDir, 'marketplace.json'));
+          if (!hasPluginJson) {
+            let nameFromMarketplace = name;
+            let descriptionFromMarketplace = '';
+            let versionFromMarketplace = '0.0.0';
+            try {
+              const marketplaceRaw = fs.readFileSync(marketplaceJsonPath, 'utf-8');
+              const marketplace = JSON.parse(marketplaceRaw);
+              if (typeof marketplace?.name === 'string') {
+                nameFromMarketplace = marketplace.name;
+              }
+              if (typeof marketplace?.metadata?.description === 'string') {
+                descriptionFromMarketplace = marketplace.metadata.description;
+              }
+              if (typeof marketplace?.metadata?.version === 'string') {
+                versionFromMarketplace = marketplace.metadata.version;
+              }
+            } catch {
+              // ignore and use fallback metadata
+            }
+
+            const shimPluginJson = {
+              name: nameFromMarketplace,
+              description: descriptionFromMarketplace,
+              version: versionFromMarketplace
+            };
+            fs.writeFileSync(
+              path.join(normalizedMetaDir, 'plugin.json'),
+              JSON.stringify(shimPluginJson, null, 2)
+            );
+          } else {
+            fs.copyFileSync(pluginJsonPath, path.join(normalizedMetaDir, 'plugin.json'));
+          }
+        } else if (hasPluginJson) {
+          fs.copyFileSync(pluginJsonPath, path.join(normalizedMetaDir, 'plugin.json'));
+        }
+
+        const sourceSkillsDir = hasSkillsDir ? skillsDir : scientificSkillsDir;
+        const normalizedSkillsDir = path.join(normalizedRoot, 'skills');
+        if (!fs.existsSync(normalizedSkillsDir) && sourceSkillsDir) {
+          fs.symlinkSync(sourceSkillsDir, normalizedSkillsDir, 'junction');
+        }
+
+        return { type: "local" as const, path: normalizedRoot, normalized: true };
       });
 
-      const pluginConfigs = pluginNames.map(name => ({
-        type: "local" as const,
-        path: path.join(bundledPluginsPath, name)
+      const pluginConfigs = normalizedPluginConfigs.map(({ type, path: pluginPath }) => ({
+        type,
+        path: pluginPath
       }));
-
-      console.log('[Runner] Plugin configs:', pluginConfigs);
 
       const q = query({
         prompt: effectivePrompt,
