@@ -76,6 +76,14 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Set Brand Environment (Linux/Mac)
+        if: runner.os != 'Windows'
+        run: echo "BRAND=${{ matrix.brand == 'bio' && 'bio-research' || 'business' }}" >> $GITHUB_ENV
+
+      - name: Set Brand Environment (Windows)
+        if: runner.os == 'Windows'
+        run: echo "BRAND=${{ matrix.brand == 'bio' && 'bio-research' || 'business' }}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Build Desktop (custom command)
         if: ${{ matrix.command != '' }}
         run: ${{ matrix.command }}

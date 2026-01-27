@@ -20,9 +20,14 @@ export function WelcomePage({ onStartSession }: WelcomePageProps) {
     // Get logo path from brand config or fallback
     const logoSrc = useMemo(() => {
         if (!brandConfig?.icons.logo) return null;
-        // Convert relative path to absolute for bundled assets
-        const logoPath = brandConfig.icons.logo.replace('./assets/', '/assets/');
-        return logoPath;
+        const rawLogo = brandConfig.icons.logo;
+        if (window.location.protocol === 'file:') {
+            // In packaged app, assets live alongside app.asar
+            const fileRelative = rawLogo.replace('./', '../');
+            return new URL(fileRelative, window.location.href).toString();
+        }
+        // Dev server: use absolute path for assets
+        return rawLogo.replace('./assets/', '/assets/');
     }, [brandConfig]);
 
     const handleSelectDirectory = useCallback(async () => {

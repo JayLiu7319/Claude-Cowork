@@ -4,7 +4,8 @@
     "files": [
         "dist-electron",
         "dist-react",
-        "brands"
+        "brands",
+        "assets"
     ],
     "extraResources": [
         "dist-electron/preload.cjs",

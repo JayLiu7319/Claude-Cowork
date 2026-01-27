@@ -24,14 +24,14 @@
 		"dist:mac-x64": "bun run transpile:electron && bun run build && electron-builder --mac --x64",
 		"dist:win": "bun run transpile:electron && bun run build && electron-builder --win --x64",
 		"dist:linux": "bun run transpile:electron && bun run build && electron-builder --linux --x64",
-		"dist:business:mac-arm64": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run build && electron-builder --mac --arm64 --config electron-builder.business.json",
-		"dist:business:mac-x64": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run build && electron-builder --mac --x64 --config electron-builder.business.json",
-		"dist:business:win": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run build && electron-builder --win --x64 --config electron-builder.business.json",
-		"dist:business:linux": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run build && electron-builder --linux --x64 --config electron-builder.business.json",
-		"dist:bio:mac-arm64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run build && electron-builder --mac --arm64 --config electron-builder.bio.json",
-		"dist:bio:mac-x64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run build && electron-builder --mac --x64 --config electron-builder.bio.json",
-		"dist:bio:win": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run build && electron-builder --win --x64 --config electron-builder.bio.json",
-		"dist:bio:linux": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run build && electron-builder --linux --x64 --config electron-builder.bio.json"
+		"dist:business:mac-arm64": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run scripts/write-brand-info.ts && cross-env BRAND=business bun run build && electron-builder --mac --arm64 --config electron-builder.business.json",
+		"dist:business:mac-x64": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run scripts/write-brand-info.ts && cross-env BRAND=business bun run build && electron-builder --mac --x64 --config electron-builder.business.json",
+		"dist:business:win": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run scripts/write-brand-info.ts && cross-env BRAND=business bun run build && electron-builder --win --x64 --config electron-builder.business.json",
+		"dist:business:linux": "cross-env BRAND=business bun run transpile:electron && cross-env BRAND=business bun run scripts/write-brand-info.ts && cross-env BRAND=business bun run build && electron-builder --linux --x64 --config electron-builder.business.json",
+		"dist:bio:mac-arm64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --mac --arm64 --config electron-builder.bio.json",
+		"dist:bio:mac-x64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --mac --x64 --config electron-builder.bio.json",
+		"dist:bio:win": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --win --x64 --config electron-builder.bio.json",
+		"dist:bio:linux": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --linux --x64 --config electron-builder.bio.json"
 	},
 	"dependencies": {
 		"@anthropic-ai/claude-agent-sdk": "^0.2.6",

@@ -1,11 +1,43 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
+import { fileURLToPath } from 'url';
 import type { BrandConfig } from '../types.js';
 
-const BRAND_ENV = process.env.BRAND || 'business';
-
+let cachedBrandId: string | null = null;
 let cachedConfig: BrandConfig | null = null;
+const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+
+function getBrandId(): string {
+  if (cachedBrandId) {
+    return cachedBrandId;
+  }
+
+  // Priority 1: Read from .brand file (production builds)
+  try {
+    const brandFilePath = path.join(moduleDir, '../../../.brand');
+    if (fs.existsSync(brandFilePath)) {
+      cachedBrandId = fs.readFileSync(brandFilePath, 'utf-8').trim();
+      console.log(`Brand ID loaded from .brand file: ${cachedBrandId}`);
+      return cachedBrandId;
+    }
+  } catch {
+    console.log('No .brand file found, checking environment variable');
+  }
+
+  // Priority 2: Read from environment variable (development)
+  const envBrand = process.env.BRAND;
+  if (envBrand) {
+    cachedBrandId = envBrand;
+    console.log(`Brand ID loaded from environment: ${cachedBrandId}`);
+    return cachedBrandId;
+  }
+
+  // Priority 3: Default to business
+  cachedBrandId = 'business';
+  console.log(`Brand ID defaulted to: ${cachedBrandId}`);
+  return cachedBrandId;
+}
 
 function getBrandsPath(): string {
   // Use app.getAppPath() to get the root of the application
@@ -21,15 +53,16 @@ export function loadBrandConfig(): BrandConfig {
     return cachedConfig;
   }
 
+  const brandId = getBrandId();
   const brandsDir = getBrandsPath();
-  const configPath = path.join(brandsDir, `${BRAND_ENV}.json`);
+  const configPath = path.join(brandsDir, `${brandId}.json`);
 
   try {
     const configContent = fs.readFileSync(configPath, 'utf-8');
     cachedConfig = JSON.parse(configContent);
     return cachedConfig!;
   } catch (error) {
-    console.error(`Failed to load brand config for "${BRAND_ENV}" from ${configPath}:`, error);
+    console.error(`Failed to load brand config for "${brandId}" from ${configPath}:`, error);
     // Fallback to business config
     const fallbackPath = path.join(brandsDir, 'business.json');
     try {
@@ -64,6 +97,4 @@ function getDefaultBrandConfig(): BrandConfig {
   };
 }
 
-export function getBrandId(): string {
-  return BRAND_ENV;
-}
+export { getBrandId };
