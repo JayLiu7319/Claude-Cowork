@@ -3,6 +3,7 @@ import path from "path";
 import os from "os";
 import type { Command } from "../types.js";
 import { getResourcesPath } from "../pathResolver.js";
+import { loadBrandConfig } from "./brand-config.js";
 
 /**
  * Parse YAML frontmatter from a markdown file content
@@ -53,6 +54,10 @@ export async function loadGlobalCommands(): Promise<Command[]> {
     const commandsDir = getGlobalCommandsPath();
     const commands: Command[] = [];
 
+    // Load brand config and create allowed plugins set
+    const brandConfig = loadBrandConfig();
+    const allowedPlugins = new Set(brandConfig.plugins ?? ['core-skills']);
+
     // 1. Load from ~/.claude/commands
     try {
         if (await fs.stat(commandsDir).then(s => s.isDirectory()).catch(() => false)) {
@@ -80,6 +85,9 @@ export async function loadGlobalCommands(): Promise<Command[]> {
 
             for (const pluginDir of pluginDirs) {
                 if (!pluginDir.isDirectory()) continue;
+
+                // Only load commands from plugins specified in brand config
+                if (!allowedPlugins.has(pluginDir.name)) continue;
 
                 // Check for commands subdirectory
                 const commandsPath = path.join(bundledPluginsPath, pluginDir.name, 'commands');
