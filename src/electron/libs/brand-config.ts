@@ -50,6 +50,10 @@ function getBrandsPath(): string {
 
 export function loadBrandConfig(): BrandConfig {
   if (cachedConfig) {
+    console.log('[BrandConfig] Returning cached config:', {
+      id: cachedConfig.id,
+      plugins: cachedConfig.plugins
+    });
     return cachedConfig;
   }
 
@@ -57,9 +61,19 @@ export function loadBrandConfig(): BrandConfig {
   const brandsDir = getBrandsPath();
   const configPath = path.join(brandsDir, `${brandId}.json`);
 
+  console.log('[BrandConfig] Loading config:', {
+    brandId,
+    brandsDir,
+    configPath
+  });
+
   try {
     const configContent = fs.readFileSync(configPath, 'utf-8');
     cachedConfig = JSON.parse(configContent);
+    console.log('[BrandConfig] Config loaded successfully:', {
+      id: cachedConfig!.id,
+      plugins: cachedConfig!.plugins
+    });
     return cachedConfig!;
   } catch (error) {
     console.error(`Failed to load brand config for "${brandId}" from ${configPath}:`, error);

@@ -58,6 +58,8 @@ export async function loadGlobalCommands(): Promise<Command[]> {
     const brandConfig = loadBrandConfig();
     const allowedPlugins = new Set(brandConfig.plugins ?? ['core-skills']);
 
+    console.log('[Commands] Loading commands for plugins:', Array.from(allowedPlugins));
+
     // 1. Load from ~/.claude/commands
     try {
         if (await fs.stat(commandsDir).then(s => s.isDirectory()).catch(() => false)) {

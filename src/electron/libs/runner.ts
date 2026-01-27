@@ -98,6 +98,19 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       const brandConfig = loadBrandConfig();
       const pluginNames = brandConfig.plugins ?? ['core-skills'];
 
+      console.log('[Runner] Brand config loaded:', {
+        brandId: brandConfig.id,
+        plugins: pluginNames,
+        bundledPluginsPath
+      });
+
+      const pluginConfigs = pluginNames.map(name => ({
+        type: "local" as const,
+        path: path.join(bundledPluginsPath, name)
+      }));
+
+      console.log('[Runner] Plugin configs:', pluginConfigs);
+
       const q = query({
         prompt: effectivePrompt,
         options: {
@@ -109,10 +122,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           permissionMode: "bypassPermissions",
           includePartialMessages: true,
           allowDangerouslySkipPermissions: true,
-          plugins: pluginNames.map(name => ({
-            type: "local" as const,
-            path: path.join(bundledPluginsPath, name)
-          })),
+          plugins: pluginConfigs,
           canUseTool: async (toolName, input, { signal }) => {
             // For AskUserQuestion, we need to wait for user response
             if (toolName === "AskUserQuestion") {
