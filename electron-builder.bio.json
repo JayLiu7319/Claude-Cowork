@@ -1,6 +1,6 @@
 {
-    "appId": "com.devagentforge.agentcowork",
-    "productName": "Agent Cowork",
+    "appId": "com.devagentforge.agentcowork.bio",
+    "productName": "生物基因CoScientist",
     "files": [
         "dist-electron",
         "dist-react",
@@ -8,13 +8,13 @@
     ],
     "extraResources": [
         "dist-electron/preload.cjs",
-        "app-icon.png",
+        "assets/icons/bio/app-icon.png",
         "resources"
     ],
     "asarUnpack": [
         "node_modules/@anthropic-ai/claude-agent-sdk/**/*"
     ],
-    "icon": "./app-icon.png",
+    "icon": "./assets/icons/bio/app-icon.png",
     "mac": {
         "target": "dmg"
     },

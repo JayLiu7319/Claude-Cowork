@@ -14,22 +14,49 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # Business Brand
           - os: ubuntu-latest
             platform: linux
             arch: x64
-            script: dist:linux
+            brand: business
+            script: dist:business:linux
           - os: windows-latest
             platform: win
             arch: x64
-            command: bun run transpile:electron && bun run build && bunx electron-builder --win --x64 --config.win.signAndEditExecutable=false
+            brand: business
+            command: bun run dist:business:win -- --config.win.signAndEditExecutable=false
           - os: macos-latest
             platform: mac
             arch: arm64
-            script: dist:mac-arm64
+            brand: business
+            script: dist:business:mac-arm64
           - os: macos-15-intel
             platform: mac
             arch: x64
-            script: dist:mac-x64
+            brand: business
+            script: dist:business:mac-x64
+
+          # Bio Brand
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            brand: bio
+            script: dist:bio:linux
+          - os: windows-latest
+            platform: win
+            arch: x64
+            brand: bio
+            command: bun run dist:bio:win -- --config.win.signAndEditExecutable=false
+          - os: macos-latest
+            platform: mac
+            arch: arm64
+            brand: bio
+            script: dist:bio:mac-arm64
+          - os: macos-15-intel
+            platform: mac
+            arch: x64
+            brand: bio
+            script: dist:bio:mac-x64
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -60,7 +87,7 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-${{ matrix.platform }}-${{ matrix.arch }}
+          name: desktop-${{ matrix.brand }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             dist/*.dmg
             dist/*.AppImage

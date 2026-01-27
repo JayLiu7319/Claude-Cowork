@@ -19,5 +19,6 @@ interface Window {
     getDefaultCwd: () => Promise<string>;
     setDefaultCwd: (cwd: string) => Promise<void>;
     readDirectoryTree: (dirPath: string, depth?: number) => Promise<import('../electron/types').DirectoryEntry[]>;
+    getBrandConfig: () => Promise<import('./types').BrandConfig>;
   };
 }

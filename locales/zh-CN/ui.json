@@ -1,4 +1,21 @@
 {
+  "welcomePage": {
+    "cwdLabel": "工作目录",
+    "cwdPlaceholder": "/path/to/project",
+    "browse": "浏览",
+    "isDefault": "默认",
+    "setAsDefault": "设为默认",
+    "title": "Agent Cowork",
+    "subtitle": "您的智能助手",
+    "quickAction": {
+      "analyze": "商业分析",
+      "strategy": "战略咨询",
+      "report": "生成报告",
+      "experiment": "实验设计",
+      "dataAnalysis": "数据分析",
+      "literature": "文献综述"
+    }
+  },
   "sidebar": {
     "newTask": "+ 新建任务",
     "noSessions": "暂无会话。点击 + 新建任务 开始。",

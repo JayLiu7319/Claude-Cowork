@@ -1,3 +1,4 @@
+import path from "path";
 import { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu, IpcMainEvent, IpcMainInvokeEvent } from "electron"
 import { execSync } from "child_process";
 import { ipcMainHandle, isDev, DEV_PORT } from "./util.js";
@@ -9,9 +10,16 @@ import { saveApiConfig, loadDefaultCwd, saveDefaultCwd } from "./libs/config-sto
 import { getCurrentApiConfig } from "./libs/claude-settings.js";
 import { loadGlobalCommands, readCommandContent } from "./libs/commands.js";
 import { initI18n, getLanguage } from "./i18n.js";
+import { loadBrandConfig } from "./libs/brand-config.js";
 import type { ClientEvent } from "./types.js";
 import type { ApiConfig } from "./libs/config-store.js";
 import "./libs/claude-settings.js";
+
+// ... (lines 17-137 skipped in replacement content, I will target the imports and the specific line later)
+// Wait, replace_file_content replaces a CONTIGUOUS block.
+// I can't easily replace imports AND line 140 in one go if they are far apart.
+// I should make TWO calls.
+
 
 let cleanupComplete = false;
 let mainWindow: BrowserWindow | null = null;
@@ -118,6 +126,9 @@ app.on("ready", () => {
     // Initialize i18n for main process
     initI18n();
 
+    // Load brand configuration
+    const brandConfig = loadBrandConfig();
+
     Menu.setApplicationMenu(null);
     // Setup event handlers
     app.on("before-quit", cleanup);
@@ -133,11 +144,22 @@ app.on("ready", () => {
 
     const preloadPath = getPreloadPath();
     const uiPath = getUIPath();
-    const iconPath = getIconPath();
+    // Resolve icon path based on brand config
+    let iconPath = getIconPath(); // Default fallback
+
+    // For bio-research, we respect the brand config path as we ensure it's copied in build
+    if (brandConfig.id === 'bio-research') {
+        const iconRelPath = brandConfig.icons.app;
+        if (isDev()) {
+            iconPath = path.join(app.getAppPath(), iconRelPath);
+        } else {
+            iconPath = path.join(process.resourcesPath, iconRelPath);
+        }
+    }
 
     // Create main window
     mainWindow = new BrowserWindow({
-        title: "观复君Cowork",
+        title: brandConfig.appTitle,
         width: 1200,
         height: 800,
         minWidth: 900,
@@ -222,6 +244,11 @@ app.on("ready", () => {
     // Handle language request from renderer process
     ipcMainHandle("get-language", () => {
         return getLanguage();
+    });
+
+    // Handle brand config request from renderer process
+    ipcMainHandle("get-brand-config", () => {
+        return brandConfig;
     });
 
     // Handle slash commands loading

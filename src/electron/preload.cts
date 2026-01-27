@@ -48,7 +48,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
     setDefaultCwd: (cwd: string) =>
         ipcInvoke("set-default-cwd", cwd),
     readDirectoryTree: (dirPath: string, depth?: number) =>
-        ipcInvoke("read-directory-tree", dirPath, depth)
+        ipcInvoke("read-directory-tree", dirPath, depth),
+    getBrandConfig: () =>
+        ipcInvoke("get-brand-config")
 })
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {

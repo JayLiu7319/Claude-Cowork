@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command, BrandConfig } from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -41,6 +41,7 @@ interface AppState {
   rightPanelActiveTab: "tasksfiles" | "tree";
   planMode: boolean;
   availableCommands: Command[];
+  brandConfig: BrandConfig | null;
 
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
@@ -54,6 +55,7 @@ interface AppState {
   setRightPanelActiveTab: (tab: "tasksfiles" | "tree") => void;
   setPlanMode: (enabled: boolean) => void;
   setAvailableCommands: (commands: Command[]) => void;
+  setBrandConfig: (config: BrandConfig) => void;
   markHistoryRequested: (sessionId: string) => void;
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
   toggleFolderExpanded: (sessionId: string, folderPath: string) => void;
@@ -91,6 +93,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   rightPanelActiveTab: "tasksfiles",
   planMode: false,
   availableCommands: [],
+  brandConfig: null,
 
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
@@ -104,6 +107,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setRightPanelActiveTab: (rightPanelActiveTab) => set({ rightPanelActiveTab }),
   setPlanMode: (planMode) => set({ planMode }),
   setAvailableCommands: (availableCommands) => set({ availableCommands }),
+  setBrandConfig: (brandConfig) => set({ brandConfig }),
 
   markHistoryRequested: (sessionId) => {
     set((state) => {

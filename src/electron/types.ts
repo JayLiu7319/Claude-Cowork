@@ -104,6 +104,29 @@ export type DirectoryEntry = {
   children?: DirectoryEntry[];
 };
 
+// Brand configuration type
+export interface BrandConfig {
+  id: 'business' | 'bio-research';
+  name: string;
+  displayName: string;
+  appTitle: string;
+  subtitle: string;
+  colors: {
+    accent: string;
+    accentHover: string;
+    accentLight: string;
+    accentSubtle: string;
+  };
+  waterfall?: {
+    items: string[];
+    enabled: boolean;
+  };
+  icons: {
+    app: string;
+    logo: string;
+  };
+}
+
 // IPC Event Payload Mapping for type-safe IPC communication
 export type EventPayloadMapping = {
   "getStaticData": StaticData;
@@ -122,5 +145,6 @@ export type EventPayloadMapping = {
   "get-default-cwd": string;
   "set-default-cwd": void;
   "read-directory-tree": DirectoryEntry[];
+  "get-brand-config": BrandConfig;
 };
 

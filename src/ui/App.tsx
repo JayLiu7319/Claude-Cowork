@@ -5,8 +5,9 @@ import type { i18n } from 'i18next';
 import { useShallow } from 'zustand/shallow';
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
+import { useBrandTheme } from "./hooks/useBrandTheme";
 import { useAppStore } from "./store/useAppStore";
-import type { ServerEvent } from "./types";
+import type { ServerEvent, BrandConfig } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
@@ -90,6 +91,11 @@ function AppShell() {
   const setCwd = useAppStore((s) => s.setCwd);
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
   const setDefaultCwd = useAppStore((s) => s.setDefaultCwd);
+  const setBrandConfig = useAppStore((s) => s.setBrandConfig);
+  const brandConfig = useAppStore((s) => s.brandConfig);
+
+  // Apply brand theme
+  useBrandTheme(brandConfig);
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(() =>
@@ -219,9 +225,16 @@ function AppShell() {
     totalMessages,
   } = useMessageWindow(messages, activeSessionId);
 
-  // 启动时检查 API 配置和加载默认工作目录
+  // 启动时检查 API 配置、加载默认工作目录和品牌配置
   useEffect(() => {
     if (!apiConfigChecked) {
+      // Load brand config
+      window.electron.getBrandConfig().then((config: BrandConfig) => {
+        setBrandConfig(config);
+      }).catch((err: Error) => {
+        console.error("Failed to load brand config:", err);
+      });
+
       // Load default cwd
       window.electron.getDefaultCwd().then((defaultCwd) => {
         setDefaultCwd(defaultCwd);
@@ -241,7 +254,7 @@ function AppShell() {
         setApiConfigChecked(true);
       });
     }
-  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd]);
+  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd, setBrandConfig]);
 
   useEffect(() => {
     if (connected) sendEvent({ type: "session.list" });

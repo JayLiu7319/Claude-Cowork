@@ -1,4 +1,21 @@
 {
+  "welcomePage": {
+    "cwdLabel": "Working Directory",
+    "cwdPlaceholder": "/path/to/project",
+    "browse": "Browse",
+    "isDefault": "Default",
+    "setAsDefault": "Set as Default",
+    "title": "Agent Cowork",
+    "subtitle": "Your Intelligent Assistant",
+    "quickAction": {
+      "analyze": "Business Analysis",
+      "strategy": "Strategic Consulting",
+      "report": "Generate Report",
+      "experiment": "Experiment Design",
+      "dataAnalysis": "Data Analysis",
+      "literature": "Literature Review"
+    }
+  },
   "sidebar": {
     "newTask": "+ New Task",
     "noSessions": "No sessions yet. Click \"+ New Task\" to start.",

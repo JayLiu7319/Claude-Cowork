@@ -79,3 +79,30 @@ export type ClientEvent =
   | { type: "session.list" }
   | { type: "session.history"; payload: { sessionId: string } }
   | { type: "permission.response"; payload: { sessionId: string; toolUseId: string; result: PermissionResult } };
+
+// Brand configuration type (shared with electron)
+export interface BrandConfig {
+  id: 'business' | 'bio-research';
+  name: string;
+  displayName: string;
+  appTitle: string;
+  subtitle: string;
+  colors: {
+    accent: string;
+    accentHover: string;
+    accentLight: string;
+    accentSubtle: string;
+    surface?: string;
+    surfaceSecondary?: string;
+    surfaceTertiary?: string;
+    surfaceCream?: string;
+  };
+  waterfall?: {
+    items: string[];
+    enabled: boolean;
+  };
+  icons: {
+    app: string;
+    logo: string;
+  };
+}

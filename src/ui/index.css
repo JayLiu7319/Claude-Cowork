@@ -20,7 +20,8 @@
   --color-muted: #6B6B66;
   --color-muted-light: #9B9B96;
 
-  /* Accent colors (Claude orange) */
+  /* Accent colors (dynamically injected by brand theme) */
+  /* Default fallback values if brand config not loaded yet */
   --color-accent: #D97757;
   --color-accent-hover: #CC785C;
   --color-accent-light: #F5D0C5;

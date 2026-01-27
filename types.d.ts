@@ -19,6 +19,35 @@ type Command = {
     filePath: string;
 }
 
+type BrandConfig = {
+    id: 'business' | 'bio-research';
+    name: string;
+    displayName: string;
+    appTitle: string;
+    subtitle: string;
+    colors: {
+        accent: string;
+        accentHover: string;
+        accentLight: string;
+        accentSubtle: string;
+    };
+    waterfall?: {
+        items: string[];
+        enabled: boolean;
+    };
+    icons: {
+        app: string;
+        logo: string;
+    };
+}
+
+type DirectoryEntry = {
+    name: string;
+    path: string;
+    isDirectory: boolean;
+    children?: DirectoryEntry[];
+}
+
 export type EventPayloadMapping = {
     statistics: Statistics;
     getStaticData: StaticData;
@@ -54,6 +83,9 @@ declare global {
             readCommandContent: (filePath: string) => Promise<string | null>;
             getDefaultCwd: () => Promise<string>;
             setDefaultCwd: (cwd: string) => Promise<void>;
+            readDirectoryTree: (dirPath: string, depth?: number) => Promise<DirectoryEntry[]>;
+            // Brand configuration
+            getBrandConfig: () => Promise<BrandConfig>;
         }
     }
 }
