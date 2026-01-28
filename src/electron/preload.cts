@@ -1,5 +1,10 @@
 import electron from "electron";
 import type { EventPayloadMapping } from "./types.js";
+try {
+    require('electron-log/preload');
+} catch (e) {
+    console.error('Failed to load electron-log/preload:', e);
+}
 
 electron.contextBridge.exposeInMainWorld("electron", {
     subscribeStatistics: (callback: any) =>
@@ -50,7 +55,9 @@ electron.contextBridge.exposeInMainWorld("electron", {
     readDirectoryTree: (dirPath: string, depth?: number) =>
         ipcInvoke("read-directory-tree", dirPath, depth),
     getBrandConfig: () =>
-        ipcInvoke("get-brand-config")
+        ipcInvoke("get-brand-config"),
+    getLogPath: () =>
+        ipcInvoke("get-log-path")
 })
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {

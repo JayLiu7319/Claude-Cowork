@@ -4,6 +4,7 @@
         "target": "ESNext",
         "module": "NodeNext",
         "outDir": "../../dist-electron",
+        "esModuleInterop": true,
         "skipLibCheck": true,
         // add global types
         "types": [

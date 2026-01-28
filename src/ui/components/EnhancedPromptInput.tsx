@@ -9,7 +9,7 @@ const MAX_ROWS = 12;
 const LINE_HEIGHT = 21;
 const MAX_HEIGHT = MAX_ROWS * LINE_HEIGHT;
 // Stable noop function reference to prevent unnecessary re-renders
-const NOOP_SEND_EVENT = () => {};
+const NOOP_SEND_EVENT = () => { };
 
 interface EnhancedPromptInputProps {
     onStartSession: () => void;
@@ -200,7 +200,7 @@ export function EnhancedPromptInput({ onStartSession, sendEvent }: EnhancedPromp
 
                         {planMode && (
                             <span className="text-xs text-muted">
-                                {t('welcomePage.planModeHint', 'Claude 将先制定计划再执行')}
+                                {t('welcomePage.planModeHint', 'Agent 将先制定计划再执行')}
                             </span>
                         )}
                     </div>

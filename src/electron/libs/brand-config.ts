@@ -13,7 +13,7 @@ function getBrandId(): string {
     return cachedBrandId;
   }
 
-  const isPackaged = app.isPackaged;
+
 
   // Development: prefer environment variable to avoid stale .brand in dist-electron
   const envBrand = process.env.BRAND;

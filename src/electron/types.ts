@@ -147,5 +147,6 @@ export type EventPayloadMapping = {
   "set-default-cwd": void;
   "read-directory-tree": DirectoryEntry[];
   "get-brand-config": BrandConfig;
+  "get-log-path": string;
 };
 

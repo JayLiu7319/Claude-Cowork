@@ -1,6 +1,7 @@
 import path from "path";
 import { app, BrowserWindow, ipcMain, dialog, globalShortcut, Menu, IpcMainEvent, IpcMainInvokeEvent } from "electron"
 import { execSync } from "child_process";
+import log from 'electron-log';
 import { ipcMainHandle, isDev, DEV_PORT } from "./util.js";
 import { getPreloadPath, getUIPath, getIconPath } from "./pathResolver.js";
 import { getStaticData, pollResources, stopPolling } from "./test.js";
@@ -14,6 +15,10 @@ import { loadBrandConfig } from "./libs/brand-config.js";
 import type { ClientEvent } from "./types.js";
 import type { ApiConfig } from "./libs/config-store.js";
 import "./libs/claude-settings.js";
+
+// Initialize logging
+log.initialize();
+Object.assign(console, log.functions);
 
 // ... (lines 17-137 skipped in replacement content, I will target the imports and the specific line later)
 // Wait, replace_file_content replaces a CONTIGUOUS block.
@@ -168,8 +173,13 @@ app.on("ready", () => {
             preload: preloadPath,
         },
         icon: iconPath,
-        titleBarStyle: "hiddenInset",
+        titleBarStyle: "hidden",
         backgroundColor: "#FAF9F6",
+        titleBarOverlay: {
+            color: '#FAF9F6',
+            symbolColor: '#4B5563',
+            height: 48
+        },
         trafficLightPosition: { x: 15, y: 18 }
     });
 
@@ -189,6 +199,11 @@ app.on("ready", () => {
     ipcMainHandle("getStaticData", () => {
         return getStaticData();
     });
+
+    ipcMainHandle("get-log-path", () => {
+        return log.transports.file.getFile().path; // Returns the full path to the log file
+    });
+
 
     // Handle client events
     ipcMain.on("client-event", (_: IpcMainEvent, event: ClientEvent) => {

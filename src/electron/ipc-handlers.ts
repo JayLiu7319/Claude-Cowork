@@ -4,6 +4,7 @@ import { runClaude, type RunnerHandle } from "./libs/runner.js";
 import { SessionStore } from "./libs/session-store.js";
 import { app } from "electron";
 import { join } from "path";
+import log from 'electron-log';
 import { t } from "./i18n.js";
 import { aggregateTodos } from "./libs/todo-extractor.js";
 import { aggregateFileChanges } from "./libs/file-change-extractor.js";
@@ -18,6 +19,7 @@ const rightPanelUpdateTimers = new Map<string, NodeJS.Timeout>();
 function initializeSessions() {
   if (!sessions) {
     const DB_PATH = join(app.getPath("userData"), "sessions.db");
+    log.info(`Initializing SessionStore at ${DB_PATH}`);
     sessions = new SessionStore(DB_PATH);
   }
   return sessions;
@@ -140,6 +142,10 @@ export function handleClientEvent(event: ClientEvent) {
   // Initialize sessions on first event
   const sessions = initializeSessions();
 
+  if (event.type !== "session.history" && event.type !== "session.list") {
+    log.info(`[ClientEvent] ${event.type}`, event.type === 'session.start' || event.type === 'session.continue' ? event.payload : '');
+  }
+
   if (event.type === "session.list") {
     emit({
       type: "session.list",
@@ -208,6 +214,8 @@ export function handleClientEvent(event: ClientEvent) {
       prompt: event.payload.prompt
     });
 
+    log.info(`[Session] Starting new session: ${session.id} (Title: ${session.title})`);
+
     sessions.updateSession(session.id, {
       status: "running",
       lastPrompt: event.payload.prompt
@@ -247,6 +255,7 @@ export function handleClientEvent(event: ClientEvent) {
             error: String(error)
           }
         });
+        log.error(`[Session] Error in session ${session.id}:`, error);
       });
 
     return;
@@ -285,6 +294,8 @@ export function handleClientEvent(event: ClientEvent) {
       return;
     }
 
+    log.info(`[Session] Continuing session: ${session.id}`);
+
     sessions.updateSession(session.id, { status: "running", lastPrompt: event.payload.prompt });
     emit({
       type: "session.status",
@@ -320,6 +331,7 @@ export function handleClientEvent(event: ClientEvent) {
             error: String(error)
           }
         });
+        log.error(`[Session] Error in continuing session ${session.id}:`, error);
       });
 
     return;
@@ -339,6 +351,7 @@ export function handleClientEvent(event: ClientEvent) {
     }
 
     sessions.updateSession(session.id, { status: "idle" });
+    log.info(`[Session] Stopped session: ${event.payload.sessionId}`);
     emit({
       type: "session.status",
       payload: { sessionId: session.id, status: "idle", title: session.title, cwd: session.cwd }
@@ -360,6 +373,7 @@ export function handleClientEvent(event: ClientEvent) {
 
     // Always try to delete and emit deleted event
     // Don't emit error if session doesn't exist - it may have already been deleted
+    log.info(`[Session] Deleting session: ${sessionId}`);
     sessions.deleteSession(sessionId);
     emit({
       type: "session.deleted",

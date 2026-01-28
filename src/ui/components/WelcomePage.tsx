@@ -27,6 +27,8 @@ export function WelcomePage({
 
     const renderedTitle = brandConfig?.appTitle || t('welcomePage.title', 'Agent Cowork');
     const renderedSubtitle = brandConfig?.subtitle || t('welcomePage.subtitle', '您的智能助手');
+    const isWindows = navigator.userAgent.includes('Windows');
+    const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
 
     // Get logo path from brand config or fallback
     const logoSrc = useMemo(() => {
@@ -73,16 +75,17 @@ export function WelcomePage({
 
             {/* Top Directory Bar */}
             <div
-                className="relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 md:px-6"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                className={`relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 md:px-6 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
+                style={{ WebkitAppRegion: 'drag', paddingRight: titlebarRightPadding } as React.CSSProperties}
             >
-                <div className="flex items-center gap-3 w-full" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                <div className="flex items-center gap-3 w-full">
                     {/* Mobile Menu Button */}
                     <div className="md:hidden mr-1">
                         {onMenuClick && (
                             <button
                                 onClick={onMenuClick}
                                 className="p-1.5 rounded-lg hover:bg-ink-900/5 text-ink-600 transition-colors"
+                                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                             >
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -95,19 +98,23 @@ export function WelcomePage({
                         {t('welcomePage.cwdLabel', '工作目录')}
                     </span>
                     <div className="flex-1 min-w-0 overflow-hidden">
-                        <input
-                            type="text"
-                            value={cwd}
-                            onChange={(e) => setCwd(e.target.value)}
-                            className="w-full text-sm text-ink-700 bg-transparent border-none focus:outline-none"
-                            placeholder={t('welcomePage.cwdPlaceholder', '/path/to/project')}
-                            title={cwd}
-                        />
+                        <div
+                            className={`w-full text-sm ${cwd ? 'text-ink-700' : 'text-ink-400'} truncate select-none`}
+                            title={cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
+                            onMouseDown={() => {
+                                // #region agent log
+                                fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WelcomePage.tsx:108',message:'welcome-cwd-input-mousedown',data:{selection:window.getSelection()?.toString() || '',value:cwd,defaultCwd},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
+                                // #endregion
+                            }}
+                        >
+                            {cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
+                        </div>
                     </div>
                     <button
                         type="button"
                         onClick={handleSelectDirectory}
                         className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     >
                         {t('welcomePage.browse', '浏览')}
                     </button>
@@ -116,6 +123,7 @@ export function WelcomePage({
                         onClick={handleSetAsDefault}
                         disabled={isSettingDefault || isCurrentDefault || !cwd.trim()}
                         className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     >
                         {isCurrentDefault ? t('welcomePage.isDefault', '默认') : t('welcomePage.setAsDefault', '设为默认')}
                     </button>

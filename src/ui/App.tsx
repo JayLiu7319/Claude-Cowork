@@ -97,6 +97,7 @@ function AppShell() {
 
   // Apply brand theme
   useBrandTheme(brandConfig);
+  const isWindows = navigator.userAgent.includes('Windows');
 
   // Check user's motion preference
   const prefersReducedMotion = useMemo(() =>
@@ -454,6 +455,7 @@ function AppShell() {
   const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [isRightPanelOpen, setRightPanelOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
 
   // Initialize responsive state on mount and listen to resize
   useEffect(() => {
@@ -526,8 +528,8 @@ function AppShell() {
         <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-all duration-300">
           <div className="flex flex-col">
             <div
-              className="relative flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4"
-              style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              className={`relative flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
+              style={{ WebkitAppRegion: 'drag', paddingRight: titlebarRightPadding } as React.CSSProperties}
             >
               {/* Left Sidebar Toggle */}
               <div className="flex items-center z-10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
