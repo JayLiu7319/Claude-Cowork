@@ -10,13 +10,15 @@ interface WelcomePageProps {
     onMenuClick?: () => void;
     onToggleRightPanel?: () => void;
     isRightPanelOpen?: boolean;
+    isSidebarOpen?: boolean;
 }
 
 export function WelcomePage({
     onStartSession,
     onMenuClick,
     onToggleRightPanel,
-    isRightPanelOpen
+    isRightPanelOpen,
+    isSidebarOpen
 }: WelcomePageProps) {
     const { t } = useTranslation();
     const cwd = useAppStore((s) => s.cwd);
@@ -76,11 +78,11 @@ export function WelcomePage({
 
             {/* Top Directory Bar */}
             <div
-                className={`relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 md:px-6 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
+                className={`relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
                 style={{ WebkitAppRegion: 'drag', paddingRight: titlebarRightPadding } as React.CSSProperties}
             >
                 <div className="flex items-center gap-3 w-full">
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Button - Hamburger */}
                     <div className="md:hidden mr-1">
                         {onMenuClick && (
                             <button
@@ -90,6 +92,22 @@ export function WelcomePage({
                             >
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Desktop Sidebar Toggle - Panel Left */}
+                    <div className="hidden md:block mr-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                        {onMenuClick && (
+                            <button
+                                onClick={onMenuClick}
+                                className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'}`}
+                                aria-label="Toggle Sidebar"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="9" y1="3" x2="9" y2="21" />
                                 </svg>
                             </button>
                         )}
@@ -133,9 +151,9 @@ export function WelcomePage({
                             className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors ${isRightPanelOpen ? 'text-accent bg-accent/5' : 'text-ink-400'}`}
                             aria-label="Toggle Info Panel"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 4v16" />
+                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <line x1="15" y1="3" x2="15" y2="21" />
                             </svg>
                         </button>
                     )}

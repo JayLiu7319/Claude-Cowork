@@ -20,6 +20,8 @@ interface EnhancedPromptInputProps {
     sendEvent?: (event: ClientEvent) => void;
     onSendMessage?: () => void;
     disabled?: boolean;
+    showNewMessageButton?: boolean;
+    onScrollToBottom?: () => void;
 }
 
 type TokenRegistryItem = InputToken & { id: string };
@@ -278,7 +280,14 @@ function computeDiffRange(prev: string, next: string) {
     return { start, endPrev, endNext };
 }
 
-export function EnhancedPromptInput({ onStartSession, sendEvent, onSendMessage, disabled = false }: EnhancedPromptInputProps) {
+export function EnhancedPromptInput({
+    onStartSession,
+    sendEvent,
+    onSendMessage,
+    disabled = false,
+    showNewMessageButton = false,
+    onScrollToBottom
+}: EnhancedPromptInputProps) {
     const { t } = useTranslation();
     const planMode = useAppStore((s) => s.planMode);
     const setPlanMode = useAppStore((s) => s.setPlanMode);
@@ -606,7 +615,7 @@ export function EnhancedPromptInput({ onStartSession, sendEvent, onSendMessage, 
 
     return (
         <section className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-surface-cream via-surface-cream to-transparent pb-6 px-2 lg:pb-8 pt-8">
-            <div ref={inputContainerRef} className="relative mx-auto max-w-full lg:max-w-3xl">
+            <div ref={inputContainerRef} className="relative mx-auto max-w-full lg:max-w-3xl pr-[6px]">
                 {/* Autocomplete Popup */}
                 {showAutocomplete && (
                     <AutocompletePopup
@@ -624,7 +633,23 @@ export function EnhancedPromptInput({ onStartSession, sendEvent, onSendMessage, 
                     />
                 )}
 
-                <div className="flex flex-col gap-2 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card">
+                <div className="relative flex flex-col gap-2 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card">
+                    {/* New Messages Button - Positioned above the card */}
+                    {showNewMessageButton && (
+                        <div className="absolute -top-12 left-0 right-0 flex justify-center pointer-events-none">
+                            <button
+                                onClick={onScrollToBottom}
+                                aria-label="Scroll to bottom to view new messages"
+                                className="pointer-events-auto flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 animate-bounce-subtle"
+                            >
+                                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 5v14M5 12l7 7 7-7" />
+                                </svg>
+                                <span>{t('common.newMessages', '新消息')}</span>
+                            </button>
+                        </div>
+                    )}
+
                     {/* Input area */}
                     <div className="flex items-end gap-3">
                         <label htmlFor="enhanced-prompt-input" className="sr-only">{t('promptInput.sendPrompt')}</label>

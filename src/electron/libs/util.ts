@@ -10,6 +10,7 @@ export function getEnhancedEnv(): Record<string, string | undefined> {
   if (!config) {
     return {
       ...process.env,
+      ...(app.isPackaged && process.platform === "win32" ? { ELECTRON_RUN_AS_NODE: "1" } : {})
     };
   }
   
@@ -17,6 +18,7 @@ export function getEnhancedEnv(): Record<string, string | undefined> {
   return {
     ...process.env,
     ...env,
+    ...(app.isPackaged && process.platform === "win32" ? { ELECTRON_RUN_AS_NODE: "1" } : {})
   };
 }
 

@@ -535,6 +535,7 @@ function AppShell() {
           onMenuClick={toggleSidebar}
           onToggleRightPanel={toggleRightPanel}
           isRightPanelOpen={isRightPanelOpen}
+          isSidebarOpen={isSidebarOpen}
         />
       ) : (
         <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-all duration-300">
@@ -550,16 +551,25 @@ function AppShell() {
                   className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
                   aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4v16" />
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <line x1="9" y1="3" x2="9" y2="21" />
                   </svg>
                 </button>
               </div>
 
               {/* Centered Title */}
-              <div className="absolute inset-x-0 flex justify-center items-center mx-16 pointer-events-none">
-                <span className="text-sm font-medium text-ink-700 truncate max-w-full" title={activeSession?.title || "Agent Cowork"}>
+              <div
+                className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none transition-all duration-300"
+                style={{
+                  left: '60px',
+                  right: isWindows && !isRightPanelOpen ? '190px' : '60px'
+                }}
+              >
+                <span
+                  className="text-sm font-medium text-ink-700 truncate max-w-full"
+                  title={activeSession?.title || "Agent Cowork"}
+                >
                   {activeSession?.title || "Agent Cowork"}
                 </span>
               </div>
@@ -571,9 +581,9 @@ function AppShell() {
                   className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isRightPanelOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
                   aria-label={isRightPanelOpen ? "Close Info Panel" : "Open Info Panel"}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 4v16" />
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <line x1="15" y1="3" x2="15" y2="21" />
                   </svg>
                 </button>
               </div>
@@ -685,21 +695,10 @@ function AppShell() {
             sendEvent={sendEvent}
             onSendMessage={handleSendMessage}
             disabled={visibleMessages.length === 0}
+            showNewMessageButton={hasNewMessages && !shouldAutoScroll}
+            onScrollToBottom={scrollToBottom}
           />
 
-          {hasNewMessages && !shouldAutoScroll && (
-            <button
-              onClick={scrollToBottom}
-              aria-label="Scroll to bottom to view new messages"
-              className={`fixed bottom-28 left-1/2 z-40 -translate-x-1/2 flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${!prefersReducedMotion ? 'animate-bounce-subtle' : ''}`}
-              style={!prefersReducedMotion ? {} : { transform: 'translateX(-50%)' }}
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12l7 7 7-7" />
-              </svg>
-              <span>{t('common.newMessages')}</span>
-            </button>
-          )}
         </main>
       )}
 

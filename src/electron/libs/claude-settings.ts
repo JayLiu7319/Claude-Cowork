@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import { loadApiConfig, saveApiConfig, type ApiConfig } from "./config-store.js";
@@ -6,9 +6,6 @@ import { app } from "electron";
 
 // Get Claude Code CLI path
 export function getClaudeCodePath(): string {
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'claude-settings.ts:getClaudeCodePath',message:'getClaudeCodePath entry',data:{isPackaged:app.isPackaged,platform:process.platform,resourcesPath:process.resourcesPath,execPath:process.execPath},timestamp:Date.now()})}).catch(()=>{});
-  // #endregion
   if (app.isPackaged) {
     // For packaged apps, the SDK needs the explicit path to the CLI
     // The path should point to the unpackaged asar.unpacked directory
@@ -21,50 +18,14 @@ export function getClaudeCodePath(): string {
       "cli.js"
     );
 
-    const cliExists = existsSync(cliPath);
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A',location:'claude-settings.ts:getClaudeCodePath',message:'resolved cli path',data:{cliPath,cliExists},timestamp:Date.now()})}).catch(()=>{});
-    // #endregion
-    if (!cliExists) {
+    if (!existsSync(cliPath)) {
       console.error("[claude-settings] CRITICAL: Claude Code CLI not found at expected path:", cliPath);
-    } else {
-      console.log("[claude-settings] Verified Claude Code CLI exists at:", cliPath);
     }
 
-    // On Windows, create a wrapper script to ensure we use the Electron binary as Node
-    // This avoids reliance on user's installed Node (or lack thereof) and ensures version compatibility
+    // On Windows, avoid .cmd wrapper because cmd.exe can fail on non-ASCII exe paths.
+    // We rely on ELECTRON_RUN_AS_NODE in env to execute cli.js via Electron's Node runtime.
     if (process.platform === 'win32') {
-      try {
-        const wrapperPath = join(app.getPath('userData'), 'claude-code-wrapper.cmd');
-        const logPath = join(app.getPath('userData'), 'claude-wrapper-debug.log');
-        const exePath = process.execPath;
-
-        // Wrapper script with debug logging
-        const content = `@echo off
-set ELECTRON_RUN_AS_NODE=1
-echo [WRAPPER] Starting execution at %DATE% %TIME% >> "${logPath}"
-echo [WRAPPER] Executable: "${exePath}" >> "${logPath}"
-echo [WRAPPER] Script: "${cliPath}" >> "${logPath}"
-echo [WRAPPER] Args: %* >> "${logPath}"
-
-"${exePath}" "${cliPath}" %*
-if %errorlevel% neq 0 (
-  echo [WRAPPER] Execution failed with code %errorlevel% >> "${logPath}"
-  exit /b %errorlevel%
-)
-echo [WRAPPER] Execution finished successfully >> "${logPath}"
-`;
-        writeFileSync(wrapperPath, content);
-        console.log("[claude-settings] Created wrapper script at:", wrapperPath);
-        // #region agent log
-        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'B',location:'claude-settings.ts:getClaudeCodePath',message:'wrapper created',data:{wrapperPath,logPath,exePath},timestamp:Date.now()})}).catch(()=>{});
-        // #endregion
-        return wrapperPath;
-      } catch (error) {
-        console.error("Failed to create Claude Code wrapper script:", error);
-        // Fallback to direct path if wrapper creation fails
-        return cliPath;
-      }
+      return cliPath;
     }
 
     return cliPath;

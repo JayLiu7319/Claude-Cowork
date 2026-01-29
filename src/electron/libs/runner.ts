@@ -5,6 +5,7 @@ import type { Session } from "./session-store.js";
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "./claude-settings.js";
 import path from "path";
 import fs from "fs";
+import log from "electron-log";
 import { app } from "electron";
 import { getEnhancedEnv } from "./util.js";
 import { t } from "../i18n.js";
@@ -92,16 +93,14 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         ...env
       };
 
+
+
       // Resolve bundled plugins path
       const resourcesPath = getResourcesPath();
       const bundledPluginsPath = path.join(resourcesPath, 'resources', 'builtin-plugins');
-
       // Load plugins based on brand configuration
       const brandConfig = loadBrandConfig();
       const pluginNames = brandConfig.plugins ?? ['core-skills'];
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'runner.ts:runClaude',message:'plugin resolution inputs',data:{resourcesPath,bundledPluginsPath,pluginNames,cwd:session.cwd ?? DEFAULT_CWD},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
 
       const normalizedPluginConfigs = pluginNames.map((name) => {
         const pluginPath = path.join(bundledPluginsPath, name);
@@ -168,8 +167,47 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
 
         const sourceSkillsDir = hasSkillsDir ? skillsDir : scientificSkillsDir;
         const normalizedSkillsDir = path.join(normalizedRoot, 'skills');
-        if (!fs.existsSync(normalizedSkillsDir) && sourceSkillsDir) {
-          fs.symlinkSync(sourceSkillsDir, normalizedSkillsDir, 'junction');
+        if (sourceSkillsDir) {
+          let existingStats: fs.Stats | null = null;
+          try {
+            existingStats = fs.lstatSync(normalizedSkillsDir);
+          } catch (error) {
+            const err = error as NodeJS.ErrnoException;
+            if (err.code !== "ENOENT") {
+              log.warn("[runner] Failed to inspect existing skills path", {
+                name,
+                normalizedSkillsDir,
+                error: String(error)
+              });
+            }
+          }
+
+          if (existingStats) {
+            if (existingStats.isSymbolicLink()) {
+              const currentTarget = fs.readlinkSync(normalizedSkillsDir);
+              if (path.resolve(currentTarget) === path.resolve(sourceSkillsDir)) {
+                log.info("[runner] Plugin skills link already exists", {
+                  name,
+                  normalizedSkillsDir,
+                  currentTarget
+                });
+              } else {
+                log.warn("[runner] Plugin skills link points to different target", {
+                  name,
+                  normalizedSkillsDir,
+                  currentTarget,
+                  expectedTarget: sourceSkillsDir
+                });
+              }
+            } else {
+              log.warn("[runner] Plugin skills path exists and is not a link", {
+                name,
+                normalizedSkillsDir
+              });
+            }
+          } else {
+            fs.symlinkSync(sourceSkillsDir, normalizedSkillsDir, 'junction');
+          }
         }
 
         return { type: "local" as const, path: normalizedRoot, normalized: true };
@@ -179,9 +217,8 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         type,
         path: pluginPath
       }));
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'runner.ts:runClaude',message:'plugin configs resolved',data:{pluginConfigs,normalizedCount:normalizedPluginConfigs.filter((p)=>p.normalized).length},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+
+      const claudeCodePath = getClaudeCodePath();
 
       const q = query({
         prompt: effectivePrompt,
@@ -190,7 +227,7 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           resume: resumeSessionId,
           abortController,
           env: mergedEnv,
-          pathToClaudeCodeExecutable: getClaudeCodePath(),
+          pathToClaudeCodeExecutable: claudeCodePath,
           permissionMode: "bypassPermissions",
           includePartialMessages: true,
           allowDangerouslySkipPermissions: true,
@@ -228,9 +265,6 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           }
         }
       });
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'D',location:'runner.ts:runClaude',message:'query started',data:{resumeSessionId,permissionMode:'bypassPermissions',pathToClaudeCodeExecutable:getClaudeCodePath()},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
 
       // Capture session_id from init message
       for await (const message of q) {
@@ -268,9 +302,12 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         // Session was aborted, don't treat as error
         return;
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'D',location:'runner.ts:runClaude',message:'query failed',data:{errorName:(error as Error)?.name,errorMessage:String(error)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      log.error("[runner] Query failed", {
+        sessionId: session.id,
+        cwd: session.cwd ?? DEFAULT_CWD,
+        resumeSessionId: resumeSessionId ?? null,
+        error: String(error)
+      });
       onEvent({
         type: "session.status",
         payload: { sessionId: session.id, status: "error", title: session.title, error: String(error) }
