@@ -16,6 +16,11 @@ interface Window {
     // Welcome page APIs
     loadCommands: () => Promise<import('./types').Command[]>;
     readCommandContent: (filePath: string) => Promise<string | null>;
+    loadSkills: () => Promise<import('./types').SkillMetadata[]>;
+    readSkillContent: (filePath: string) => Promise<string | null>;
+    listFiles: (dirPath: string) => Promise<import('./types').FileEntry[]>;
+    getRecentFiles: (sessionId: string) => Promise<import('./types').RecentFile[]>;
+    addRecentFile: (filePath: string, sessionId: string) => Promise<void>;
     getDefaultCwd: () => Promise<string>;
     setDefaultCwd: (cwd: string) => Promise<void>;
     readDirectoryTree: (dirPath: string, depth?: number) => Promise<import('../electron/types').DirectoryEntry[]>;

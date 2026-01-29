@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command, BrandConfig } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command, BrandConfig, SkillMetadata, RecentFile } from "../types";
 
 export type PermissionRequest = {
   toolUseId: string;
@@ -41,6 +41,8 @@ interface AppState {
   rightPanelActiveTab: "tasksfiles" | "tree";
   planMode: boolean;
   availableCommands: Command[];
+  availableSkills: SkillMetadata[];
+  recentFiles: RecentFile[];
   brandConfig: BrandConfig | null;
   lastFileRefresh: number;
 
@@ -56,6 +58,8 @@ interface AppState {
   setRightPanelActiveTab: (tab: "tasksfiles" | "tree") => void;
   setPlanMode: (enabled: boolean) => void;
   setAvailableCommands: (commands: Command[]) => void;
+  setAvailableSkills: (skills: SkillMetadata[]) => void;
+  setRecentFiles: (files: RecentFile[]) => void;
   setBrandConfig: (config: BrandConfig) => void;
   markHistoryRequested: (sessionId: string) => void;
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
@@ -94,6 +98,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   rightPanelActiveTab: "tasksfiles",
   planMode: false,
   availableCommands: [],
+  availableSkills: [],
+  recentFiles: [],
   brandConfig: null,
   lastFileRefresh: 0,
 
@@ -109,6 +115,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setRightPanelActiveTab: (rightPanelActiveTab) => set({ rightPanelActiveTab }),
   setPlanMode: (planMode) => set({ planMode }),
   setAvailableCommands: (availableCommands) => set({ availableCommands }),
+  setAvailableSkills: (availableSkills) => set({ availableSkills }),
+  setRecentFiles: (recentFiles) => set({ recentFiles }),
   setBrandConfig: (brandConfig) => set({ brandConfig }),
 
   markHistoryRequested: (sessionId) => {
@@ -281,7 +289,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       case "stream.user_prompt": {
-        const { sessionId, prompt } = event.payload;
+        const { sessionId, prompt, displayPrompt, displayTokens } = event.payload;
         set((state) => {
           const existing = state.sessions[sessionId] ?? createSession(sessionId);
           return {
@@ -289,7 +297,7 @@ export const useAppStore = create<AppState>((set, get) => ({
               ...state.sessions,
               [sessionId]: {
                 ...existing,
-                messages: [...existing.messages, { type: "user_prompt", prompt }]
+                messages: [...existing.messages, { type: "user_prompt", prompt, displayPrompt, displayTokens }]
               }
             }
           };

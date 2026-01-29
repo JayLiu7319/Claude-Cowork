@@ -10,6 +10,8 @@ import { generateSessionTitle } from "./libs/util.js";
 import { saveApiConfig, loadDefaultCwd, saveDefaultCwd } from "./libs/config-store.js";
 import { getCurrentApiConfig } from "./libs/claude-settings.js";
 import { loadGlobalCommands, readCommandContent } from "./libs/commands.js";
+import { loadGlobalSkills, readSkillContent } from "./libs/skills.js";
+import { listFilesInDirectory, getRecentFiles, addRecentFile } from "./libs/file-picker.js";
 import { initI18n, getLanguage } from "./i18n.js";
 import { loadBrandConfig } from "./libs/brand-config.js";
 import type { ClientEvent } from "./types.js";
@@ -274,6 +276,29 @@ app.on("ready", () => {
     // Handle reading command content
     ipcMainHandle("read-command-content", async (_: IpcMainInvokeEvent, filePath: string) => {
         return await readCommandContent(filePath);
+    });
+
+    // Handle skills loading
+    ipcMainHandle("load-skills", async () => {
+        return await loadGlobalSkills();
+    });
+
+    // Handle reading skill content
+    ipcMainHandle("read-skill-content", async (_: IpcMainInvokeEvent, filePath: string) => {
+        return await readSkillContent(filePath);
+    });
+
+    // Handle file picker operations
+    ipcMainHandle("list-files", async (_: IpcMainInvokeEvent, dirPath: string) => {
+        return await listFilesInDirectory(dirPath);
+    });
+
+    ipcMainHandle("get-recent-files", async (_: IpcMainInvokeEvent, sessionId: string) => {
+        return getRecentFiles(sessionId);
+    });
+
+    ipcMainHandle("add-recent-file", async (_: IpcMainInvokeEvent, filePath: string, sessionId: string) => {
+        addRecentFile(filePath, sessionId);
     });
 
     // Handle default cwd

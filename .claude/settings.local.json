@@ -51,7 +51,9 @@
       "Bash(node -e:*)",
       "Bash(SKIP_PLUGIN_SETUP=1 tsx:*)",
       "Bash(SKIP_PLUGIN_SETUP=1 bun run:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dir:*)",
+      "Bash(npm run lint)"
     ]
   }
 }

@@ -1,11 +1,12 @@
 import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store/useAppStore";
+import type { InputToken } from "../types";
 import { EnhancedPromptInput } from "./EnhancedPromptInput";
 import { WaterfallBackground } from "./WaterfallBackground";
 
 interface WelcomePageProps {
-    onStartSession: () => void;
+    onStartSession: (options?: { promptOverride?: string; titleOverride?: string; displayTokensOverride?: InputToken[] }) => void;
     onMenuClick?: () => void;
     onToggleRightPanel?: () => void;
     isRightPanelOpen?: boolean;
@@ -101,11 +102,6 @@ export function WelcomePage({
                         <div
                             className={`w-full text-sm ${cwd ? 'text-ink-700' : 'text-ink-400'} truncate select-none`}
                             title={cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
-                            onMouseDown={() => {
-                                // #region agent log
-                                fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WelcomePage.tsx:108',message:'welcome-cwd-input-mousedown',data:{selection:window.getSelection()?.toString() || '',value:cwd,defaultCwd},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'H1'})}).catch(()=>{});
-                                // #endregion
-                            }}
                         >
                             {cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
                         </div>

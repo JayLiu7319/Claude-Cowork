@@ -3,6 +3,8 @@ import type { SDKMessage, PermissionResult } from "@anthropic-ai/claude-agent-sd
 export type UserPromptMessage = {
   type: "user_prompt";
   prompt: string;
+  displayPrompt?: string;
+  displayTokens?: InputToken[];
 };
 
 export type Command = {
@@ -11,6 +13,31 @@ export type Command = {
   argumentHint?: string;
   filePath: string;
 };
+
+export type SkillMetadata = {
+  name: string;
+  description?: string;
+  pluginName: string;
+  filePath: string;
+};
+
+export type FileEntry = {
+  name: string;
+  path: string;  // Absolute path
+  isDirectory: boolean;
+};
+
+export type RecentFile = {
+  name: string;
+  path: string;  // Absolute path
+  lastUsed: number;  // Timestamp
+};
+
+export type InputToken =
+  | { type: 'text'; value: string }
+  | { type: 'command'; name: string; content: string }
+  | { type: 'skill'; name: string; content: string }
+  | { type: 'file'; name: string; path: string };
 
 export type StreamMessage = SDKMessage | UserPromptMessage;
 
@@ -57,7 +84,7 @@ export type FileTreeNode = {
 // Server -> Client events
 export type ServerEvent =
   | { type: "stream.message"; payload: { sessionId: string; message: StreamMessage } }
-  | { type: "stream.user_prompt"; payload: { sessionId: string; prompt: string } }
+  | { type: "stream.user_prompt"; payload: { sessionId: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[] } }
   | { type: "session.status"; payload: { sessionId: string; status: SessionStatus; title?: string; cwd?: string; error?: string } }
   | { type: "session.list"; payload: { sessions: SessionInfo[] } }
   | { type: "session.history"; payload: { sessionId: string; status: SessionStatus; messages: StreamMessage[] } }
@@ -70,9 +97,9 @@ export type ServerEvent =
 
 // Client -> Server events
 export type ClientEvent =
-  | { type: "session.start"; payload: { title: string; prompt: string; cwd?: string; allowedTools?: string } }
+  | { type: "session.start"; payload: { title: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[]; cwd?: string; allowedTools?: string } }
   | { type: "session.rename"; payload: { sessionId: string; title: string } }
-  | { type: "session.continue"; payload: { sessionId: string; prompt: string } }
+  | { type: "session.continue"; payload: { sessionId: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[] } }
   | { type: "session.stop"; payload: { sessionId: string } }
   | { type: "file.open"; payload: { sessionId: string; path: string } }
   | { type: "session.delete"; payload: { sessionId: string } }

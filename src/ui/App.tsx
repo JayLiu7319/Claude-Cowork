@@ -12,7 +12,7 @@ import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
 import { SettingsModal } from "./components/SettingsModal";
-import { PromptInput } from "./components/PromptInput";
+import { EnhancedPromptInput } from "./components/EnhancedPromptInput";
 import { usePromptActions } from "./hooks/usePromptActions";
 import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";
@@ -93,6 +93,7 @@ function AppShell() {
   const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
   const setDefaultCwd = useAppStore((s) => s.setDefaultCwd);
   const setBrandConfig = useAppStore((s) => s.setBrandConfig);
+  const setRecentFiles = useAppStore((s) => s.setRecentFiles);
   const brandConfig = useAppStore((s) => s.brandConfig);
 
   // Apply brand theme
@@ -270,6 +271,17 @@ function AppShell() {
       sendEvent({ type: "session.history", payload: { sessionId: activeSessionId } });
     }
   }, [activeSessionId, connected, sessions, historyRequested, markHistoryRequested, sendEvent]);
+
+  // Load recent files when session becomes active
+  useEffect(() => {
+    if (!activeSessionId) {
+      setRecentFiles([]);
+      return;
+    }
+    window.electron.getRecentFiles(activeSessionId)
+      .then((files) => setRecentFiles(files))
+      .catch((err) => console.error("Failed to load recent files:", err));
+  }, [activeSessionId, setRecentFiles]);
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -669,7 +681,11 @@ function AppShell() {
             </div>
           </div>
 
-          <PromptInput sendEvent={sendEvent} onSendMessage={handleSendMessage} disabled={visibleMessages.length === 0} />
+          <EnhancedPromptInput
+            sendEvent={sendEvent}
+            onSendMessage={handleSendMessage}
+            disabled={visibleMessages.length === 0}
+          />
 
           {hasNewMessages && !shouldAutoScroll && (
             <button

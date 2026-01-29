@@ -7,11 +7,12 @@ import type {
   SDKResultMessage,
   SDKUserMessage
 } from "@anthropic-ai/claude-agent-sdk";
-import type { StreamMessage } from "../types";
+import type { InputToken, StreamMessage } from "../types";
 import type { PermissionRequest } from "../store/useAppStore";
 import MDContent from "../render/markdown";
 import { DecisionPanel } from "./DecisionPanel";
 import { formatCurrency, formatNumber, formatDuration } from "../utils/formatters";
+import { InlineBadge } from "./InlineBadge";
 
 type MessageContent = SDKAssistantMessage["message"]["content"][number];
 type ToolResultContent = SDKUserMessage["message"]["content"][number];
@@ -406,8 +407,22 @@ const SystemInfoCard = ({ message, showIndicator = false, prefersReducedMotion =
   );
 };
 
-const UserMessageCard = ({ message, showIndicator = false, prefersReducedMotion = false }: { message: { type: "user_prompt"; prompt: string }; showIndicator?: boolean; prefersReducedMotion?: boolean }) => {
+const UserMessageCard = ({
+  message,
+  showIndicator = false,
+  prefersReducedMotion = false
+}: {
+  message: { type: "user_prompt"; prompt: string; displayPrompt?: string; displayTokens?: InputToken[] };
+  showIndicator?: boolean;
+  prefersReducedMotion?: boolean;
+}) => {
   const { t } = useTranslation();
+  const displayPrompt = message.displayPrompt ?? message.prompt;
+  const displayTokens = message.displayTokens;
+  const hasBadges = useMemo(() => {
+    return Boolean(displayTokens?.some((token) => token.type !== "text"));
+  }, [displayTokens]);
+
   return (
     <div className="flex flex-col mt-4 items-end">
       <div className="header text-accent flex items-center gap-2 mb-2 flex-row-reverse">
@@ -415,7 +430,18 @@ const UserMessageCard = ({ message, showIndicator = false, prefersReducedMotion 
         {t('eventCard.user')}
       </div>
       <div className="rounded-2xl px-4 py-3 bg-surface-secondary border border-ink-900/10 max-w-[85%] text-left [&>:first-child]:mt-0">
-        <MDContent text={message.prompt} />
+        {hasBadges && displayTokens ? (
+          <div className="whitespace-pre-wrap break-words">
+            {displayTokens.map((token, idx) => {
+              if (token.type === "text") {
+                return <span key={`text-${idx}`}>{token.value}</span>;
+              }
+              return <InlineBadge key={`badge-${idx}`} token={token} />;
+            })}
+          </div>
+        ) : (
+          <MDContent text={displayPrompt} />
+        )}
       </div>
     </div>
   );

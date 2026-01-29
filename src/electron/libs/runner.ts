@@ -92,7 +92,6 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         ...env
       };
 
-
       // Resolve bundled plugins path
       const resourcesPath = getResourcesPath();
       const bundledPluginsPath = path.join(resourcesPath, 'resources', 'builtin-plugins');
@@ -100,6 +99,9 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
       // Load plugins based on brand configuration
       const brandConfig = loadBrandConfig();
       const pluginNames = brandConfig.plugins ?? ['core-skills'];
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'runner.ts:runClaude',message:'plugin resolution inputs',data:{resourcesPath,bundledPluginsPath,pluginNames,cwd:session.cwd ?? DEFAULT_CWD},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
 
       const normalizedPluginConfigs = pluginNames.map((name) => {
         const pluginPath = path.join(bundledPluginsPath, name);
@@ -177,6 +179,9 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         type,
         path: pluginPath
       }));
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'C',location:'runner.ts:runClaude',message:'plugin configs resolved',data:{pluginConfigs,normalizedCount:normalizedPluginConfigs.filter((p)=>p.normalized).length},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
 
       const q = query({
         prompt: effectivePrompt,
@@ -223,6 +228,9 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
           }
         }
       });
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'D',location:'runner.ts:runClaude',message:'query started',data:{resumeSessionId,permissionMode:'bypassPermissions',pathToClaudeCodeExecutable:getClaudeCodePath()},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
 
       // Capture session_id from init message
       for await (const message of q) {
@@ -260,6 +268,9 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
         // Session was aborted, don't treat as error
         return;
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'debug-session',runId:'pre-fix',hypothesisId:'D',location:'runner.ts:runClaude',message:'query failed',data:{errorName:(error as Error)?.name,errorMessage:String(error)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       onEvent({
         type: "session.status",
         payload: { sessionId: session.id, status: "error", title: session.title, error: String(error) }

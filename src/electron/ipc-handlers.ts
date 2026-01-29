@@ -132,7 +132,9 @@ function emit(event: ServerEvent) {
   if (event.type === "stream.user_prompt") {
     sessions.recordMessage(event.payload.sessionId, {
       type: "user_prompt",
-      prompt: event.payload.prompt
+      prompt: event.payload.prompt,
+      displayPrompt: event.payload.displayPrompt,
+      displayTokens: event.payload.displayTokens
     });
   }
   broadcast(event);
@@ -227,7 +229,12 @@ export function handleClientEvent(event: ClientEvent) {
 
     emit({
       type: "stream.user_prompt",
-      payload: { sessionId: session.id, prompt: event.payload.prompt }
+      payload: {
+        sessionId: session.id,
+        prompt: event.payload.prompt,
+        displayPrompt: event.payload.displayPrompt ?? event.payload.prompt,
+        displayTokens: event.payload.displayTokens
+      }
     });
 
     runClaude({
@@ -304,7 +311,12 @@ export function handleClientEvent(event: ClientEvent) {
 
     emit({
       type: "stream.user_prompt",
-      payload: { sessionId: session.id, prompt: event.payload.prompt }
+      payload: {
+        sessionId: session.id,
+        prompt: event.payload.prompt,
+        displayPrompt: event.payload.displayPrompt ?? event.payload.prompt,
+        displayTokens: event.payload.displayTokens
+      }
     });
 
     runClaude({

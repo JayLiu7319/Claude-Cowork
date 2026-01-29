@@ -48,6 +48,16 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("load-commands"),
     readCommandContent: (filePath: string) =>
         ipcInvoke("read-command-content", filePath),
+    loadSkills: () =>
+        ipcInvoke("load-skills"),
+    readSkillContent: (filePath: string) =>
+        ipcInvoke("read-skill-content", filePath),
+    listFiles: (dirPath: string) =>
+        ipcInvoke("list-files", dirPath),
+    getRecentFiles: (sessionId: string) =>
+        ipcInvoke("get-recent-files", sessionId),
+    addRecentFile: (filePath: string, sessionId: string) =>
+        ipcInvoke("add-recent-file", filePath, sessionId),
     getDefaultCwd: () =>
         ipcInvoke("get-default-cwd"),
     setDefaultCwd: (cwd: string) =>
