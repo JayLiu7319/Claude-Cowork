@@ -93,7 +93,7 @@ export function SlashCommandPopup({ commands, filter, onSelect, onClose }: Slash
                         key={command.name}
                         data-index={index}
                         onClick={() => handleSelect(command)}
-                        className={`w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-colors ${index === selectedIndex
+                        className={`w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${index === selectedIndex
                             ? "bg-accent/10 text-ink-800"
                             : "text-ink-700 hover:bg-surface-tertiary"
                             }`}

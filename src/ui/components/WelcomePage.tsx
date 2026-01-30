@@ -31,7 +31,8 @@ export function WelcomePage({
     const renderedTitle = brandConfig?.appTitle || t('welcomePage.title', 'Agent Cowork');
     const renderedSubtitle = brandConfig?.subtitle || t('welcomePage.subtitle', '您的智能助手');
     const isWindows = navigator.userAgent.includes('Windows');
-    const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
+    const WINDOWS_TITLEBAR_PADDING = '160px';
+    const titlebarRightPadding = isWindows && !isRightPanelOpen ? WINDOWS_TITLEBAR_PADDING : undefined;
 
     // Get logo path from brand config or fallback
     const logoSrc = useMemo(() => {
@@ -89,8 +90,9 @@ export function WelcomePage({
                                 onClick={onMenuClick}
                                 className="p-1.5 rounded-lg hover:bg-ink-900/5 text-ink-600 transition-colors"
                                 style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                                aria-label={t('sidebar.toggle', '切换菜单')}
                             >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 </svg>
                             </button>
@@ -102,10 +104,10 @@ export function WelcomePage({
                         {onMenuClick && (
                             <button
                                 onClick={onMenuClick}
-                                className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'}`}
+                                className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'}`}
                                 aria-label="Toggle Sidebar"
                             >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                     <line x1="9" y1="3" x2="9" y2="21" />
                                 </svg>
@@ -127,7 +129,7 @@ export function WelcomePage({
                     <button
                         type="button"
                         onClick={handleSelectDirectory}
-                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors"
+                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     >
                         {t('welcomePage.browse', '浏览')}
@@ -136,7 +138,7 @@ export function WelcomePage({
                         type="button"
                         onClick={handleSetAsDefault}
                         disabled={isSettingDefault || isCurrentDefault || !cwd.trim()}
-                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                     >
                         {isCurrentDefault ? t('welcomePage.isDefault', '默认') : t('welcomePage.setAsDefault', '设为默认')}
@@ -148,10 +150,10 @@ export function WelcomePage({
                     {onToggleRightPanel && (
                         <button
                             onClick={onToggleRightPanel}
-                            className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors ${isRightPanelOpen ? 'text-accent bg-accent/5' : 'text-ink-400'}`}
+                            className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${isRightPanelOpen ? 'text-accent bg-accent/5' : 'text-ink-400'}`}
                             aria-label="Toggle Info Panel"
                         >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                            <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                 <line x1="15" y1="3" x2="15" y2="21" />
                             </svg>
@@ -168,7 +170,7 @@ export function WelcomePage({
                     {logoSrc && (
                         <div className="mb-8 flex justify-center">
                             <div className="w-24 h-24 rounded-3xl bg-surface-cream flex items-center justify-center shadow-2xl shadow-ink-900/10 ring-1 ring-ink-900/5 overflow-hidden">
-                                <img src={logoSrc} alt={brandConfig?.appTitle || 'App Logo'} className="w-full h-full object-cover" />
+                                <img src={logoSrc} alt={brandConfig?.appTitle || 'App Logo'} className="w-full h-full object-cover" width={96} height={96} />
                             </div>
                         </div>
                     )}
@@ -250,16 +252,21 @@ export function WelcomePage({
     );
 }
 
-interface QuickActionCardProps {
+export interface QuickActionCardProps {
     icon: React.ReactNode;
     title: string;
+    onClick?: () => void;
 }
 
-function QuickActionCard({ icon, title }: QuickActionCardProps) {
+function QuickActionCard({ icon, title, onClick }: QuickActionCardProps) {
     return (
-        <div className="flex flex-col items-center gap-2 p-4 rounded-xl border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors cursor-pointer min-w-[100px]">
-            <div className="text-accent">{icon}</div>
+        <button
+            type="button"
+            className="flex flex-col items-center gap-2 p-4 rounded-xl border border-ink-900/10 bg-surface hover:bg-surface-tertiary transition-colors cursor-pointer min-w-[100px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            onClick={onClick}
+        >
+            <div className="text-accent" aria-hidden="true">{icon}</div>
             <span className="text-xs font-medium text-ink-700">{title}</span>
-        </div>
+        </button>
     );
 }

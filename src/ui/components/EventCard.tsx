@@ -185,11 +185,12 @@ const ToolResultInline = ({ messageContent, isLatest }: { messageContent: ToolRe
   };
 
   return (
-    <div className={`mt-3 mb-1 rounded-lg transition-all duration-300 ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
+    <div className={`mt-3 mb-1 rounded-lg transition-[background-color,border-color] duration-300 ${isError ? "bg-red-50 border border-red-200" : "bg-surface-secondary border border-ink-900/10"}`}>
       {/* Header with status indicator - Clickable for collapse/expand */}
-      <div
+      <button
+        type="button"
         onClick={toggleCollapse}
-        className={`flex items-center gap-2 px-3 py-2 border-b cursor-pointer select-none transition-colors 
+        className={`w-full text-left flex items-center gap-2 px-3 py-2 border-b cursor-pointer select-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent
             ${isError ? "border-red-200 bg-red-100/50 hover:bg-red-100" : "border-ink-900/5 bg-ink-900/[0.02] hover:bg-ink-900/[0.04]"}
             ${isCollapsed ? "border-b-0 rounded-lg" : ""}`} // Remove border when collapsed
       >
@@ -210,7 +211,7 @@ const ToolResultInline = ({ messageContent, isLatest }: { messageContent: ToolRe
             {lines.length} {t(lines.length === 1 ? 'eventCard.line' : 'eventCard.lines')}
           </span>
         )}
-      </div>
+      </button>
 
       {/* Content area with animation */}
       <div
@@ -240,7 +241,7 @@ const ToolResultInline = ({ messageContent, isLatest }: { messageContent: ToolRe
           <div ref={bottomRef} />
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -311,7 +312,7 @@ const ToolUseCard = ({
   };
 
   return (
-    <div className="flex flex-col gap-2 rounded-[1rem] bg-surface-tertiary px-3 py-2 mt-4 overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="flex flex-col gap-2 rounded-[1rem] bg-surface-tertiary px-3 py-2 mt-4 overflow-hidden motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-2 motion-safe:duration-500">
       <div className="flex flex-row items-center gap-2 min-w-0">
         <StatusDot variant={statusVariant} isActive={isPending && showIndicator} isVisible={shouldShowDot} prefersReducedMotion={prefersReducedMotion} />
         <div className="flex flex-row items-center gap-2 tool-use-item min-w-0 flex-1">

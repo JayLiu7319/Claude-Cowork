@@ -111,12 +111,13 @@ export function DecisionPanel({
               })}
             </div>
             <div className="mt-3">
-              <label className="block text-xs font-medium text-muted">{t('decisionPanel.other')}</label>
+              <label htmlFor={`decision-other-${qIndex}`} className="block text-xs font-medium text-muted">{t('decisionPanel.other')}</label>
               <input
+                id={`decision-other-${qIndex}`}
                 type="text"
                 autoComplete="off"
                 className="mt-1 w-full rounded-xl border border-ink-900/10 bg-surface px-3 py-2 text-sm text-ink-700 focus:border-info/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-                placeholder={t('decisionPanel.typeAnswer')}
+                placeholder={t('decisionPanel.typeAnswer') + '…'}
                 value={otherInputs[qIndex] ?? ""}
                 onChange={(e) => setOtherInputs((prev) => ({ ...prev, [qIndex]: e.target.value }))}
               />

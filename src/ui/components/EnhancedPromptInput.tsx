@@ -310,7 +310,7 @@ export function EnhancedPromptInput({
     const prevValueRef = useRef("");
     const promptActions = usePromptActions(sendEvent || NOOP_SEND_EVENT);
     const isRunning = promptActions.isRunning;
-    const placeholderText = t('welcomePage.inputPlaceholder', '输入 / 使用技能，描述您的任务...');
+    const placeholderText = t('welcomePage.inputPlaceholder', '输入 / 使用技能，描述您的任务…');
 
     const displayTokens = useMemo(
         () => parseDisplayTokens(inputValue, tokens),
@@ -633,14 +633,14 @@ export function EnhancedPromptInput({
                     />
                 )}
 
-                <div className="relative flex flex-col gap-2 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card">
+                <div className="relative flex flex-col gap-2 rounded-2xl border border-ink-900/10 bg-surface px-4 py-3 shadow-card focus-within:border-accent focus-within:ring-1 focus-within:ring-accent/20 transition-colors">
                     {/* New Messages Button - Positioned above the card */}
                     {showNewMessageButton && (
                         <div className="absolute -top-12 left-0 right-0 flex justify-center pointer-events-none">
                             <button
                                 onClick={onScrollToBottom}
                                 aria-label="Scroll to bottom to view new messages"
-                                className="pointer-events-auto flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 animate-bounce-subtle"
+                                className="pointer-events-auto flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 animate-bounce-subtle motion-reduce:animate-none"
                             >
                                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M12 5v14M5 12l7 7 7-7" />
@@ -686,6 +686,7 @@ export function EnhancedPromptInput({
                                 name="prompt"
                                 rows={1}
                                 autoComplete="off"
+                                spellCheck={false}
                                 className="relative z-10 w-full resize-none bg-transparent py-1.5 text-base leading-6 text-transparent caret-ink-800 selection:bg-blue-400/40 selection:text-transparent focus:outline-none disabled:cursor-not-allowed"
                                 value={inputValue}
                                 onChange={handleInputChange}
@@ -714,6 +715,8 @@ export function EnhancedPromptInput({
                         <button
                             type="button"
                             onClick={togglePlanMode}
+                            aria-label={planMode ? t('accessibility.disablePlanMode', '禁用计划模式') : t('accessibility.enablePlanMode', '启用计划模式')}
+                            aria-pressed={planMode}
                             className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${planMode
                                 ? "bg-accent/10 text-accent border border-accent/30"
                                 : "text-muted hover:bg-surface-tertiary hover:text-ink-700 border border-transparent"

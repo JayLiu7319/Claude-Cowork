@@ -506,13 +506,14 @@ function AppShell() {
     <div className="flex h-screen bg-surface overflow-hidden relative">
       {/* Mobile Overlay/Backdrop */}
       {isMobile && (isSidebarOpen || isRightPanelOpen) && (
-        <div
-          className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-30 transition-opacity"
+        <button
+          type="button"
+          className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-30 transition-opacity cursor-default focus:outline-none"
           onClick={() => {
             setSidebarOpen(false);
             setRightPanelOpen(false);
           }}
-          aria-hidden="true"
+          aria-label="Close sidebar"
         />
       )}
 
@@ -538,7 +539,7 @@ function AppShell() {
           isSidebarOpen={isSidebarOpen}
         />
       ) : (
-        <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-all duration-300">
+        <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-[margin,width] duration-300">
           <div className="flex flex-col">
             <div
               className={`relative flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
@@ -551,7 +552,7 @@ function AppShell() {
                   className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
                   aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <line x1="9" y1="3" x2="9" y2="21" />
                   </svg>
@@ -560,7 +561,7 @@ function AppShell() {
 
               {/* Centered Title */}
               <div
-                className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none transition-all duration-300"
+                className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none transition-[left,right] duration-300"
                 style={{
                   left: '60px',
                   right: isWindows && !isRightPanelOpen ? '190px' : '60px'
@@ -581,7 +582,7 @@ function AppShell() {
                   className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isRightPanelOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
                   aria-label={isRightPanelOpen ? "Close Info Panel" : "Open Info Panel"}
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <line x1="15" y1="3" x2="15" y2="21" />
                   </svg>
@@ -596,7 +597,7 @@ function AppShell() {
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto px-4 md:px-8 pb-40 pt-6"
           >
-            <div className="mx-auto max-w-3xl w-full transition-all duration-300">
+            <div className="mx-auto max-w-3xl w-full transition-[max-width,width] duration-300" style={{ contentVisibility: 'auto' }}>
               <div ref={topSentinelRef} className="h-1" />
 
               {!hasMoreHistory && totalMessages > 0 && (

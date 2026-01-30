@@ -228,7 +228,7 @@ export const DirectorySection = memo(function DirectorySection({
             </button>
 
             {isExpanded && (
-                <div className="pb-3 flex flex-col gap-0.5">
+                <div className="pb-3 flex flex-col gap-0.5" style={{ contentVisibility: 'auto' }}>
                     {!sessionCwd ? (
                         <div className="py-2 text-xs text-ink-500">
                             {t("rightpanel.noCwd") || "No working directory"}
@@ -236,7 +236,7 @@ export const DirectorySection = memo(function DirectorySection({
                     ) : isLoading ? (
                         <div className="py-2 text-xs text-ink-500 flex items-center gap-2">
                             <span className="animate-spin">⏳</span>
-                            {t("common.loading") || "Loading..."}
+                            {t("common.loading") || "Loading…"}
                         </div>
                     ) : error ? (
                         <div className="py-2 text-xs text-red-500">

@@ -115,3 +115,9 @@
 .animate-bounce-subtle {
   animation: bounce-subtle 1.5s ease-in-out infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-bounce-subtle {
+    animation: none;
+  }
+}

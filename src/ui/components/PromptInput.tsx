@@ -63,7 +63,7 @@ export function PromptInput({ sendEvent, onSendMessage, disabled = false }: Prom
           name="prompt"
           rows={1}
           autoComplete="off"
-          className="flex-1 resize-none bg-transparent py-1.5 text-sm text-ink-800 placeholder:text-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex-1 resize-none bg-transparent py-1.5 text-sm text-ink-800 placeholder:text-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-0 rounded-lg disabled:cursor-not-allowed disabled:opacity-60"
           placeholder={disabled ? t('promptInput.placeholder.disabled') : t('promptInput.placeholder.enabled')}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}

@@ -241,7 +241,7 @@ export function AutocompletePopup({
 
   return (
     <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-ink-900/10 bg-surface shadow-elevated max-h-80 overflow-y-auto">
-      <div ref={listRef} className="divide-y divide-ink-900/5">
+      <div ref={listRef} className="divide-y divide-ink-900/5" role="listbox" aria-label="Suggestions" style={{ contentVisibility: 'auto' }}>
         {showCommandHeader && (
           <>
             <div className="px-3 py-2 text-xs font-semibold text-muted uppercase">
@@ -308,26 +308,28 @@ function ResultItem({ result, isSelected, onSelect, onMouseEnter, dataIndex }: R
   const getIcon = (type: string) => {
     switch (type) {
       case 'command':
-        return '⚡';
+        return <span role="img" aria-label="Command">⚡</span>;
       case 'skill':
-        return '🔧';
+        return <span role="img" aria-label="Skill">🔧</span>;
       case 'file':
-        return '📄';
+        return <span role="img" aria-label="File">📄</span>;
       case 'folder':
-        return '📁';
+        return <span role="img" aria-label="Folder">📁</span>;
       default:
         return '';
     }
   };
 
   return (
-    <div
+    <button
+      type="button"
+      role="option"
+      aria-selected={isSelected}
       data-index={dataIndex}
       onClick={onSelect}
       onMouseEnter={onMouseEnter}
-      className={`px-3 py-2 cursor-pointer transition-colors ${
-        isSelected ? 'bg-ink-900/10' : 'hover:bg-ink-900/5'
-      }`}
+      className={`w-full text-left px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent ${isSelected ? 'bg-ink-900/10' : 'hover:bg-ink-900/5'
+        }`}
     >
       <div className="flex items-center gap-2">
         <span className="text-base leading-none">{getIcon(result.type)}</span>
@@ -341,6 +343,6 @@ function ResultItem({ result, isSelected, onSelect, onMouseEnter, dataIndex }: R
           <span className="text-xs text-muted">→</span>
         )}
       </div>
-    </div>
+    </button>
   );
 }

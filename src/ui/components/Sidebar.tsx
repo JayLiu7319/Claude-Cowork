@@ -22,32 +22,32 @@ export function Sidebar({
 
   // Combine default classes with custom className
   // default: w-[280px] flex-col border-r border-ink-900/5 bg-surface-cream h-full
-  const sidebarClasses = `flex flex-col h-full bg-surface-cream border-r border-ink-900/5 transition-all duration-300 ease-in-out ${className}`;
+  const sidebarClasses = `flex flex-col h-full bg-surface-cream border-r border-ink-900/5 transition-colors duration-300 ease-in-out ${className}`;
 
   const StatusIcon = ({ status }: { status?: string }) => {
     switch (status) {
       case "running":
         return (
-          <div className="h-3.5 w-3.5 relative flex items-center justify-center">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-info/40 opacity-75"></span>
+          <div className="h-3.5 w-3.5 relative flex items-center justify-center" aria-label={t('status.running', 'Running')} role="status">
+            <span className="animate-ping motion-reduce:hidden absolute inline-flex h-full w-full rounded-full bg-info/40 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-info"></span>
           </div>
         );
       case "completed":
         return (
-          <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-label={t('status.completed', 'Completed')} role="img">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         );
       case "error":
         return (
-          <svg className="h-3.5 w-3.5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <svg className="h-3.5 w-3.5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-label={t('status.error', 'Error')} role="img">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         );
       default:
         return (
-          <svg className="h-3.5 w-3.5 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <svg className="h-3.5 w-3.5 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-label={t('status.pending', 'Pending')} role="img">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         );
@@ -57,6 +57,7 @@ export function Sidebar({
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
   const [resumeSessionId, setResumeSessionId] = useState<string | null>(null);
+  const [deleteSessionId, setDeleteSessionId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [now, setNow] = useState(() => Date.now());
@@ -146,22 +147,23 @@ export function Sidebar({
             <button
               onClick={onClose}
               className="p-1 rounded-md hover:bg-ink-900/5 text-ink-500"
+              aria-label={t('common.close', '关闭')}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              <svg className="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           )}
         </div>
         <div className="flex gap-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <button
-            className="flex-1 rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"
+            className="flex-1 rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={onNewSession}
           >
             {t('sidebar.newTask')}
           </button>
           <button
-            className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors"
+            className="rounded-xl border border-ink-900/10 bg-surface px-3 py-2.5 text-sm text-ink-700 hover:bg-surface-tertiary hover:border-ink-900/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={() => useAppStore.getState().setShowSettingsModal(true)}
-            aria-label="Settings"
+            aria-label={t('settings.title', 'Settings')}
           >
             <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
               <circle cx="12" cy="12" r="3" />
@@ -174,7 +176,10 @@ export function Sidebar({
         <div className="relative group" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
           <input
             type="text"
-            className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 pl-10 text-sm text-ink-800 placeholder:text-muted focus:border-ink-900/20 focus:outline-none transition-all"
+            name="search"
+            autoComplete="off"
+            aria-label={t('sidebar.searchPlaceholder')}
+            className="w-full rounded-xl border border-ink-900/10 bg-surface px-4 py-2.5 pl-10 text-sm text-ink-800 placeholder:text-muted focus:border-ink-900/20 focus:outline-none transition-colors"
             placeholder={t('sidebar.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -194,16 +199,14 @@ export function Sidebar({
         )}
         <div className="flex flex-col gap-2">
           {sessionList.map((session) => (
-            <div
+            <button
               key={session.id}
-              className={`group relative cursor-pointer rounded-xl border px-3 py-3 text-left transition-all ${activeSessionId === session.id
+              type="button"
+              className={`w-full group relative rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${activeSessionId === session.id
                 ? "border-accent/30 bg-accent-subtle shadow-sm"
                 : "border-transparent bg-transparent hover:bg-ink-900/5"
                 }`}
               onClick={() => setActiveSessionId(session.id)}
-              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveSessionId(session.id); } }}
-              role="button"
-              tabIndex={0}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex flex-col min-w-0 flex-1 overflow-hidden mr-1">
@@ -223,23 +226,26 @@ export function Sidebar({
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <DropdownMenu.Root>
                     <DropdownMenu.Trigger asChild>
-                      <button
-                        className={`flex-shrink-0 rounded-md p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${activeSessionId === session.id ? 'text-accent hover:bg-accent/10' : 'text-ink-500 hover:bg-ink-900/10'
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        className={`flex-shrink-0 rounded-md p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer ${activeSessionId === session.id ? 'text-accent hover:bg-accent/10' : 'text-ink-500 hover:bg-ink-900/10'
                           }`}
                         aria-label="Open session menu"
                         onClick={(e) => e.stopPropagation()}
                         onPointerDown={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.stopPropagation(); }}
                       >
                         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
                           <circle cx="5" cy="12" r="1.5" />
                           <circle cx="12" cy="12" r="1.5" />
                           <circle cx="19" cy="12" r="1.5" />
                         </svg>
-                      </button>
+                      </span>
                     </DropdownMenu.Trigger>
                     <DropdownMenu.Portal>
                       <DropdownMenu.Content className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-100" align="end" sideOffset={4}>
-                        <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => onDeleteSession(session.id)}>
+                        <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => setDeleteSessionId(session.id)}>
                           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-error/80" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M4 7h16" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9l1-12" />
                           </svg>
@@ -257,13 +263,13 @@ export function Sidebar({
                   <span className="text-[10px] text-ink-400 opacity-60 transition-opacity group-hover:opacity-100 truncate">{getRelativeTime(session.updatedAt)}</span>
                 </div>
               </div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
       <Dialog.Root open={!!resumeSessionId} onOpenChange={(open) => !open && setResumeSessionId(null)}>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm" />
+          <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm overscroll-contain" />
           <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <Dialog.Title className="text-lg font-semibold text-ink-800">{t('sidebar.resumeTitle')}</Dialog.Title>
@@ -283,6 +289,38 @@ export function Sidebar({
                 ) : (
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
                 )}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={!!deleteSessionId} onOpenChange={(open) => !open && setDeleteSessionId(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-50 overscroll-contain" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl z-50">
+            <Dialog.Title className="text-lg font-semibold text-ink-800">
+              {t('sidebar.deleteSession', '删除会话')}
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-muted">
+              {t('sidebar.deleteConfirmation', '您确定要删除此会话吗？此操作无法撤销。')}
+            </Dialog.Description>
+            <div className="mt-6 flex justify-end gap-3">
+              <Dialog.Close asChild>
+                <button className="rounded-xl px-4 py-2 text-sm font-medium text-ink-600 hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
+                  {t('common.cancel', '取消')}
+                </button>
+              </Dialog.Close>
+              <button
+                className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:bg-error/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
+                onClick={() => {
+                  if (deleteSessionId) {
+                    onDeleteSession(deleteSessionId);
+                    setDeleteSessionId(null);
+                  }
+                }}
+              >
+                {t('common.delete', '删除')}
               </button>
             </div>
           </Dialog.Content>

@@ -168,3 +168,13 @@ a {
 .animate-pulse-scale {
   animation: pulse-scale-opacity 2s ease-in-out infinite;
 }
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-shimmer,
+  .animate-in,
+  .animate-pulse-scale {
+    animation: none;
+  }
+}
