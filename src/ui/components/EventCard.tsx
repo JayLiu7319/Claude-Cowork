@@ -92,17 +92,17 @@ const SessionResult = ({ message }: { message: SDKResultMessage }) => {
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">{t('eventCard.duration')}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">
-            {typeof message.duration_ms === "number" ? formatDuration(message.duration_ms) : "-"}
+            {formatDuration(message.duration_ms)}
           </span>
           <span className="font-normal">{t('eventCard.api')}</span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">
-            {typeof message.duration_api_ms === "number" ? formatDuration(message.duration_api_ms) : "-"}
+            {formatDuration(message.duration_api_ms)}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="font-normal">{t('eventCard.usage')}</span>
           <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-accent text-[13px]">
-            {t('eventCard.cost')} {typeof message.total_cost_usd === "number" ? formatCurrency(message.total_cost_usd) : "-"}
+            {t('eventCard.cost')} {formatCurrency(message.total_cost_usd)}
           </span>
           <span className="inline-flex items-center rounded-full bg-surface-tertiary px-2.5 py-0.5 text-ink-700 text-[13px]">
             {t('eventCard.input')} {typeof message.usage?.input_tokens === "number" ? formatNumber(message.usage.input_tokens) : "-"}
@@ -118,8 +118,17 @@ const SessionResult = ({ message }: { message: SDKResultMessage }) => {
 
 import { isMarkdown } from "../utils/markdownUtils";
 
+// 规则: js-hoist-regexp - 缓存正则表达式避免重复创建
+const tagRegexCache = new Map<string, RegExp>();
+function getTagRegex(tag: string): RegExp {
+  if (!tagRegexCache.has(tag)) {
+    tagRegexCache.set(tag, new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+  }
+  return tagRegexCache.get(tag)!;
+}
+
 function extractTagContent(input: string, tag: string): string | null {
-  const match = input.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`));
+  const match = input.match(getTagRegex(tag));
   return match ? match[1] : null;
 }
 

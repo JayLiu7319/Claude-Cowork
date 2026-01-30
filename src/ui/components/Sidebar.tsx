@@ -112,9 +112,10 @@ export function Sidebar({
     return rtf.format(Math.round(diff / 86400), 'day');
   };
 
+  // 规则: js-tosorted-immutable - 使用展开运算符避免原数组变异
   const sessionList = useMemo(() => {
-    const list = Object.values(sessions);
-    list.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
+    const list = [...Object.values(sessions)]
+      .sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
     if (!searchQuery.trim()) return list;
 

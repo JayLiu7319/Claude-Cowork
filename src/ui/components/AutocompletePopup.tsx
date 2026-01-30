@@ -165,6 +165,23 @@ export function AutocompletePopup({
   // Ensure selected index is valid
   const validSelectedIndex = Math.min(selectedIndex, Math.max(0, results.length - 1));
 
+  // 规则: js-combine-iterations - 预计算分组结果避免多次遍历
+  // 规则: react-hooks/rules-of-hooks - 必须在条件返回之前调用所有 Hooks
+  const { commandResults, skillResults, showCommandHeader, showSkillHeader } = useMemo(() => {
+    const commands: SearchResult[] = [];
+    const skills: SearchResult[] = [];
+    for (const r of results) {
+      if (r.type === 'command') commands.push(r);
+      else if (r.type === 'skill') skills.push(r);
+    }
+    return {
+      commandResults: commands,
+      skillResults: skills,
+      showCommandHeader: commands.length > 0 && mode === 'commands-skills',
+      showSkillHeader: skills.length > 0 && mode === 'commands-skills'
+    };
+  }, [results, mode]);
+
   // Scroll selected item into view
   useEffect(() => {
     if (listRef.current) {
@@ -217,6 +234,8 @@ export function AutocompletePopup({
       }
     };
 
+    // 注意: keydown 事件由于需要 preventDefault，不能使用 passive
+    // 规则: client-passive-event-listeners 主要适用于 touchstart/wheel 事件
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [results, validSelectedIndex, handleSelectResult, onClose]);
@@ -233,12 +252,6 @@ export function AutocompletePopup({
     );
   }
 
-  // Get group headers
-  const commandCount = results.filter(r => r.type === 'command').length;
-  const skillCount = results.filter(r => r.type === 'skill').length;
-  const showCommandHeader = commandCount > 0 && mode === 'commands-skills';
-  const showSkillHeader = skillCount > 0 && mode === 'commands-skills';
-
   return (
     <div className="absolute bottom-full left-0 right-0 mb-2 rounded-xl border border-ink-900/10 bg-surface shadow-elevated max-h-80 overflow-y-auto">
       <div ref={listRef} className="divide-y divide-ink-900/5" role="listbox" aria-label="Suggestions" style={{ contentVisibility: 'auto' }}>
@@ -247,18 +260,19 @@ export function AutocompletePopup({
             <div className="px-3 py-2 text-xs font-semibold text-muted uppercase">
               {t('autocomplete.commands', 'Commands')}
             </div>
-            {results
-              .filter(r => r.type === 'command')
-              .map((result, idx) => (
+            {commandResults.map((result, idx) => {
+              const globalIndex = results.indexOf(result);
+              return (
                 <ResultItem
                   key={`cmd-${idx}`}
                   result={result}
-                  isSelected={validSelectedIndex === results.indexOf(result)}
+                  isSelected={validSelectedIndex === globalIndex}
                   onSelect={() => handleSelectResult(result)}
-                  onMouseEnter={() => setSelectedIndex(results.indexOf(result))}
-                  dataIndex={results.indexOf(result)}
+                  onMouseEnter={() => setSelectedIndex(globalIndex)}
+                  dataIndex={globalIndex}
                 />
-              ))}
+              );
+            })}
           </>
         )}
         {showSkillHeader && (
@@ -266,18 +280,19 @@ export function AutocompletePopup({
             <div className="px-3 py-2 text-xs font-semibold text-muted uppercase">
               {t('autocomplete.skills', 'Skills')}
             </div>
-            {results
-              .filter(r => r.type === 'skill')
-              .map((result, idx) => (
+            {skillResults.map((result, idx) => {
+              const globalIndex = results.indexOf(result);
+              return (
                 <ResultItem
                   key={`skill-${idx}`}
                   result={result}
-                  isSelected={validSelectedIndex === results.indexOf(result)}
+                  isSelected={validSelectedIndex === globalIndex}
                   onSelect={() => handleSelectResult(result)}
-                  onMouseEnter={() => setSelectedIndex(results.indexOf(result))}
-                  dataIndex={results.indexOf(result)}
+                  onMouseEnter={() => setSelectedIndex(globalIndex)}
+                  dataIndex={globalIndex}
                 />
-              ))}
+              );
+            })}
           </>
         )}
         {mode === 'files' &&

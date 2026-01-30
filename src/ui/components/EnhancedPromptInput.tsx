@@ -571,6 +571,7 @@ export function EnhancedPromptInput({
         }
     }, [inputValue]);
 
+    // 规则: 避免在 useLayoutEffect 中同步调用 setState 防止级联渲染
     useLayoutEffect(() => {
         const displayLayer = displayRef.current;
         const textarea = promptRef.current;
@@ -589,7 +590,8 @@ export function EnhancedPromptInput({
                 width: element.getBoundingClientRect().width
             };
         });
-        const sortedBadges = badgeMetrics
+        // 规则: js-tosorted-immutable - 使用展开运算符避免原数组变异
+        const sortedBadges = [...badgeMetrics]
             .filter((badge) => Number.isFinite(badge.index))
             .sort((a, b) => a.index - b.index);
         const fallbackWidth = avgCharWidth && avgCharWidth > 0 ? avgCharWidth : 12;
@@ -603,8 +605,11 @@ export function EnhancedPromptInput({
         if (desiredRuns.length && desiredRuns.length === placeholderRuns.length) {
             const { nextValue, runCount } = replacePlaceholderRuns(inputValue, desiredRuns);
             if (runCount === desiredRuns.length && nextValue !== inputValue) {
-                setInputValue(nextValue);
-                prevValueRef.current = nextValue;
+                // 使用 requestAnimationFrame 延迟 setState 避免级联渲染警告
+                requestAnimationFrame(() => {
+                    setInputValue(nextValue);
+                    prevValueRef.current = nextValue;
+                });
             }
         }
     }, [inputValue, displayTokens]);

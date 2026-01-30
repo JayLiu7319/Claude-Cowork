@@ -178,3 +178,16 @@ a {
     animation: none;
   }
 }
+
+/* 规则: rendering-content-visibility - 长列表渲染性能优化 */
+/* 对于消息列表项，使用 content-visibility 延迟屏幕外元素的渲染 */
+[data-message-index] {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 120px;
+}
+
+/* 会话列表项优化 */
+.session-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 72px;
+}

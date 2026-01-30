@@ -7,7 +7,7 @@ import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useBrandTheme } from "./hooks/useBrandTheme";
 import { useAppStore } from "./store/useAppStore";
-import type { ServerEvent, BrandConfig } from "./types";
+import type { ServerEvent } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
@@ -228,33 +228,43 @@ function AppShell() {
     totalMessages,
   } = useMessageWindow(messages, activeSessionId);
 
-  // 启动时检查 API 配置、加载默认工作目录和品牌配置
+
+  // 规则: async-parallel - 启动时检查 API 配置、加载默认工作目录和品牌配置
+  // 使用 Promise.allSettled 并行执行，每个操作的错误不会阻塞其他操作
   useEffect(() => {
     if (!apiConfigChecked) {
-      // Load brand config
-      window.electron.getBrandConfig().then((config: BrandConfig) => {
-        setBrandConfig(config);
-      }).catch((err: Error) => {
-        console.error("Failed to load brand config:", err);
-      });
-
-      // Load default cwd
-      window.electron.getDefaultCwd().then((defaultCwd) => {
-        setDefaultCwd(defaultCwd);
-        if (!cwd) {
-          setCwd(defaultCwd);
+      Promise.allSettled([
+        window.electron.getBrandConfig(),
+        window.electron.getDefaultCwd(),
+        window.electron.checkApiConfig()
+      ]).then(([brandConfigResult, defaultCwdResult, apiConfigResult]) => {
+        // 处理品牌配置
+        if (brandConfigResult.status === 'fulfilled') {
+          setBrandConfig(brandConfigResult.value);
+        } else {
+          console.error("Failed to load brand config:", brandConfigResult.reason);
         }
-      }).catch(console.error);
 
-      // Check API config
-      window.electron.checkApiConfig().then((result) => {
-        setApiConfigChecked(true);
-        if (!result.hasConfig) {
-          setShowSettingsModal(true);
+        // 处理默认工作目录
+        if (defaultCwdResult.status === 'fulfilled') {
+          const defaultCwdValue = defaultCwdResult.value;
+          setDefaultCwd(defaultCwdValue);
+          if (!cwd) {
+            setCwd(defaultCwdValue);
+          }
+        } else {
+          console.error("Failed to load default cwd:", defaultCwdResult.reason);
         }
-      }).catch((err) => {
-        console.error("Failed to check API config:", err);
+
+        // 处理 API 配置检查
         setApiConfigChecked(true);
+        if (apiConfigResult.status === 'fulfilled') {
+          if (!apiConfigResult.value.hasConfig) {
+            setShowSettingsModal(true);
+          }
+        } else {
+          console.error("Failed to check API config:", apiConfigResult.reason);
+        }
       });
     }
   }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd, setBrandConfig]);
