@@ -1,8 +1,63 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as Dialog from "@radix-ui/react-dialog";
+// 规则: bundle-barrel-imports - 直接导入具体组件避免加载整个库
+import {
+  Root as DropdownMenuRoot,
+  Trigger as DropdownMenuTrigger,
+  Portal as DropdownMenuPortal,
+  Content as DropdownMenuContent,
+  Item as DropdownMenuItem
+} from "@radix-ui/react-dropdown-menu";
+import {
+  Root as DialogRoot,
+  Portal as DialogPortal,
+  Overlay as DialogOverlay,
+  Content as DialogContent,
+  Title as DialogTitle,
+  Close as DialogClose,
+  Description as DialogDescription
+} from "@radix-ui/react-dialog";
 import { useAppStore } from "../store/useAppStore";
+
+// 规则: rendering-hoist-jsx - 提取静态组件到模块顶层
+const StatusIcon = ({ status }: { status?: string }) => {
+  switch (status) {
+    case "running":
+      return (
+        <div className="h-3.5 w-3.5 relative flex items-center justify-center" role="status">
+          <span className="animate-ping motion-reduce:hidden absolute inline-flex h-full w-full rounded-full bg-info/40 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-info"></span>
+        </div>
+      );
+    case "completed":
+      return (
+        <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" role="img">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+        </svg>
+      );
+    case "error":
+      return (
+        <svg className="h-3.5 w-3.5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" role="img">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className="h-3.5 w-3.5 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" role="img">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      );
+  }
+};
+
+// 规则: js-cache-function-results - 缓存 Intl 实例避免重复创建
+const rtfCache = new Map<string, Intl.RelativeTimeFormat>();
+const getRtf = (lang: string) => {
+  if (!rtfCache.has(lang)) {
+    rtfCache.set(lang, new Intl.RelativeTimeFormat(lang, { numeric: 'auto' }));
+  }
+  return rtfCache.get(lang)!;
+};
 
 interface SidebarProps {
   connected: boolean;
@@ -24,35 +79,6 @@ export function Sidebar({
   // default: w-[280px] flex-col border-r border-ink-900/5 bg-surface-cream h-full
   const sidebarClasses = `flex flex-col h-full bg-surface-cream border-r border-ink-900/5 transition-colors duration-300 ease-in-out ${className}`;
 
-  const StatusIcon = ({ status }: { status?: string }) => {
-    switch (status) {
-      case "running":
-        return (
-          <div className="h-3.5 w-3.5 relative flex items-center justify-center" aria-label={t('status.running', 'Running')} role="status">
-            <span className="animate-ping motion-reduce:hidden absolute inline-flex h-full w-full rounded-full bg-info/40 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-info"></span>
-          </div>
-        );
-      case "completed":
-        return (
-          <svg className="h-3.5 w-3.5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-label={t('status.completed', 'Completed')} role="img">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        );
-      case "error":
-        return (
-          <svg className="h-3.5 w-3.5 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" aria-label={t('status.error', 'Error')} role="img">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        );
-      default:
-        return (
-          <svg className="h-3.5 w-3.5 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-label={t('status.pending', 'Pending')} role="img">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        );
-    }
-  };
   const sessions = useAppStore((state) => state.sessions);
   const activeSessionId = useAppStore((state) => state.activeSessionId);
   const setActiveSessionId = useAppStore((state) => state.setActiveSessionId);
@@ -78,7 +104,7 @@ export function Sidebar({
   const getRelativeTime = (timestamp?: number) => {
     if (!timestamp) return "";
     const diff = (timestamp - now) / 1000;
-    const rtf = new Intl.RelativeTimeFormat(i18n.language, { numeric: 'auto' });
+    const rtf = getRtf(i18n.language);
 
     if (Math.abs(diff) < 60) return rtf.format(Math.round(diff), 'second');
     if (Math.abs(diff) < 3600) return rtf.format(Math.round(diff / 60), 'minute');
@@ -224,8 +250,8 @@ export function Sidebar({
                 </div>
 
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <DropdownMenu.Root>
-                    <DropdownMenu.Trigger asChild>
+                  <DropdownMenuRoot>
+                    <DropdownMenuTrigger asChild>
                       <span
                         role="button"
                         tabIndex={0}
@@ -242,24 +268,24 @@ export function Sidebar({
                           <circle cx="19" cy="12" r="1.5" />
                         </svg>
                       </span>
-                    </DropdownMenu.Trigger>
-                    <DropdownMenu.Portal>
-                      <DropdownMenu.Content className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-100" align="end" sideOffset={4}>
-                        <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => setDeleteSessionId(session.id)}>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuContent className="z-50 min-w-[220px] rounded-xl border border-ink-900/10 bg-white p-1 shadow-lg motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-100" align="end" sideOffset={4}>
+                        <DropdownMenuItem className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => setDeleteSessionId(session.id)}>
                           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-error/80" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M4 7h16" /><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /><path d="M7 7l1 12a1 1 0 0 0 1 .9h6a1 1 0 0 0 1-.9l1-12" />
                           </svg>
                           {t('sidebar.deleteSession')}
-                        </DropdownMenu.Item>
-                        <DropdownMenu.Item className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => setResumeSessionId(session.id)}>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 outline-none hover:bg-ink-900/5 focus:bg-ink-900/5" onSelect={() => setResumeSessionId(session.id)}>
                           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 text-ink-500" fill="none" stroke="currentColor" strokeWidth="1.8">
                             <path d="M4 5h16v14H4z" /><path d="M7 9h10M7 12h6" /><path d="M13 15l3 2-3 2" />
                           </svg>
                           {t('sidebar.resumeInClaudeCode')}
-                        </DropdownMenu.Item>
-                      </DropdownMenu.Content>
-                    </DropdownMenu.Portal>
-                  </DropdownMenu.Root>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuRoot>
                   <span className="text-[10px] text-ink-400 opacity-60 transition-opacity group-hover:opacity-100 truncate">{getRelativeTime(session.updatedAt)}</span>
                 </div>
               </div>
@@ -267,19 +293,19 @@ export function Sidebar({
           ))}
         </div>
       </div>
-      <Dialog.Root open={!!resumeSessionId} onOpenChange={(open) => !open && setResumeSessionId(null)}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm overscroll-contain" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
+      <DialogRoot open={!!resumeSessionId} onOpenChange={(open: boolean) => !open && setResumeSessionId(null)}>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm overscroll-contain" />
+          <DialogContent className="fixed left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
-              <Dialog.Title className="text-lg font-semibold text-ink-800">{t('sidebar.resumeTitle')}</Dialog.Title>
-              <Dialog.Close asChild>
+              <DialogTitle className="text-lg font-semibold text-ink-800">{t('sidebar.resumeTitle')}</DialogTitle>
+              <DialogClose asChild>
                 <button className="rounded-full p-1 text-ink-500 hover:bg-ink-900/10" aria-label="Close dialog">
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M6 6l12 12M18 6l-12 12" />
                   </svg>
                 </button>
-              </Dialog.Close>
+              </DialogClose>
             </div>
             <div className="mt-4 flex items-center gap-2 rounded-xl border border-ink-900/10 bg-surface px-3 py-2 font-mono text-xs text-ink-700">
               <span className="flex-1 break-all">{resumeSessionId ? `claude --resume ${resumeSessionId}` : ""}</span>
@@ -291,26 +317,26 @@ export function Sidebar({
                 )}
               </button>
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </DialogContent>
+        </DialogPortal>
+      </DialogRoot>
 
-      <Dialog.Root open={!!deleteSessionId} onOpenChange={(open) => !open && setDeleteSessionId(null)}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-50 overscroll-contain" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl z-50">
-            <Dialog.Title className="text-lg font-semibold text-ink-800">
+      <DialogRoot open={!!deleteSessionId} onOpenChange={(open: boolean) => !open && setDeleteSessionId(null)}>
+        <DialogPortal>
+          <DialogOverlay className="fixed inset-0 bg-ink-900/40 backdrop-blur-sm z-50 overscroll-contain" />
+          <DialogContent className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-xl z-50">
+            <DialogTitle className="text-lg font-semibold text-ink-800">
               {t('sidebar.deleteSession', '删除会话')}
-            </Dialog.Title>
-            <Dialog.Description className="mt-2 text-sm text-muted">
+            </DialogTitle>
+            <DialogDescription className="mt-2 text-sm text-muted">
               {t('sidebar.deleteConfirmation', '您确定要删除此会话吗？此操作无法撤销。')}
-            </Dialog.Description>
+            </DialogDescription>
             <div className="mt-6 flex justify-end gap-3">
-              <Dialog.Close asChild>
+              <DialogClose asChild>
                 <button className="rounded-xl px-4 py-2 text-sm font-medium text-ink-600 hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent">
                   {t('common.cancel', '取消')}
                 </button>
-              </Dialog.Close>
+              </DialogClose>
               <button
                 className="rounded-xl bg-error px-4 py-2 text-sm font-medium text-white hover:bg-error/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-2"
                 onClick={() => {
@@ -323,9 +349,9 @@ export function Sidebar({
                 {t('common.delete', '删除')}
               </button>
             </div>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </DialogContent>
+        </DialogPortal>
+      </DialogRoot>
     </aside>
   );
 }

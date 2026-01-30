@@ -273,10 +273,11 @@ const ToolUseCard = ({
   prefersReducedMotion?: boolean;
   isLatest?: boolean;
 }) => {
-  // Move check inside hooks or after hooks
-  const toolUseId = messageContent.type === "tool_use" ? messageContent.id : undefined;
+  // 规则: rerender-dependencies - 使用原始类型依赖减少 effect 触发
+  const toolId = messageContent.type === "tool_use" ? messageContent.id : undefined;
+  const toolType = messageContent.type;
 
-  const toolStatus = useToolStatus(toolUseId);
+  const toolStatus = useToolStatus(toolId);
   const isPending = !toolStatus || toolStatus === "pending";
   const statusVariant = toolStatus === "error" ? "error" : (isPending ? "pending" : "success");
 
@@ -285,10 +286,10 @@ const ToolUseCard = ({
   const shouldShowDot = isPending || toolStatus === "success" || toolStatus === "error" || showIndicator;
 
   useEffect(() => {
-    if (messageContent.type === "tool_use" && messageContent?.id && !toolStatusMap.has(messageContent.id)) {
-      setToolStatus(messageContent.id, "pending");
+    if (toolType === "tool_use" && toolId && !toolStatusMap.has(toolId)) {
+      setToolStatus(toolId, "pending");
     }
-  }, [messageContent]);
+  }, [toolId, toolType]);
 
   if (messageContent.type !== "tool_use") return null;
 
