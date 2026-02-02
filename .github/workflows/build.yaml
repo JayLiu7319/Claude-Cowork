@@ -76,6 +76,12 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Lint
+        run: bun run lint
+
+      - name: Test
+        run: bun run test
+
       - name: Set Brand Environment (Linux/Mac)
         if: runner.os != 'Windows'
         run: echo "BRAND=${{ matrix.brand == 'bio' && 'bio-research' || 'business' }}" >> $GITHUB_ENV

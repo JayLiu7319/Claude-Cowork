@@ -33,7 +33,14 @@
 		"dist:bio:mac-arm64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --mac --arm64 --config electron-builder.bio.json",
 		"dist:bio:mac-x64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --mac --x64 --config electron-builder.bio.json",
 		"dist:bio:win": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --win --x64 --config electron-builder.bio.json",
-		"dist:bio:linux": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --linux --x64 --config electron-builder.bio.json"
+		"dist:bio:linux": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --linux --x64 --config electron-builder.bio.json",
+		"prepare": "husky",
+		"lint-staged": "lint-staged"
+	},
+	"lint-staged": {
+		"*.{js,ts,jsx,tsx}": [
+			"eslint --fix"
+		]
 	},
 	"dependencies": {
 		"@anthropic-ai/claude-agent-sdk": "^0.2.6",
@@ -78,7 +85,9 @@
 		"eslint-plugin-react-hooks": "^7.0.1",
 		"eslint-plugin-react-refresh": "^0.4.26",
 		"globals": "^17.0.0",
+		"husky": "^9.1.7",
 		"jsdom": "^27.4.0",
+		"lint-staged": "^16.2.7",
 		"typescript": "~5.9.3",
 		"typescript-eslint": "^8.52.0",
 		"vite": "^7.3.1",

@@ -31,8 +31,6 @@ export function WelcomePage({
     const renderedTitle = brandConfig?.appTitle || t('welcomePage.title', 'Agent Cowork');
     const renderedSubtitle = brandConfig?.subtitle || t('welcomePage.subtitle', '您的智能助手');
     const isWindows = navigator.userAgent.includes('Windows');
-    const WINDOWS_TITLEBAR_PADDING = '160px';
-    const titlebarRightPadding = isWindows && !isRightPanelOpen ? WINDOWS_TITLEBAR_PADDING : undefined;
 
     // Get logo path from brand config or fallback
     const logoSrc = useMemo(() => {
@@ -79,32 +77,35 @@ export function WelcomePage({
 
             {/* Top Directory Bar */}
             <div
-                className={`relative z-10 flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream/80 backdrop-blur-sm select-none px-4 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
-                style={{ WebkitAppRegion: 'drag', paddingRight: titlebarRightPadding } as React.CSSProperties}
+                className="relative z-10 flex items-center justify-between h-12 bg-surface-cream/95 backdrop-blur-sm select-none px-4 transition-colors"
+                style={{
+                    WebkitAppRegion: 'drag',
+                    paddingRight: isWindows && !isRightPanelOpen ? '160px' : undefined
+                } as React.CSSProperties}
             >
-                <div className="flex items-center gap-3 w-full">
+                {/* Left: Sidebar Toggles */}
+                <div className="relative z-20 flex items-center gap-2 shrink-0 bg-transparent" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     {/* Mobile Menu Button - Hamburger */}
-                    <div className="md:hidden mr-1">
+                    <div className="md:hidden">
                         {onMenuClick && (
                             <button
                                 onClick={onMenuClick}
-                                className="p-1.5 rounded-lg hover:bg-ink-900/5 text-ink-600 transition-colors"
-                                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                                className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-ink-900/5 text-ink-600 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                                 aria-label={t('sidebar.toggle', '切换菜单')}
                             >
                                 <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                                 </svg>
                             </button>
                         )}
                     </div>
 
-                    {/* Desktop Sidebar Toggle - Panel Left */}
-                    <div className="hidden md:block mr-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                    {/* Desktop Sidebar Toggle */}
+                    <div className="hidden md:block">
                         {onMenuClick && (
                             <button
                                 onClick={onMenuClick}
-                                className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'}`}
+                                className={`flex items-center justify-center w-8 h-8 rounded-md hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/10'}`}
                                 aria-label="Toggle Sidebar"
                             >
                                 <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -114,43 +115,79 @@ export function WelcomePage({
                             </button>
                         )}
                     </div>
-
-                    <span className="text-xs font-medium text-muted shrink-0 hidden sm:block">
-                        {t('welcomePage.cwdLabel', '工作目录')}
-                    </span>
-                    <div className="flex-1 min-w-0 overflow-hidden">
-                        <div
-                            className={`w-full text-sm ${cwd ? 'text-ink-700' : 'text-ink-400'} truncate select-none`}
-                            title={cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
-                        >
-                            {cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
-                        </div>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={handleSelectDirectory}
-                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                    >
-                        {t('welcomePage.browse', '浏览')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSetAsDefault}
-                        disabled={isSettingDefault || isCurrentDefault || !cwd.trim()}
-                        className="shrink-0 rounded-lg border border-ink-900/10 bg-surface px-2.5 py-1 text-xs text-ink-700 hover:bg-surface-tertiary transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                    >
-                        {isCurrentDefault ? t('welcomePage.isDefault', '默认') : t('welcomePage.setAsDefault', '设为默认')}
-                    </button>
                 </div>
 
-                {/* Right Panel Toggle - visible on desktop/mobile if needed */}
-                <div className="ml-2 pl-2 border-l border-ink-900/10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                {/* Center: Absolute Centered Location Bar */}
+                <div
+                    className="absolute inset-0 z-10 flex justify-center items-center pointer-events-none"
+                    style={{ paddingRight: 0 }}
+                >
+                    <div
+                        className="group relative flex items-center w-full max-w-xl h-8 bg-ink-900/5 hover:bg-ink-900/10 rounded-lg transition-colors overflow-hidden pointer-events-auto mx-4"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    >
+
+                        {/* Folder Icon */}
+                        <div className="pl-3 pr-2 text-ink-400">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+                            </svg>
+                        </div>
+
+                        {/* Path Text */}
+                        <button
+                            type="button"
+                            className="flex-1 min-w-0 text-sm text-ink-700 truncate cursor-pointer select-text selection:bg-accent/20 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
+                            title={cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
+                            onClick={handleSelectDirectory}
+                        >
+                            {cwd || t('welcomePage.cwdPlaceholder', '/path/to/project')}
+                        </button>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-0.5 pr-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
+                            <button
+                                type="button"
+                                onClick={handleSelectDirectory}
+                                className="p-1.5 rounded-md text-ink-400 hover:text-ink-900 hover:bg-ink-900/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                                title={t('welcomePage.browse', '浏览')}
+                            >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 00-1.883 2.542l.857 6a2.25 2.25 0 002.227 1.932H19.05a2.25 2.25 0 002.227-1.932l.857-6a2.25 2.25 0 00-1.883-2.542m-16.5 0V6A2.25 2.25 0 016 3.75h3.879a1.5 1.5 0 011.06.44l2.122 2.12a1.5 1.5 0 001.06.44H18A2.25 2.25 0 0120.25 9v.776" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Default/Pin Status */}
+                        <div className={`flex items-center pr-1 ${!isCurrentDefault && 'opacity-0 group-hover:opacity-100 transition-opacity'}`}>
+                            <button
+                                type="button"
+                                onClick={handleSetAsDefault}
+                                disabled={isSettingDefault || isCurrentDefault || !cwd.trim()}
+                                className={`p-1.5 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${isCurrentDefault
+                                    ? 'text-accent bg-accent/10 cursor-default'
+                                    : 'text-ink-400 hover:text-ink-900 hover:bg-ink-900/10'
+                                    } disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed`}
+                                title={isCurrentDefault ? t('welcomePage.isDefault', '当前为默认 (Pinned)') : t('welcomePage.setAsDefault', '设为默认')}
+                            >
+                                <svg className={`w-4 h-4 ${isCurrentDefault ? 'fill-current' : 'fill-none'}`} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                    {isCurrentDefault ? (
+                                        <path d="M17 19V5H7v14l5-2.5 5 2.5z" />
+                                    ) : (
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                                    )}
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Panel Toggle */}
+                <div className="relative z-20 flex items-center justify-end shrink-0 gap-2 pl-2 ml-2" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                     {onToggleRightPanel && (
                         <button
                             onClick={onToggleRightPanel}
-                            className={`p-1.5 rounded-lg hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${isRightPanelOpen ? 'text-accent bg-accent/5' : 'text-ink-400'}`}
+                            className={`flex items-center justify-center w-8 h-8 rounded-md hover:bg-ink-900/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${isRightPanelOpen ? 'text-accent bg-accent/10' : 'text-ink-400'}`}
                             aria-label="Toggle Info Panel"
                         >
                             <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

@@ -54,11 +54,11 @@ export function InlineBadge({ token, onRemove }: InlineBadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-base font-medium leading-6 border ${getBadgeStyle()} cursor-default relative align-middle`}
+      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-base font-medium leading-none border ${getBadgeStyle()} cursor-default relative align-middle -translate-y-px`}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
-      <span className="leading-none">{getIcon()}</span>
+      <span className="flex items-center justify-center leading-none">{getIcon()}</span>
       <span className="leading-none">{token.name}</span>
       {onRemove && (
         <button

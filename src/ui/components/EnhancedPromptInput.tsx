@@ -159,23 +159,37 @@ function getPlaceholderRuns(value: string) {
     return runs;
 }
 
+// Singleton canvas for text measurement to avoid expensive DOM creation
+let sharedCanvas: HTMLCanvasElement | null = null;
+let sharedContext: CanvasRenderingContext2D | null = null;
+
+function getSharedContext(): CanvasRenderingContext2D | null {
+    if (!sharedCanvas) {
+        sharedCanvas = document.createElement("canvas");
+        sharedContext = sharedCanvas.getContext("2d");
+    }
+    return sharedContext;
+}
+
 function measureAverageCharWidth(element: HTMLElement) {
+    const context = getSharedContext();
+    if (!context) return null;
+
     const style = getComputedStyle(element);
     const font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} / ${style.lineHeight} ${style.fontFamily}`;
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) return null;
+
     context.font = font;
     const sample = "mmmmmmmmmm";
     return context.measureText(sample).width / sample.length;
 }
 
 function measureCharWidth(element: HTMLElement, character: string) {
+    const context = getSharedContext();
+    if (!context) return null;
+
     const style = getComputedStyle(element);
     const font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} / ${style.lineHeight} ${style.fontFamily}`;
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    if (!context) return null;
+
     context.font = font;
     return context.measureText(character).width;
 }
