@@ -63,3 +63,4 @@ Thumbs.db
 
 # Auto-downloaded plugins
 resources/builtin-plugins/claude-scientific-skills/
+/resources/installers/git/Git-64-bit.exe
