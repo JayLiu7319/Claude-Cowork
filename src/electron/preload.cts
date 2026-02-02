@@ -1,5 +1,13 @@
 import electron from "electron";
-import type { EventPayloadMapping } from "./types.js";
+import type {
+    EventPayloadMapping,
+    IpcArgsMapping,
+    Statistics,
+    ClientEvent,
+    ServerEvent,
+    ApiConfig
+} from "./types.js";
+
 try {
     require('electron-log/preload');
 } catch (e) {
@@ -7,20 +15,20 @@ try {
 }
 
 electron.contextBridge.exposeInMainWorld("electron", {
-    subscribeStatistics: (callback: any) =>
+    subscribeStatistics: (callback: (stats: Statistics) => void) =>
         ipcOn("statistics", stats => {
             callback(stats);
         }),
     getStaticData: () => ipcInvoke("getStaticData"),
 
     // Claude Agent IPC APIs
-    sendClientEvent: (event: any) => {
+    sendClientEvent: (event: ClientEvent) => {
         electron.ipcRenderer.send("client-event", event);
     },
-    onServerEvent: (callback: (event: any) => void) => {
+    onServerEvent: (callback: (event: ServerEvent) => void) => {
         const cb = (_: Electron.IpcRendererEvent, payload: string) => {
             try {
-                const event = JSON.parse(payload);
+                const event = JSON.parse(payload) as ServerEvent;
                 callback(event);
             } catch (error) {
                 console.error("Failed to parse server event:", error);
@@ -37,7 +45,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("select-directory"),
     getApiConfig: () =>
         ipcInvoke("get-api-config"),
-    saveApiConfig: (config: any) =>
+    saveApiConfig: (config: ApiConfig) =>
         ipcInvoke("save-api-config", config),
     checkApiConfig: () =>
         ipcInvoke("check-api-config"),
@@ -70,12 +78,25 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("get-log-path")
 })
 
-function ipcInvoke<Key extends keyof EventPayloadMapping>(key: Key, ...args: any[]): Promise<EventPayloadMapping[Key]> {
+/**
+ * Type-safe IPC invoke helper.
+ * Uses IpcArgsMapping to ensure correct parameter types for each channel.
+ */
+function ipcInvoke<K extends keyof EventPayloadMapping>(
+    key: K,
+    ...args: K extends keyof IpcArgsMapping ? IpcArgsMapping[K] : []
+): Promise<EventPayloadMapping[K]> {
     return electron.ipcRenderer.invoke(key, ...args);
 }
 
-function ipcOn<Key extends keyof EventPayloadMapping>(key: Key, callback: (payload: EventPayloadMapping[Key]) => void) {
-    const cb = (_: Electron.IpcRendererEvent, payload: any) => callback(payload)
+/**
+ * Type-safe IPC subscription helper.
+ */
+function ipcOn<K extends keyof EventPayloadMapping>(
+    key: K,
+    callback: (payload: EventPayloadMapping[K]) => void
+) {
+    const cb = (_: Electron.IpcRendererEvent, payload: EventPayloadMapping[K]) => callback(payload);
     electron.ipcRenderer.on(key, cb);
-    return () => electron.ipcRenderer.off(key, cb)
+    return () => electron.ipcRenderer.off(key, cb);
 }

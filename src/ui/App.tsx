@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import type { PermissionResult, SDKAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
-import { I18nextProvider, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import type { i18n } from 'i18next';
 import { useShallow } from 'zustand/shallow';
 import { useIPC } from "./hooks/useIPC";
@@ -18,8 +18,11 @@ import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";
 import { SkeletonLoader } from "./components/SkeletonLoader";
 import { initI18n } from "./i18n";
-
-const SCROLL_THRESHOLD = 50;
+import { AppProviders } from "./providers/AppProviders";
+import { useElectronBridge } from "./hooks/useElectronBridge";
+import { usePartialMessage } from "./hooks/usePartialMessage";
+import { useScrollManagement } from "./hooks/useScrollManagement";
+import { useResponsiveLayout } from "./hooks/useResponsiveLayout";
 
 function App() {
   const [i18nReady, setI18nReady] = useState(false);
@@ -42,31 +45,17 @@ function App() {
   }
 
   return (
-    <I18nextProvider i18n={i18nInstance}>
+    <AppProviders i18nInstance={i18nInstance}>
       <AppShell />
-    </I18nextProvider>
+    </AppProviders>
   );
 }
 
 function AppShell() {
   const { t } = useTranslation();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const topSentinelRef = useRef<HTMLDivElement>(null);
-  const partialMessageRef = useRef("");
-  const [partialMessage, setPartialMessage] = useState("");
-  const [showPartialMessage, setShowPartialMessage] = useState(false);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const [hasNewMessages, setHasNewMessages] = useState(false);
-  const prevMessagesLengthRef = useRef(0);
-  const scrollHeightBeforeLoadRef = useRef(0);
-  const shouldRestoreScrollRef = useRef(false);
-  // RAF throttling for partial message updates
-  const rafIdRef = useRef<number | null>(null);
-  const pendingPartialUpdateRef = useRef(false);
+  const bridge = useElectronBridge();
 
   // Merge data selectors with shallow comparison to prevent unnecessary re-renders
-  // This reduces subscriptions and only re-renders when actually used state changes
   const { sessions, historyRequested } = useAppStore(
     useShallow((s) => ({
       sessions: s.sessions,
@@ -80,10 +69,7 @@ function AppShell() {
   const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
   const lastFileRefresh = useAppStore((s) => s.lastFileRefresh);
 
-  const activeSessionIdRef = useRef(activeSessionId);
-  const previousSessionIdRef = useRef<string | null>(activeSessionId);
-
-  // Separate stable function selectors - these never change so no re-render risk
+  // Separate stable function selectors
   const setShowSettingsModal = useAppStore((s) => s.setShowSettingsModal);
   const setGlobalError = useAppStore((s) => s.setGlobalError);
   const markHistoryRequested = useAppStore((s) => s.markHistoryRequested);
@@ -106,118 +92,12 @@ function AppShell() {
     []
   );
 
-  /**
-   * Flush pending partial message update to state.
-   * This is called by requestAnimationFrame to throttle UI updates to 60fps.
-   */
-  const flushPartialMessage = useCallback(() => {
-    if (pendingPartialUpdateRef.current) {
-      setPartialMessage(partialMessageRef.current);
-      pendingPartialUpdateRef.current = false;
-    }
-    rafIdRef.current = null;
-  }, []);
-
-  /**
-   * Schedule a throttled partial message update.
-   * Instead of updating state on every token (1000+ times/sec), we throttle
-   * to 60fps using requestAnimationFrame for smooth rendering.
-   */
-  const schedulePartialUpdate = useCallback(() => {
-    pendingPartialUpdateRef.current = true;
-
-    if (rafIdRef.current === null) {
-      rafIdRef.current = requestAnimationFrame(flushPartialMessage);
-    }
-  }, [flushPartialMessage]);
-
-  // Cleanup RAF on unmount
-  useEffect(() => {
-    return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-      }
-    };
-  }, []);
-
-  // Helper function to extract partial message content
-  const getPartialMessageContent = (eventMessage: { delta: unknown }) => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const delta = eventMessage.delta as { type: string;[key: string]: any };
-      const realType = delta.type.split("_")[0];
-      return delta[realType];
-    } catch (error) {
-      console.error(error);
-      return "";
-    }
-  };
-
-  // Keep activeSessionIdRef in sync with activeSessionId
-  useEffect(() => {
-    activeSessionIdRef.current = activeSessionId;
-  }, [activeSessionId]);
-
-  // Handle partial messages from stream events
-  const handlePartialMessages = useCallback((partialEvent: ServerEvent) => {
-    if (partialEvent.type !== "stream.message") return;
-
-    // CRITICAL: Check if this event belongs to the current active session
-    const currentSessionId = activeSessionIdRef.current;
-    if (partialEvent.payload.sessionId !== currentSessionId) return;
-
-    if (partialEvent.payload.message.type !== "stream_event") return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const message = partialEvent.payload.message as any;
-    if (message.event.type === "content_block_start") {
-      partialMessageRef.current = "";
-      setPartialMessage(partialMessageRef.current);
-      setShowPartialMessage(true);
-    }
-
-    if (message.event.type === "content_block_delta") {
-      // Accumulate text in ref (always immediate, never dropped)
-      partialMessageRef.current += getPartialMessageContent(message.event) || "";
-      // Throttle UI updates to 60fps instead of 1000+ times/sec
-      schedulePartialUpdate();
-      if (shouldAutoScroll) {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      } else {
-        setHasNewMessages(true);
-      }
-    }
-
-    if (message.event.type === "content_block_stop") {
-      // Flush any pending update immediately to ensure no text is lost
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current);
-        rafIdRef.current = null;
-      }
-      setPartialMessage(partialMessageRef.current);
-      // Then clear for next block
-      partialMessageRef.current = "";
-      setPartialMessage("");
-      setShowPartialMessage(false);
-    }
-  }, [shouldAutoScroll, schedulePartialUpdate]);
-
-  // Combined event handler
-  const onEvent = useCallback((event: ServerEvent) => {
-    handleServerEvent(event);
-    handlePartialMessages(event);
-  }, [handleServerEvent, handlePartialMessages]);
-
-  const { connected, sendEvent } = useIPC(onEvent);
-  const { handleStartFromModal } = usePromptActions(sendEvent);
-
   const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
   const messages = useMemo(() => activeSession?.messages ?? [], [activeSession?.messages]);
   const permissionRequests = activeSession?.permissionRequests ?? [];
   const isRunning = activeSession?.status === "running";
   const rightPanelTodos = activeSession?.todos ?? [];
   const rightPanelFileChanges = activeSession?.fileChanges ?? [];
-
 
   const {
     visibleMessages,
@@ -228,24 +108,72 @@ function AppShell() {
     totalMessages,
   } = useMessageWindow(messages, activeSessionId);
 
+  // Scroll Management
+  const {
+    scrollContainerRef,
+    messagesEndRef,
+    topSentinelRef,
+    shouldAutoScroll,
+    hasNewMessages,
+    handleScroll,
+    scrollToBottom,
+    scrollToBottomIfAuto,
+    scrollToMessage
+  } = useScrollManagement({
+    messagesLength: messages.length,
+    activeSessionId,
+    hasMoreHistory,
+    isLoadingHistory,
+    loadMoreMessages,
+  });
 
-  // 规则: async-parallel - 启动时检查 API 配置、加载默认工作目录和品牌配置
-  // 使用 Promise.allSettled 并行执行，每个操作的错误不会阻塞其他操作
+  // Partial Message Handling
+  const {
+    partialMessage,
+    showPartialMessage,
+    handlePartialMessages
+  } = usePartialMessage({
+    activeSessionId,
+    shouldAutoScroll,
+    onContentUpdate: scrollToBottomIfAuto
+  });
+
+  // Responsive Layout
+  const {
+    isSidebarOpen,
+    setSidebarOpen,
+    isRightPanelOpen,
+    setRightPanelOpen,
+    isMobile,
+    toggleSidebar,
+    toggleRightPanel
+  } = useResponsiveLayout();
+
+  const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
+
+  // Combined event handler
+  const onEvent = useCallback((event: ServerEvent) => {
+    handleServerEvent(event);
+    handlePartialMessages(event);
+  }, [handleServerEvent, handlePartialMessages]);
+
+  const { connected, sendEvent } = useIPC(onEvent);
+  const { handleStartFromModal } = usePromptActions(sendEvent);
+
+  // Initial Configuration Checks
   useEffect(() => {
     if (!apiConfigChecked) {
       Promise.allSettled([
-        window.electron.getBrandConfig(),
-        window.electron.getDefaultCwd(),
-        window.electron.checkApiConfig()
+        bridge.getBrandConfig(),
+        bridge.getDefaultCwd(),
+        bridge.checkApiConfig()
       ]).then(([brandConfigResult, defaultCwdResult, apiConfigResult]) => {
-        // 处理品牌配置
         if (brandConfigResult.status === 'fulfilled') {
           setBrandConfig(brandConfigResult.value);
         } else {
           console.error("Failed to load brand config:", brandConfigResult.reason);
         }
 
-        // 处理默认工作目录
         if (defaultCwdResult.status === 'fulfilled') {
           const defaultCwdValue = defaultCwdResult.value;
           setDefaultCwd(defaultCwdValue);
@@ -256,7 +184,6 @@ function AppShell() {
           console.error("Failed to load default cwd:", defaultCwdResult.reason);
         }
 
-        // 处理 API 配置检查
         setApiConfigChecked(true);
         if (apiConfigResult.status === 'fulfilled') {
           if (!apiConfigResult.value.hasConfig) {
@@ -267,7 +194,7 @@ function AppShell() {
         }
       });
     }
-  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd, setBrandConfig]);
+  }, [apiConfigChecked, setApiConfigChecked, setShowSettingsModal, setDefaultCwd, setCwd, cwd, setBrandConfig, bridge]);
 
   useEffect(() => {
     if (connected) sendEvent({ type: "session.list" });
@@ -282,127 +209,19 @@ function AppShell() {
     }
   }, [activeSessionId, connected, sessions, historyRequested, markHistoryRequested, sendEvent]);
 
-  // Load recent files when session becomes active
+  // Load recent files
   useEffect(() => {
     if (!activeSessionId) {
       setRecentFiles([]);
       return;
     }
-    window.electron.getRecentFiles(activeSessionId)
+    bridge.getRecentFiles(activeSessionId)
       .then((files) => setRecentFiles(files))
       .catch((err) => console.error("Failed to load recent files:", err));
-  }, [activeSessionId, setRecentFiles]);
-
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const { scrollTop, scrollHeight, clientHeight } = container;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD;
-
-    if (isAtBottom !== shouldAutoScroll) {
-      setShouldAutoScroll(isAtBottom);
-      if (isAtBottom) {
-        setHasNewMessages(false);
-      }
-    }
-  }, [shouldAutoScroll]);
-
-  // Set up IntersectionObserver for top sentinel
-  useEffect(() => {
-    const sentinel = topSentinelRef.current;
-    const container = scrollContainerRef.current;
-    if (!sentinel || !container) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && hasMoreHistory && !isLoadingHistory) {
-          scrollHeightBeforeLoadRef.current = container.scrollHeight;
-          shouldRestoreScrollRef.current = true;
-          loadMoreMessages();
-        }
-      },
-      {
-        root: container,
-        rootMargin: "100px 0px 0px 0px",
-        threshold: 0,
-      }
-    );
-
-    observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMoreHistory, isLoadingHistory, loadMoreMessages]);
-
-  // Restore scroll position after loading history
-  useEffect(() => {
-    if (shouldRestoreScrollRef.current && !isLoadingHistory) {
-      const container = scrollContainerRef.current;
-      if (container) {
-        const newScrollHeight = container.scrollHeight;
-        const scrollDiff = newScrollHeight - scrollHeightBeforeLoadRef.current;
-        container.scrollTop += scrollDiff;
-      }
-      shouldRestoreScrollRef.current = false;
-    }
-  }, [visibleMessages, isLoadingHistory]);
-
-  // Reset scroll state on session change
-  useEffect(() => {
-    // Get the previous session ID before updating
-    const previousSessionId = previousSessionIdRef.current;
-    const didChangeSession = previousSessionId !== activeSessionId;
-
-    if (!didChangeSession) return;
-
-    const state = useAppStore.getState();
-    const newSession = activeSessionId ? state.sessions[activeSessionId] : undefined;
-    const isNewSessionRunning = newSession?.status === "running";
-
-    // Reset scroll state
-    // Defer state updates to avoid synchronous setState in effect
-    // Reset scroll state and partial message
-    setTimeout(() => {
-      setShouldAutoScroll(true);
-      setHasNewMessages(false);
-      prevMessagesLengthRef.current = 0;
-      setPartialMessage("");
-      setShowPartialMessage(isNewSessionRunning);
-    }, 0);
-
-    // CRITICAL: Only reset partial message ref when switching to a DIFFERENT session
-    partialMessageRef.current = "";
-
-    // Update the previous session ID ref for next time
-    previousSessionIdRef.current = activeSessionId;
-
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-    }, 100);
-  }, [activeSessionId]);
-
-  useEffect(() => {
-    if (shouldAutoScroll) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else if (messages.length > prevMessagesLengthRef.current && prevMessagesLengthRef.current > 0) {
-      setTimeout(() => setHasNewMessages(true), 0);
-    }
-    prevMessagesLengthRef.current = messages.length;
-  }, [messages, partialMessage, shouldAutoScroll]);
-
-  const scrollToBottom = useCallback(() => {
-    setShouldAutoScroll(true);
-    setHasNewMessages(false);
-    resetToLatest();
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [resetToLatest]);
+  }, [activeSessionId, setRecentFiles, bridge]);
 
   const handleNewSession = useCallback(() => {
     useAppStore.getState().setActiveSessionId(null);
-    // No longer show modal, welcome page is displayed automatically
   }, []);
 
   const handleDeleteSession = useCallback((sessionId: string) => {
@@ -416,35 +235,14 @@ function AppShell() {
   }, [activeSessionId, sendEvent, resolvePermissionRequest]);
 
   const handleSendMessage = useCallback(() => {
-    setShouldAutoScroll(true);
-    setHasNewMessages(false);
+    scrollToBottom();
     resetToLatest();
-  }, [resetToLatest]);
+  }, [resetToLatest, scrollToBottom]);
 
-  const handleScrollToMessage = useCallback((messageIndex: number) => {
-    // Reset to latest first to ensure all messages are loaded and visible
+  const handleScrollToMessageCallback = useCallback((messageIndex: number) => {
     resetToLatest();
-
-    // Schedule scroll after state update
-    setTimeout(() => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      // Find the message element
-      const messageElement = document.querySelector(`[data-message-index="${messageIndex}"]`);
-      if (messageElement) {
-        const containerRect = container.getBoundingClientRect();
-        const messageRect = messageElement.getBoundingClientRect();
-        const offset = messageRect.top - containerRect.top + container.scrollTop - 20;
-
-        container.scrollTo({
-          top: offset,
-          behavior: "smooth"
-        });
-        setShouldAutoScroll(false);
-      }
-    }, 100);
-  }, [resetToLatest]);
+    scrollToMessage(messageIndex);
+  }, [resetToLatest, scrollToMessage]);
 
   const handleOpenFile = useCallback((path: string) => {
     if (activeSessionId) {
@@ -456,50 +254,18 @@ function AppShell() {
     if (showPartialMessage) return true;
     if (!isRunning) return false;
 
-    // Check if the last message in the list handles its own loading state (specifically Tool Use)
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.type === 'assistant') {
       const content = (lastMessage as SDKAssistantMessage).message?.content;
       if (Array.isArray(content) && content.length > 0) {
         const lastContent = content[content.length - 1];
-        // If the last content is a tool use, it has its own spinner in EventCard, so hide skeleton
         if (lastContent.type === 'tool_use') {
           return false;
         }
       }
     }
-
-    // Default to showing skeleton if running and no specific reason to hide
     return true;
   }, [showPartialMessage, isRunning, messages]);
-
-  // Responsive state
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const [isRightPanelOpen, setRightPanelOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
-  const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
-
-  // Initialize responsive state on mount and listen to resize
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768; // Tailwind md breakpoint
-      setIsMobile(mobile);
-      if (mobile) {
-        setSidebarOpen(false);
-        setRightPanelOpen(false);
-      } else {
-        setSidebarOpen(true);
-        setRightPanelOpen(window.innerWidth >= 1280); // Open right panel only on XL screens by default
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile, { passive: true });
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
-  const toggleRightPanel = useCallback(() => setRightPanelOpen(prev => !prev), []);
 
   if (!brandConfig) {
     return (
@@ -717,7 +483,7 @@ function AppShell() {
         todos={rightPanelTodos}
         fileChanges={rightPanelFileChanges}
         sessionCwd={activeSession?.cwd || cwd}
-        onScrollToMessage={handleScrollToMessage}
+        onScrollToMessage={handleScrollToMessageCallback}
         onOpenFile={handleOpenFile}
         lastFileRefresh={lastFileRefresh}
         className={`

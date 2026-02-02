@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 import type { Command, SkillMetadata, FileEntry, RecentFile } from "../types";
 
 interface AutocompletePopupProps {
@@ -68,6 +69,7 @@ export function AutocompletePopup({
   onClose
 }: AutocompletePopupProps) {
   const { t } = useTranslation();
+  const bridge = useElectronBridge();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -193,14 +195,14 @@ export function AutocompletePopup({
   const handleSelectResult = useCallback((result: SearchResult) => {
     if (result.type === 'command' && onSelectCommand) {
       const cmd = result.object as Command;
-      window.electron.readCommandContent(cmd.filePath).then((content) => {
+      bridge.readCommandContent(cmd.filePath).then((content) => {
         onSelectCommand(cmd.name, content || `/${cmd.name}`);
       }).catch(() => {
         onSelectCommand(cmd.name, `/${cmd.name}`);
       });
     } else if (result.type === 'skill' && onSelectSkill) {
       const skill = result.object as SkillMetadata;
-      window.electron.readSkillContent(skill.filePath).then((content) => {
+      bridge.readSkillContent(skill.filePath).then((content) => {
         onSelectSkill(skill.name, content || `@${skill.name}`);
       }).catch(() => {
         onSelectSkill(skill.name, `@${skill.name}`);
@@ -212,7 +214,7 @@ export function AutocompletePopup({
       const entry = result.object as FileEntry;
       onNavigateFolder(entry.path);
     }
-  }, [onSelectCommand, onSelectSkill, onSelectFile, onNavigateFolder]);
+  }, [onSelectCommand, onSelectSkill, onSelectFile, onNavigateFolder, bridge]);
 
   // Handle keyboard navigation
   useEffect(() => {

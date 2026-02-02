@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 
 interface SettingsModalProps {
   onClose: () => void;
@@ -7,6 +8,7 @@ interface SettingsModalProps {
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
   const { t } = useTranslation();
+  const bridge = useElectronBridge();
   const [apiKey, setApiKey] = useState("");
   const [baseURL, setBaseURL] = useState("");
   const [model, setModel] = useState("");
@@ -18,7 +20,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
   useEffect(() => {
     // 加载当前配置
     setLoading(true);
-    window.electron.getApiConfig()
+    bridge.getApiConfig()
       .then((config) => {
         if (config) {
           setApiKey(config.apiKey);
@@ -33,7 +35,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       .finally(() => {
         setLoading(false);
       });
-  }, [t]);
+  }, [t, bridge]);
 
   const handleSave = async () => {
     // 验证输入
@@ -62,7 +64,7 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
     setSaving(true);
 
     try {
-      const result = await window.electron.saveApiConfig({
+      const result = await bridge.saveApiConfig({
         apiKey: apiKey.trim(),
         baseURL: baseURL.trim(),
         model: model.trim(),

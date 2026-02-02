@@ -369,7 +369,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       case "runner.error": {
-        set({ globalError: event.payload.message });
+        set({ globalError: event.payload.message ? event.payload.message : null });
         break;
       }
     }

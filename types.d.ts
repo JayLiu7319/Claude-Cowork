@@ -1,92 +1,67 @@
-type Statistics = {
-    cpuUsage: number;
-    ramUsage: number;
-    storageData: number;
-}
+/**
+ * Global type declarations for the Electron window API.
+ * Types are imported from the shared module as the single source of truth.
+ */
 
-type StaticData = {
-    totalStorage: number;
-    cpuModel: string;
-    totalMemoryGB: number;
-}
-
-type UnsubscribeFunction = () => void;
-
-type Command = {
-    name: string;
-    description?: string;
-    argumentHint?: string;
-    filePath: string;
-}
-
-type BrandConfig = {
-    id: 'business' | 'bio-research';
-    name: string;
-    displayName: string;
-    appTitle: string;
-    subtitle: string;
-    colors: {
-        accent: string;
-        accentHover: string;
-        accentLight: string;
-        accentSubtle: string;
-    };
-    waterfall?: {
-        items: string[];
-        enabled: boolean;
-    };
-    icons: {
-        app: string;
-        logo: string;
-    };
-}
-
-type DirectoryEntry = {
-    name: string;
-    path: string;
-    isDirectory: boolean;
-    children?: DirectoryEntry[];
-}
-
-export type EventPayloadMapping = {
-    statistics: Statistics;
-    getStaticData: StaticData;
-    "generate-session-title": string;
-    "get-recent-cwds": string[];
-    "select-directory": string | null;
-    "get-api-config": { apiKey: string; baseURL: string; model: string; apiType?: "anthropic" } | null;
-    "save-api-config": { success: boolean; error?: string };
-    "check-api-config": { hasConfig: boolean; config: { apiKey: string; baseURL: string; model: string; apiType?: "anthropic" } | null };
-    "load-commands": Command[];
-    "read-command-content": string | null;
-    "get-default-cwd": string;
-    "set-default-cwd": void;
-}
+import type {
+    Statistics,
+    StaticData,
+    ClientEvent,
+    ServerEvent,
+    Command,
+    SkillMetadata,
+    FileEntry,
+    RecentFile,
+    DirectoryEntry,
+    BrandConfig,
+    ApiConfig,
+    UnsubscribeFunction,
+} from './src/shared/index';
 
 declare global {
     interface Window {
         electron: {
+            // System statistics
             subscribeStatistics: (callback: (statistics: Statistics) => void) => UnsubscribeFunction;
             getStaticData: () => Promise<StaticData>;
+
             // Claude Agent IPC APIs
-            sendClientEvent: (event: import('./src/ui/types').ClientEvent) => void;
-            onServerEvent: (callback: (event: import('./src/ui/types').ServerEvent) => void) => UnsubscribeFunction;
+            sendClientEvent: (event: ClientEvent) => void;
+            onServerEvent: (callback: (event: ServerEvent) => void) => UnsubscribeFunction;
             generateSessionTitle: (userInput: string | null) => Promise<string>;
             getRecentCwds: (limit?: number) => Promise<string[]>;
             selectDirectory: () => Promise<string | null>;
-            getApiConfig: () => Promise<{ apiKey: string; baseURL: string; model: string; apiType?: "anthropic" } | null>;
-            saveApiConfig: (config: { apiKey: string; baseURL: string; model: string; apiType?: "anthropic" }) => Promise<{ success: boolean; error?: string }>;
-            checkApiConfig: () => Promise<{ hasConfig: boolean; config: { apiKey: string; baseURL: string; model: string; apiType?: "anthropic" } | null }>;
+
+            // API Configuration
+            getApiConfig: () => Promise<ApiConfig | null>;
+            saveApiConfig: (config: ApiConfig) => Promise<{ success: boolean; error?: string }>;
+            checkApiConfig: () => Promise<{ hasConfig: boolean; config: ApiConfig | null }>;
+
+            // Localization
             getLanguage: () => Promise<string>;
-            // Welcome page APIs
+
+            // Commands & Skills
             loadCommands: () => Promise<Command[]>;
             readCommandContent: (filePath: string) => Promise<string | null>;
+            loadSkills: () => Promise<SkillMetadata[]>;
+            readSkillContent: (filePath: string) => Promise<string | null>;
+
+            // File System
+            listFiles: (dirPath: string) => Promise<FileEntry[]>;
+            getRecentFiles: (sessionId: string) => Promise<RecentFile[]>;
+            addRecentFile: (filePath: string, sessionId: string) => Promise<void>;
+            readDirectoryTree: (dirPath: string, depth?: number) => Promise<DirectoryEntry[]>;
+
+            // Working Directory
             getDefaultCwd: () => Promise<string>;
             setDefaultCwd: (cwd: string) => Promise<void>;
-            readDirectoryTree: (dirPath: string, depth?: number) => Promise<DirectoryEntry[]>;
-            // Brand configuration
+
+            // Brand Configuration
             getBrandConfig: () => Promise<BrandConfig>;
-        }
+
+            // Logging
+            getLogPath: () => Promise<string>;
+        };
     }
 }
 

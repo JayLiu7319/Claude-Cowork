@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "../store/useAppStore";
 import type { ClientEvent, InputToken } from "../types";
+import { useElectronBridge } from "./useElectronBridge";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 const MAX_FALLBACK_TITLE_WORDS = 6;
@@ -22,6 +23,7 @@ type SendOptions = {
 
 export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     const { t } = useTranslation();
+    const bridge = useElectronBridge();
     const prompt = useAppStore((state) => state.prompt);
     const cwd = useAppStore((state) => state.cwd);
     const activeSessionId = useAppStore((state) => state.activeSessionId);
@@ -61,7 +63,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
             (async () => {
 
                 try {
-                    const title = await window.electron.generateSessionTitle(promptForTitle);
+                    const title = await bridge.generateSessionTitle(promptForTitle);
                     const currentSessionId = useAppStore.getState().activeSessionId;
                     if (!currentSessionId || !title.trim() || title === fallbackTitle) return;
                     sendEvent({ type: "session.rename", payload: { sessionId: currentSessionId, title } });
@@ -77,7 +79,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
             sendEvent({ type: "session.continue", payload: { sessionId: activeSessionId, prompt: promptForSend, displayPrompt, displayTokens } });
         }
         setPrompt("");
-    }, [activeSession, activeSessionId, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
+    }, [activeSession, activeSessionId, bridge, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
 
     const handleStop = useCallback(() => {
         if (!activeSessionId) return;

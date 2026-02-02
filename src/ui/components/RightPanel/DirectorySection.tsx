@@ -1,5 +1,6 @@
 import { memo, useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import { useElectronBridge } from "../../hooks/useElectronBridge";
 
 // Directory entry type from file system
 export type DirectoryEntry = {
@@ -152,6 +153,7 @@ export const DirectorySection = memo(function DirectorySection({
     lastFileRefresh
 }: DirectorySectionProps) {
     const { t } = useTranslation("ui");
+    const bridge = useElectronBridge();
     const [directoryData, setDirectoryData] = useState<{
         tree: DirectoryEntry[] | null;
         cwd: string | undefined;
@@ -175,7 +177,7 @@ export const DirectorySection = memo(function DirectorySection({
         setIsLoading(true);
         setError(null);
 
-        window.electron.readDirectoryTree(sessionCwd, 2) // Load 2 levels deep initially
+        bridge.readDirectoryTree(sessionCwd, 2) // Load 2 levels deep initially
             .then((tree) => {
                 setDirectoryData({ tree, cwd: sessionCwd });
                 setIsLoading(false);
@@ -185,7 +187,7 @@ export const DirectorySection = memo(function DirectorySection({
                 setError(String(err));
                 setIsLoading(false);
             });
-    }, [sessionCwd, isExpanded, lastFileRefresh]);
+    }, [sessionCwd, isExpanded, lastFileRefresh, bridge]);
 
     const handleTogglePath = useCallback((path: string) => {
         setExpandedPaths(prev => {

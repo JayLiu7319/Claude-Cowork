@@ -4,6 +4,7 @@ import { useAppStore } from "../store/useAppStore";
 import type { InputToken } from "../types";
 import { EnhancedPromptInput } from "./EnhancedPromptInput";
 import { WaterfallBackground } from "./WaterfallBackground";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 
 interface WelcomePageProps {
     onStartSession: (options?: { promptOverride?: string; titleOverride?: string; displayTokensOverride?: InputToken[] }) => void;
@@ -21,6 +22,7 @@ export function WelcomePage({
     isSidebarOpen
 }: WelcomePageProps) {
     const { t } = useTranslation();
+    const bridge = useElectronBridge();
     const cwd = useAppStore((s) => s.cwd);
     const setCwd = useAppStore((s) => s.setCwd);
     const defaultCwd = useAppStore((s) => s.defaultCwd);
@@ -46,22 +48,22 @@ export function WelcomePage({
     }, [brandConfig]);
 
     const handleSelectDirectory = useCallback(async () => {
-        const result = await window.electron.selectDirectory();
+        const result = await bridge.selectDirectory();
         if (result) setCwd(result);
-    }, [setCwd]);
+    }, [setCwd, bridge]);
 
     const handleSetAsDefault = useCallback(async () => {
         if (!cwd.trim()) return;
         setIsSettingDefault(true);
         try {
-            await window.electron.setDefaultCwd(cwd);
+            await bridge.setDefaultCwd(cwd);
             setDefaultCwd(cwd);
         } catch (error) {
             console.error("Failed to set default cwd:", error);
         } finally {
             setIsSettingDefault(false);
         }
-    }, [cwd, setDefaultCwd]);
+    }, [cwd, setDefaultCwd, bridge]);
 
     const isCurrentDefault = cwd === defaultCwd;
 

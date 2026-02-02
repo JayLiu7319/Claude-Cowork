@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 import type { Command } from "../types";
 
 interface SlashCommandPopupProps {
@@ -11,6 +12,7 @@ interface SlashCommandPopupProps {
 
 export function SlashCommandPopup({ commands, filter, onSelect, onClose }: SlashCommandPopupProps) {
     const { t } = useTranslation();
+    const bridge = useElectronBridge();
     const [selectedIndex, setSelectedIndex] = useState(0);
     const listRef = useRef<HTMLDivElement>(null);
 
@@ -36,12 +38,12 @@ export function SlashCommandPopup({ commands, filter, onSelect, onClose }: Slash
 
     const handleSelect = useCallback((command: Command) => {
         // Read the command file content
-        window.electron.readCommandContent(command.filePath).then((content) => {
+        bridge.readCommandContent(command.filePath).then((content) => {
             onSelect(command.name, content || `/${command.name}`);
         }).catch(() => {
             onSelect(command.name, `/${command.name}`);
         });
-    }, [onSelect]);
+    }, [onSelect, bridge]);
 
     // Handle keyboard navigation
     useEffect(() => {

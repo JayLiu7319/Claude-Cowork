@@ -5,6 +5,7 @@ import { AutocompletePopup } from "./AutocompletePopup";
 import { InlineBadge } from "./InlineBadge";
 import type { ClientEvent, InputToken, FileEntry } from "../types";
 import { usePromptActions } from "../hooks/usePromptActions";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 
 const MAX_ROWS = 12;
 const LINE_HEIGHT = 24;
@@ -303,6 +304,7 @@ export function EnhancedPromptInput({
     onScrollToBottom
 }: EnhancedPromptInputProps) {
     const { t } = useTranslation();
+    const bridge = useElectronBridge();
     const planMode = useAppStore((s) => s.planMode);
     const setPlanMode = useAppStore((s) => s.setPlanMode);
     const availableCommands = useAppStore((s) => s.availableCommands);
@@ -338,21 +340,21 @@ export function EnhancedPromptInput({
     // Load commands and skills on mount
     useEffect(() => {
         Promise.all([
-            window.electron.loadCommands(),
-            window.electron.loadSkills()
+            bridge.loadCommands(),
+            bridge.loadSkills()
         ]).then(([commands, skills]) => {
             useAppStore.getState().setAvailableCommands(commands);
             useAppStore.getState().setAvailableSkills(skills);
         }).catch(console.error);
-    }, []);
+    }, [bridge]);
 
     // Load files when cwd changes
     useEffect(() => {
         if (!cwd) return;
-        window.electron.listFiles(cwd)
+        bridge.listFiles(cwd)
             .then((entries) => setCurrentFileEntries(entries))
             .catch(() => setCurrentFileEntries([]));
-    }, [cwd]);
+    }, [cwd, bridge]);
 
     const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
@@ -460,12 +462,12 @@ export function EnhancedPromptInput({
     }, [insertTokenAtTrigger]);
 
     const handleNavigateFolder = useCallback((folderPath: string) => {
-        window.electron.listFiles(folderPath)
+        bridge.listFiles(folderPath)
             .then((entries) => {
                 setCurrentFileEntries(entries);
             })
             .catch(console.error);
-    }, []);
+    }, [bridge]);
 
     const isInputDisabled = disabled && !isRunning;
 

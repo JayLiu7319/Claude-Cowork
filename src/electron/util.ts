@@ -2,7 +2,7 @@ import { ipcMain, WebContents, WebFrameMain, IpcMainInvokeEvent } from "electron
 import { getUIPath } from "./pathResolver.js";
 import { pathToFileURL } from "url";
 import path from "path";
-import type { EventPayloadMapping } from "./types.js";
+import type { EventPayloadMapping, IpcArgsMapping } from "./types.js";
 export const DEV_PORT = 5173;
 
 // Checks if you are in development mode
@@ -46,13 +46,21 @@ export function resolveFilePath(filePath: string, basePath: string): string {
     return path.normalize(path.join(basePath, filePath));
 }
 
-// Making IPC Typesafe
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function ipcMainHandle<Key extends keyof EventPayloadMapping>(key: Key, handler: (event: IpcMainInvokeEvent, ...args: any[]) => EventPayloadMapping[Key] | Promise<EventPayloadMapping[Key]>) {
+/**
+ * Type-safe IPC main handler registration.
+ * Uses IpcArgsMapping to ensure correct parameter types for each channel.
+ */
+export function ipcMainHandle<K extends keyof EventPayloadMapping>(
+    key: K,
+    handler: (
+        event: IpcMainInvokeEvent,
+        ...args: K extends keyof IpcArgsMapping ? IpcArgsMapping[K] : []
+    ) => EventPayloadMapping[K] | Promise<EventPayloadMapping[K]>
+) {
     ipcMain.handle(key, (event, ...args) => {
         if (event.senderFrame) validateEventFrame(event.senderFrame);
-
-        return handler(event, ...args)
+        // Type assertion is safe here because the preload layer enforces types
+        return handler(event, ...(args as K extends keyof IpcArgsMapping ? IpcArgsMapping[K] : []));
     });
 }
 

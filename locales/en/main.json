@@ -6,6 +6,12 @@
   "api": {
     "configurationNotFound": "API configuration not found. Please configure API settings."
   },
+  "git": {
+    "installing": "Installing Git. Please wait until installation completes.",
+    "installFailed": "Git installation failed. Please install Git for Windows and try again.",
+    "missingInstaller": "Bundled Git installer not found. Please contact admin.",
+    "required": "Git is required to continue."
+  },
   "sessionAborted": "Session aborted",
   "userCanceled": "User canceled the question",
   "userDenied": "User denied the request"

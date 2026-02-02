@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useElectronBridge } from "../hooks/useElectronBridge";
 
 interface StartSessionModalProps {
   cwd: string;
@@ -21,14 +22,15 @@ export function StartSessionModal({
   onClose
 }: StartSessionModalProps) {
   const { t } = useTranslation();
+  const bridge = useElectronBridge();
   const [recentCwds, setRecentCwds] = useState<string[]>([]);
 
   useEffect(() => {
-    window.electron.getRecentCwds().then(setRecentCwds).catch(console.error);
-  }, []);
+    bridge.getRecentCwds().then(setRecentCwds).catch(console.error);
+  }, [bridge]);
 
   const handleSelectDirectory = async () => {
-    const result = await window.electron.selectDirectory();
+    const result = await bridge.selectDirectory();
     if (result) onCwdChange(result);
   };
 

@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ServerEvent, ClientEvent } from "../types";
+import { useElectronBridge } from "./useElectronBridge";
+import { errorService } from "../services/error-service";
 
 export function useIPC(onEvent: (event: ServerEvent) => void) {
   const [connected, setConnected] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
+  const bridge = useElectronBridge();
 
   useEffect(() => {
-    // Subscribe to server events
-    const unsubscribe = window.electron.onServerEvent((event: ServerEvent) => {
+    // Subscribe to server events via bridge
+    const unsubscribe = bridge.onServerEvent((event: ServerEvent) => {
       onEvent(event);
     });
 
@@ -21,11 +24,16 @@ export function useIPC(onEvent: (event: ServerEvent) => void) {
       }
       setConnected(false);
     };
-  }, [onEvent]);
+  }, [onEvent, bridge]);
 
   const sendEvent = useCallback((event: ClientEvent) => {
-    window.electron.sendClientEvent(event);
-  }, []);
+    try {
+      bridge.sendClientEvent(event);
+    } catch (error) {
+      errorService.reportError(error as Error, { action: 'sendEvent', eventType: event.type });
+    }
+  }, [bridge]);
 
   return { connected, sendEvent };
 }
+

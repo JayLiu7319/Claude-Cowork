@@ -2,6 +2,7 @@ import { unstable_v2_prompt } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath} from "./claude-settings.js";
 import { app } from "electron";
+import log from "electron-log";
 
 // Build enhanced PATH for packaged environment
 export function getEnhancedEnv(): Record<string, string | undefined> {
@@ -45,14 +46,18 @@ export const generateSessionTitle = async (userIntent: string | null) => {
     }
 
     // Log any non-success result for debugging
-    console.error("Claude SDK returned non-success result:", result);
+    log.warn("[title] Claude SDK returned non-success result", {
+      result
+    });
     return "New Session";
   } catch (error) {
     // Enhanced error logging for packaged app debugging
-    console.error("Failed to generate session title:", error);
-    console.error("Claude Code path:", claudeCodePath);
-    console.error("Is packaged:", app.isPackaged);
-    console.error("Resources path:", process.resourcesPath);
+    log.error("[title] Failed to generate session title", {
+      error: String(error),
+      claudeCodePath,
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath
+    });
 
     // Return a simple title based on user input as fallback
     if (userIntent) {

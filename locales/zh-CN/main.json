@@ -6,6 +6,12 @@
   "api": {
     "configurationNotFound": "未找到 API 配置。请配置 API 设置。"
   },
+  "git": {
+    "installing": "正在安装 Git，请稍候…安装完成后可正常使用。",
+    "installFailed": "Git 安装失败，请手动安装 Git for Windows 后重试。",
+    "missingInstaller": "未找到离线 Git 安装包，请联系管理员提供安装包。",
+    "required": "需要安装 Git 才能正常使用。"
+  },
   "sessionAborted": "会话已中止",
   "userCanceled": "用户取消了问题",
   "userDenied": "用户拒绝了请求"

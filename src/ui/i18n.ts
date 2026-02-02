@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { resources } from '../../locales/index';
+import { electronBridge } from './services/electron-bridge';
 
 /**
  * Initialize i18next for React UI layer
@@ -10,7 +11,7 @@ export async function initI18n(): Promise<typeof i18n> {
   // Get language from main process with fallback
   let language = 'en'; // Default fallback
   try {
-    language = await window.electron.getLanguage();
+    language = await electronBridge.getLanguage();
   } catch (error) {
     console.warn('Failed to get language from main process, using default (en):', error);
   }
