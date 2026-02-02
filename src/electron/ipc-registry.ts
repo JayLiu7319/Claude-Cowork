@@ -1,7 +1,8 @@
 import { ipcMain, dialog, IpcMainEvent, IpcMainInvokeEvent, BrowserWindow } from "electron";
 import log from 'electron-log';
 import { getStaticData, pollResources } from "./test.js";
-import { handleClientEvent, sessions } from "./ipc-handlers.js";
+import { handleClientEvent } from "./handlers/index.js";
+import { getSessionStore } from "./services/session-instance.js";
 import { generateSessionTitle } from "./libs/util.js";
 import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, ApiConfig } from "./libs/config-store.js";
 import { getCurrentApiConfig } from "./libs/claude-settings.js";
@@ -39,7 +40,7 @@ export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {
     // Handle recent cwds request
     ipcMainHandle("get-recent-cwds", (_: IpcMainInvokeEvent, limit?: number) => {
         const boundedLimit = limit ? Math.min(Math.max(limit, 1), 20) : 8;
-        return sessions.listRecentCwds(boundedLimit);
+        return getSessionStore().listRecentCwds(boundedLimit);
     });
 
     // Handle directory selection

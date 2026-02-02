@@ -1,6 +1,6 @@
 import { app, globalShortcut } from "electron";
 import { stopPolling } from "./test.js";
-import { cleanupAllSessions } from "./ipc-handlers.js";
+import { cleanupSessions } from "./services/session-instance.js";
 import { killViteDevServer } from "./dev-utils.js";
 
 let cleanupComplete = false;
@@ -11,7 +11,7 @@ export function cleanup(): void {
 
     globalShortcut.unregisterAll();
     stopPolling();
-    cleanupAllSessions();
+    cleanupSessions();
     killViteDevServer();
 }
 
