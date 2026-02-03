@@ -36,6 +36,7 @@ const quiet = args.includes('--quiet');
 // Environment variables
 const SKIP_SETUP = process.env.SKIP_PLUGIN_SETUP === '1';
 const FORCE_UPDATE = process.env.FORCE_PLUGIN_UPDATE === '1';
+const SHOULD_STRIP_GIT = process.env.STRIP_PLUGIN_GIT === '1' || process.env.CI === 'true';
 
 function log(message: string) {
   if (!quiet) {
@@ -126,6 +127,16 @@ function verifyPlugin(): boolean {
   return true;
 }
 
+function stripGitMetadata(): void {
+  const gitDir = path.join(PLUGIN_PATH, '.git');
+  if (!fs.existsSync(gitDir)) {
+    return;
+  }
+
+  log(`Removing ${PLUGIN_NAME} git metadata...`);
+  fs.rmSync(gitDir, { recursive: true, force: true });
+}
+
 async function main() {
   // Check if setup should be skipped
   if (SKIP_SETUP) {
@@ -170,6 +181,10 @@ async function main() {
       // Don't exit with error code - just warn
       log('Continuing despite verification failure...');
     }
+  }
+
+  if (SHOULD_STRIP_GIT) {
+    stripGitMetadata();
   }
 
   log('Plugin setup complete!');
