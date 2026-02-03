@@ -1,19 +1,19 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import { MessageCard } from './EventCard';
-import { isMarkdown } from '../utils/markdownUtils';
-import type { StreamMessage } from '../types';
+import { MessageCard } from './index';
+import { isMarkdown } from '../../utils/markdownUtils';
+import type { StreamMessage } from '../../types';
 import type { SDKMessage, SDKAssistantMessage } from '@anthropic-ai/claude-agent-sdk';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18next';
 
 // Mock dependencies
-vi.mock('../render/markdown', () => ({
+vi.mock('../../render/markdown', () => ({
   default: ({ text }: { text: string }) => <div data-testid="markdown-content">{text}</div>
 }));
 
-vi.mock('./DecisionPanel', () => ({
+vi.mock('../DecisionPanel', () => ({
   DecisionPanel: ({ onSubmit }: { onSubmit: (data: unknown) => void }) => (
     <div data-testid="decision-panel">
       <button onClick={() => onSubmit({ approved: true })}>Approve</button>

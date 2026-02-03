@@ -2,7 +2,7 @@ import { app } from "electron";
 import { join } from "path";
 import log from "electron-log";
 import { SessionStore } from "./session-store.js";
-import type { RunnerHandle } from "./runner.js";
+import type { RunnerHandle } from "./runner/index.js";
 
 let sessions: SessionStore;
 const runnerHandles = new Map<string, RunnerHandle>();
