@@ -1,4 +1,4 @@
-import type { ServerEvent } from "../../types.js";
+import type { ServerEvent } from "../../../types.js";
 import type { Session } from "../session-store.js";
 
 /**

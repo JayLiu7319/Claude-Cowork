@@ -2,7 +2,7 @@ import { app, BrowserWindow, globalShortcut } from "electron";
 import path from "path";
 import { isDev, DEV_PORT } from "./util.js";
 import { getPreloadPath, getUIPath, getIconPath } from "./pathResolver.js";
-import { loadBrandConfig } from "./libs/brand-config.js";
+import { loadBrandConfig } from "./libs/config/index.js";
 import { cleanup } from "./lifecycle.js";
 
 let mainWindow: BrowserWindow | null = null;

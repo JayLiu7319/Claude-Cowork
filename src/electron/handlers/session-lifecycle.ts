@@ -1,8 +1,7 @@
 import log from "electron-log";
-import { runClaude } from "../libs/runner/index.js";
+import { runClaude, getSessionStore, getRunnerHandles } from "../libs/session/index.js";
 import { t } from "../i18n.js";
 import type { ClientEvent } from "../types.js";
-import { getSessionStore, getRunnerHandles } from "../libs/session-instance.js";
 import { emit } from "../services/server-event-emitter.js";
 import { cancelRightPanelUpdate } from "../aggregators/right-panel-aggregator.js";
 

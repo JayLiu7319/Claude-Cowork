@@ -1,6 +1,6 @@
 import { unstable_v2_prompt } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
-import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath} from "./claude-settings.js";
+import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "../config/claude-settings.js";
 import { app } from "electron";
 import log from "electron-log";
 
@@ -14,7 +14,7 @@ export function getEnhancedEnv(): Record<string, string | undefined> {
       ...(app.isPackaged && process.platform === "win32" ? { ELECTRON_RUN_AS_NODE: "1" } : {})
     };
   }
-  
+
   const env = buildEnvForConfig(config);
   return {
     ...process.env,

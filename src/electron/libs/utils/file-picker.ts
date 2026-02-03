@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { FileEntry, RecentFile } from "../types.js";
+import type { FileEntry, RecentFile } from "../../types.js";
 
 // Patterns to ignore (same as in main.ts readDirectoryTree)
 const IGNORE_PATTERNS = [

@@ -1,4 +1,4 @@
-import { getSessionStore } from "../libs/session-instance.js";
+import { getSessionStore } from "../libs/session/index.js";
 import { broadcast } from "../services/broadcast-service.js";
 import { aggregateTodos, aggregateFileChanges, updateFileTreeWithOperations } from "../../shared/index.js";
 

@@ -2,16 +2,11 @@ import { ipcMain, dialog, IpcMainEvent, IpcMainInvokeEvent, BrowserWindow } from
 import log from 'electron-log';
 import { getStaticData, pollResources } from "./test.js";
 import { handleClientEvent } from "./handlers/index.js";
-import { getSessionStore } from "./libs/session-instance.js";
-import { generateSessionTitle } from "./libs/util.js";
-import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, ApiConfig } from "./libs/config-store.js";
-import { getCurrentApiConfig } from "./libs/claude-settings.js";
-import { loadGlobalCommands, readCommandContent } from "./libs/commands.js";
-import { loadGlobalSkills, readSkillContent } from "./libs/skills.js";
-import { listFilesInDirectory, getRecentFiles, addRecentFile } from "./libs/file-picker.js";
+import { getSessionStore } from "./libs/session/index.js";
+import { generateSessionTitle, listFilesInDirectory, getRecentFiles, addRecentFile, readDirectoryTree } from "./libs/utils/index.js";
+import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, type ApiConfig, getCurrentApiConfig, loadBrandConfig } from "./libs/config/index.js";
+import { loadGlobalCommands, readCommandContent, loadGlobalSkills, readSkillContent } from "./libs/features/index.js";
 import { getLanguage } from "./i18n.js";
-import { loadBrandConfig } from "./libs/brand-config.js";
-import { readDirectoryTree } from "./libs/file-system.js";
 import { ClientEvent } from "./types.js";
 
 export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {

@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
-import type { SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode } from "../types.js";
-import { buildInitialFileTree } from "../../shared/index.js";
+import type { SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode } from "../../types.js";
+import { buildInitialFileTree } from "../../../shared/index.js";
 
 export type PendingPermission = {
   toolUseId: string;

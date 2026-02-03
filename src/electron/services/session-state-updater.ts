@@ -1,5 +1,5 @@
 import type { ServerEvent } from "../types.js";
-import { getSessionStore } from "../libs/session-instance.js";
+import { getSessionStore } from "../libs/session/index.js";
 import { scheduleRightPanelUpdate } from "../aggregators/right-panel-aggregator.js";
 
 function hasLiveSession(sessionId: string): boolean {

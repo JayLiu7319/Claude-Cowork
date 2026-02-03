@@ -1,6 +1,6 @@
 import { app, globalShortcut } from "electron";
 import { stopPolling } from "./test.js";
-import { cleanupSessions } from "./libs/session-instance.js";
+import { cleanupSessions } from "./libs/session/index.js";
 import { killViteDevServer } from "./dev-utils.js";
 
 let cleanupComplete = false;

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { app } from "electron";
 import log from "electron-log";
-import { loadBrandConfig } from "../brand-config.js";
+import { loadBrandConfig } from "../../config/brand-config.js";
 import { getRunnerErrorDetails } from "./error-handler.js";
 
 type PluginConfig = {

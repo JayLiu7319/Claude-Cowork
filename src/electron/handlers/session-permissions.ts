@@ -1,5 +1,5 @@
 import type { ClientEvent } from "../types.js";
-import { getSessionStore } from "../libs/session-instance.js";
+import { getSessionStore } from "../libs/session/index.js";
 
 export function handlePermissionResponse(event: Extract<ClientEvent, { type: "permission.response" }>) {
   const sessions = getSessionStore();

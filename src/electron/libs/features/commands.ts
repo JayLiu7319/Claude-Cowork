@@ -1,9 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
-import type { Command } from "../types.js";
-import { getResourcesPath } from "../pathResolver.js";
-import { loadBrandConfig } from "./brand-config.js";
+import type { Command } from "../../types.js";
+import { getResourcesPath } from "../../pathResolver.js";
+import { loadBrandConfig } from "../config/brand-config.js";
 
 /**
  * Parse YAML frontmatter from a markdown file content

@@ -1,8 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
-import type { SkillMetadata } from "../types.js";
-import { getResourcesPath } from "../pathResolver.js";
-import { loadBrandConfig } from "./brand-config.js";
+import type { SkillMetadata } from "../../types.js";
+import { getResourcesPath } from "../../pathResolver.js";
+import { loadBrandConfig } from "../config/brand-config.js";
 
 /**
  * Parse YAML frontmatter from a markdown file content

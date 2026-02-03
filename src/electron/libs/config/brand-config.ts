@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
 import { fileURLToPath } from 'url';
-import type { BrandConfig } from '../types.js';
+import type { BrandConfig } from "../../types.js";
 
 let cachedBrandId: string | null = null;
 let cachedConfig: BrandConfig | null = null;

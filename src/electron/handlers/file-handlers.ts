@@ -1,6 +1,6 @@
 import { shell } from "electron";
 import { resolveFilePath } from "../util.js";
-import { getSessionStore } from "../libs/session-instance.js";
+import { getSessionStore } from "../libs/session/index.js";
 import type { ClientEvent } from "../types.js";
 
 export function handleFileOpen(event: Extract<ClientEvent, { type: 'file.open' }>) {

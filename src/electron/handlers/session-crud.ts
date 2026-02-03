@@ -1,6 +1,6 @@
 import log from "electron-log";
 import type { ClientEvent } from "../types.js";
-import { getSessionStore, getRunnerHandles } from "../libs/session-instance.js";
+import { getSessionStore, getRunnerHandles } from "../libs/session/index.js";
 import { emit } from "../services/server-event-emitter.js";
 import { cancelRightPanelUpdate } from "../aggregators/right-panel-aggregator.js";
 import { aggregateTodos, aggregateFileChanges, updateFileTreeWithOperations } from "../../shared/index.js";

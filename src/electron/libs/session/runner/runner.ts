@@ -15,10 +15,10 @@ import {
 import { normalizeProxyUrl } from "./proxy-utils.js";
 import { buildFirstMessageSystemContext } from "./system-context.js";
 import { loadPluginConfigs } from "./plugin-loader.js";
-import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "../claude-settings.js";
-import { getEnhancedEnv } from "../util.js";
-import { t } from "../../i18n.js";
-import { getResourcesPath } from "../../pathResolver.js";
+import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "../../config/claude-settings.js";
+import { getEnhancedEnv } from "../../utils/util.js";
+import { t } from "../../../i18n.js";
+import { getResourcesPath } from "../../../pathResolver.js";
 
 const DEFAULT_CWD = process.cwd();
 
