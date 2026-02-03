@@ -6,6 +6,15 @@
         "outDir": "../../dist-electron",
         "esModuleInterop": true,
         "skipLibCheck": true,
+        "baseUrl": "../..",
+        "paths": {
+            "@electron/*": [
+                "./src/electron/*"
+            ],
+            "@shared/*": [
+                "./src/shared/*"
+            ]
+        },
         // add global types
         "types": [
             "../../types"

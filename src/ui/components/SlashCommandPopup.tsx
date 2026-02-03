@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useElectronBridge } from "../hooks/useElectronBridge";
-import type { Command } from "../types";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
+import type { Command } from "@ui/types";
 
 interface SlashCommandPopupProps {
     commands: Command[];

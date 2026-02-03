@@ -12,7 +12,7 @@ import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
 import { SettingsModal } from "./components/SettingsModal";
-import { EnhancedPromptInput } from "./components/EnhancedPromptInput";
+import { EnhancedPromptInput } from "./components/EnhancedPromptInput/EnhancedPromptInput";
 import { usePromptActions } from "./hooks/usePromptActions";
 import { MessageCard } from "./components/EventCard";
 import MDContent from "./render/markdown";

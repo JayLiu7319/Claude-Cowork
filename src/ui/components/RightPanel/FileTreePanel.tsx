@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import type { FileTreeNode } from "../../types";
+import type { FileTreeNode } from "@ui/types";
 import { FileTreeNode as FileTreeNodeComponent } from "./FileTreeNode";
 
 type FileTreePanelProps = {

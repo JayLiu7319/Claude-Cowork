@@ -1,6 +1,6 @@
 import { memo, useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useElectronBridge } from "../../hooks/useElectronBridge";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
 
 // Directory entry type from file system
 export type DirectoryEntry = {

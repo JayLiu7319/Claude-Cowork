@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import type { TodoItemData } from "../../types";
+import type { TodoItemData } from "@ui/types";
 import { TaskItem } from "./TaskItem";
 
 type TasksSectionProps = {

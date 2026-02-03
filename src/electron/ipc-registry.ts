@@ -2,7 +2,7 @@ import { ipcMain, dialog, IpcMainEvent, IpcMainInvokeEvent, BrowserWindow } from
 import log from 'electron-log';
 import { getStaticData, pollResources } from "./test.js";
 import { handleClientEvent } from "./handlers/index.js";
-import { getSessionStore } from "./services/session-instance.js";
+import { getSessionStore } from "./libs/session-instance.js";
 import { generateSessionTitle } from "./libs/util.js";
 import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, ApiConfig } from "./libs/config-store.js";
 import { getCurrentApiConfig } from "./libs/claude-settings.js";

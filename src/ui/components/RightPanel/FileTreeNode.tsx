@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import type { FileTreeNode as FileTreeNodeData } from "../../types";
+import type { FileTreeNode as FileTreeNodeData } from "@ui/types";
 
 type FileTreeNodeComponentProps = {
   node: FileTreeNodeData;

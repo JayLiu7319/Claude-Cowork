@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ServerEvent, ClientEvent } from "../types";
-import { useElectronBridge } from "./useElectronBridge";
-import { errorService } from "../services/error-service";
+import type { ServerEvent, ClientEvent } from "@ui/types";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
+import { errorService } from "@ui/services/error-service";
 
 export function useIPC(onEvent: (event: ServerEvent) => void) {
   const [connected, setConnected] = useState(false);

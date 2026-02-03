@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import type { StreamMessage } from "../types";
+import type { StreamMessage } from "@ui/types";
 
 
 const VISIBLE_WINDOW_SIZE = 3;

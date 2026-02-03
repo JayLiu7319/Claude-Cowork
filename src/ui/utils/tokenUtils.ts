@@ -1,4 +1,4 @@
-import type { InputToken } from "../types";
+import type { InputToken } from "@ui/types";
 
 // Token placeholder constants
 export const TOKEN_PLACEHOLDER = "\uFFFC";

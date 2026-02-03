@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { InputToken } from "../types";
+import type { InputToken } from "@ui/types";
 
 interface InlineBadgeProps {
   token: InputToken;

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import type { TodoItemData } from "../../types";
+import type { TodoItemData } from "@ui/types";
 
 type TaskItemProps = {
   todo: TodoItemData;

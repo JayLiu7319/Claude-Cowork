@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useElectronBridge } from "../hooks/useElectronBridge";
-import type { Command, SkillMetadata, FileEntry, RecentFile } from "../types";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
+import type { Command, SkillMetadata, FileEntry, RecentFile } from "@ui/types";
 
 interface AutocompletePopupProps {
   mode: 'commands-skills' | 'files';

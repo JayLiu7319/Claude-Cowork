@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../store/useAppStore";
-import type { InputToken } from "../types";
-import { EnhancedPromptInput } from "./EnhancedPromptInput";
+import { useAppStore } from "@ui/store/useAppStore";
+import type { InputToken } from "@ui/types";
+import { EnhancedPromptInput } from "./EnhancedPromptInput/EnhancedPromptInput";
 import { WaterfallBackground } from "./WaterfallBackground";
-import { useElectronBridge } from "../hooks/useElectronBridge";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
 
 interface WelcomePageProps {
     onStartSession: (options?: { promptOverride?: string; titleOverride?: string; displayTokensOverride?: InputToken[] }) => void;

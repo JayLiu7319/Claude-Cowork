@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";
-import type { PermissionRequest } from "../store/useAppStore";
+import type { PermissionRequest } from "@ui/store/useAppStore";
 
 type AskUserQuestionInput = {
   questions?: Array<{

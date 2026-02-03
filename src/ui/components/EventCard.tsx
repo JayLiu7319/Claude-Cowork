@@ -7,12 +7,12 @@ import type {
   SDKResultMessage,
   SDKUserMessage
 } from "@anthropic-ai/claude-agent-sdk";
-import type { InputToken, StreamMessage } from "../types";
-import type { PermissionRequest } from "../store/useAppStore";
-import MDContent from "../render/markdown";
-import { DecisionPanel } from "./DecisionPanel";
-import { formatCurrency, formatNumber, formatDuration } from "../utils/formatters";
-import { InlineBadge } from "./InlineBadge";
+import type { InputToken, StreamMessage } from "@ui/types";
+import type { PermissionRequest } from "@ui/store/useAppStore";
+import MDContent from "@ui/render/markdown";
+import { DecisionPanel } from "@ui/components/DecisionPanel";
+import { formatCurrency, formatNumber, formatDuration } from "@ui/utils/formatters";
+import { InlineBadge } from "@ui/components/InlineBadge";
 
 type MessageContent = SDKAssistantMessage["message"]["content"][number];
 type ToolResultContent = SDKUserMessage["message"]["content"][number];
@@ -116,7 +116,7 @@ const SessionResult = ({ message }: { message: SDKResultMessage }) => {
   );
 };
 
-import { isMarkdown } from "../utils/markdownUtils";
+import { isMarkdown } from "@ui/utils/markdownUtils";
 
 // 规则: js-hoist-regexp - 缓存正则表达式避免重复创建
 const tagRegexCache = new Map<string, RegExp>();

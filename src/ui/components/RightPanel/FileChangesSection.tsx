@@ -1,6 +1,6 @@
 import { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { FileChangeData } from "../../types";
+import type { FileChangeData } from "@ui/types";
 import { FileChangeItem } from "./FileChangeItem";
 
 type FileChangesSectionProps = {

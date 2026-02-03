@@ -21,7 +21,7 @@ import type {
     DirectoryEntry,
     BrandConfig,
     UnsubscribeFunction,
-} from "../types";
+} from "@ui/types";
 
 /**
  * Interface defining all Electron IPC methods available to the UI.

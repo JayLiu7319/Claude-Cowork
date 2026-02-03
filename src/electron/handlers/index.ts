@@ -1,16 +1,9 @@
 import log from 'electron-log';
 import type { ClientEvent } from "../types.js";
-import { initializeSessions } from "../services/session-instance.js";
-import {
-    handleListSessions,
-    handleSessionHistory,
-    handleSessionStart,
-    handleSessionContinue,
-    handleSessionStop,
-    handleSessionDelete,
-    handleSessionRename,
-    handlePermissionResponse
-} from "./session-handlers.js";
+import { initializeSessions } from "../libs/session-instance.js";
+import { handleListSessions, handleSessionHistory, handleSessionDelete, handleSessionRename } from "./session-crud.js";
+import { handleSessionStart, handleSessionContinue, handleSessionStop } from "./session-lifecycle.js";
+import { handlePermissionResponse } from "./session-permissions.js";
 import { handleFileOpen } from "./file-handlers.js";
 
 export function handleClientEvent(event: ClientEvent) {

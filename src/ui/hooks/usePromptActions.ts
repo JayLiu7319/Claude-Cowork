@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../store/useAppStore";
-import type { ClientEvent, InputToken } from "../types";
-import { useElectronBridge } from "./useElectronBridge";
+import { useAppStore } from "@ui/store/useAppStore";
+import type { ClientEvent, InputToken } from "@ui/types";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
 
 const DEFAULT_ALLOWED_TOOLS = "Read,Edit,Bash";
 const MAX_FALLBACK_TITLE_WORDS = 6;

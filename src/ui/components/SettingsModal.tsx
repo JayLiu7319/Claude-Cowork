@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useElectronBridge } from "../hooks/useElectronBridge";
+import { useElectronBridge } from "@ui/hooks/useElectronBridge";
 
 interface SettingsModalProps {
   onClose: () => void;

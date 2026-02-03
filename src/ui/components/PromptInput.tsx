@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import type { ClientEvent } from "../types";
-import { usePromptActions } from "../hooks/usePromptActions";
+import type { ClientEvent } from "@ui/types";
+import { usePromptActions } from "@ui/hooks/usePromptActions";
 
 const MAX_ROWS = 12;
 const LINE_HEIGHT = 21;

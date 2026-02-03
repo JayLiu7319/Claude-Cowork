@@ -4,7 +4,7 @@
  */
 
 // Re-export everything from shared
-export * from "../shared/index";
+export * from "@shared/index";
 
 // Re-export PermissionResult from SDK for convenience
 export type { PermissionResult } from "@anthropic-ai/claude-agent-sdk";

@@ -25,6 +25,15 @@
         "paths": {
             "@/*": [
                 "./src/*"
+            ],
+            "@ui/*": [
+                "./src/ui/*"
+            ],
+            "@shared/*": [
+                "./src/shared/*"
+            ],
+            "@electron/*": [
+                "./src/electron/*"
             ]
         }
     },

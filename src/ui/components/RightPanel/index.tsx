@@ -1,5 +1,5 @@
 import { useMemo, memo } from "react";
-import type { TodoItemData, FileChangeData } from "../../types";
+import type { TodoItemData, FileChangeData } from "@ui/types";
 import { Header } from "./Header";
 import { TasksFilesPanel } from "./TasksFilesPanel";
 

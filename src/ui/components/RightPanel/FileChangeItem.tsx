@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import type { FileChangeData } from "../../types";
-import { formatPathForDisplay } from "../../utils/formatters";
+import type { FileChangeData } from "@ui/types";
+import { formatPathForDisplay } from "@ui/utils/formatters";
 
 type FileChangeItemProps = {
   change: FileChangeData;

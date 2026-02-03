@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TodoItemData, FileChangeData } from "../../types";
+import type { TodoItemData, FileChangeData } from "@ui/types";
 import { TasksSection } from "./TasksSection";
 import { FileChangesSection } from "./FileChangesSection";
 import { DirectorySection } from "./DirectorySection";

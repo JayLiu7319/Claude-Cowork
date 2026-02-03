@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command, BrandConfig, SkillMetadata, RecentFile } from "../types";
+import type { ServerEvent, SessionStatus, StreamMessage, TodoItemData, FileChangeData, FileTreeNode, Command, BrandConfig, SkillMetadata, RecentFile } from "@ui/types";
 
 export type PermissionRequest = {
   toolUseId: string;

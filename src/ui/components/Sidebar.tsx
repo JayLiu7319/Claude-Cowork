@@ -17,7 +17,7 @@ import {
   Close as DialogClose,
   Description as DialogDescription
 } from "@radix-ui/react-dialog";
-import { useAppStore } from "../store/useAppStore";
+import { useAppStore } from "@ui/store/useAppStore";
 
 // 规则: rendering-hoist-jsx - 提取静态组件到模块顶层
 const StatusIcon = ({ status }: { status?: string }) => {
