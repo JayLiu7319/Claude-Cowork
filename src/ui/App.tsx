@@ -160,6 +160,7 @@ function AppShell() {
   const { connected, sendEvent } = useIPC(onEvent);
   const { handleStartFromModal } = usePromptActions(sendEvent);
 
+
   // Initial Configuration Checks
   useEffect(() => {
     if (!apiConfigChecked) {
@@ -473,6 +474,7 @@ function AppShell() {
             onSendMessage={handleSendMessage}
             disabled={visibleMessages.length === 0}
             showNewMessageButton={hasNewMessages && !shouldAutoScroll}
+            showScrollToBottomButton={!shouldAutoScroll && !hasNewMessages}
             onScrollToBottom={scrollToBottom}
           />
 

@@ -6,13 +6,32 @@ import { InlineBadge } from "./InlineBadge";
 import type { ClientEvent, InputToken, FileEntry } from "../types";
 import { usePromptActions } from "../hooks/usePromptActions";
 import { useElectronBridge } from "../hooks/useElectronBridge";
+import {
+    TOKEN_PLACEHOLDER,
+    TOKEN_SEPARATOR,
+    type TokenRegistryItem,
+    createTokenId,
+    createTokenPlaceholder,
+    parseDisplayTokens,
+    serializePrompt,
+    findTrigger,
+    countPlaceholders,
+    getPlaceholderRuns,
+    replacePlaceholderRuns,
+    removePlaceholderBeforeCursor,
+    removePlaceholderAtCursor,
+    computeDiffRange
+} from "../utils/tokenUtils";
+import {
+    measureAverageCharWidth,
+    measureCharWidth,
+    measurePlaceholderCharWidthDom
+} from "../utils/textMeasurement";
 
 const MAX_ROWS = 12;
 const LINE_HEIGHT = 24;
 const MAX_HEIGHT = MAX_ROWS * LINE_HEIGHT;
-const TOKEN_PLACEHOLDER = "\uFFFC";
-const TOKEN_PADDING_CHARS = 2;
-const TOKEN_SEPARATOR = "\u200B";
+
 // Stable noop function reference to prevent unnecessary re-renders
 const NOOP_SEND_EVENT = () => { };
 
@@ -22,277 +41,8 @@ interface EnhancedPromptInputProps {
     onSendMessage?: () => void;
     disabled?: boolean;
     showNewMessageButton?: boolean;
+    showScrollToBottomButton?: boolean;
     onScrollToBottom?: () => void;
-}
-
-type TokenRegistryItem = InputToken & { id: string };
-
-function createTokenId() {
-    if (globalThis.crypto?.randomUUID) {
-        return globalThis.crypto.randomUUID();
-    }
-    return `token-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function createTokenPlaceholder(token?: TokenRegistryItem) {
-    if (!token || token.type === "text") return TOKEN_PLACEHOLDER;
-    const placeholderCount = Math.max(1, token.name.length + TOKEN_PADDING_CHARS);
-    return TOKEN_PLACEHOLDER.repeat(placeholderCount);
-}
-
-function parseDisplayTokens(value: string, tokens: TokenRegistryItem[]) {
-    const displayTokens: InputToken[] = [];
-    let buffer = "";
-    let tokenIndex = 0;
-
-    for (let i = 0; i < value.length; i += 1) {
-        const ch = value[i];
-        if (ch === TOKEN_SEPARATOR) {
-            continue;
-        }
-        if (ch === TOKEN_PLACEHOLDER) {
-            while (i + 1 < value.length && value[i + 1] === TOKEN_PLACEHOLDER) {
-                i += 1;
-            }
-            if (buffer) {
-                displayTokens.push({ type: "text", value: buffer });
-                buffer = "";
-            }
-            const token = tokens[tokenIndex];
-            if (token) {
-                displayTokens.push(token);
-            }
-            tokenIndex += 1;
-        } else {
-            buffer += ch;
-        }
-    }
-
-    if (buffer) {
-        displayTokens.push({ type: "text", value: buffer });
-    }
-
-    return displayTokens;
-}
-
-function serializePrompt(value: string, tokens: TokenRegistryItem[], mode: "send" | "title") {
-    let result = "";
-    let tokenIndex = 0;
-    for (let i = 0; i < value.length; i += 1) {
-        const ch = value[i];
-        if (ch === TOKEN_SEPARATOR) {
-            continue;
-        }
-        if (ch === TOKEN_PLACEHOLDER) {
-            const token = tokens[tokenIndex];
-            if (token) {
-                if (token.type === "command") {
-                    result += mode === "send" ? token.content : `/${token.name}`;
-                } else if (token.type === "skill") {
-                    result += mode === "send" ? token.content : `@${token.name}`;
-                } else if (token.type === "file") {
-                    result += mode === "send" ? token.path : `@${token.name}`;
-                }
-            }
-            tokenIndex += 1;
-        } else {
-            result += ch;
-        }
-    }
-    return result;
-}
-
-function findTrigger(value: string, cursorPos: number, triggerChar: "/" | "@") {
-    let cleaned = "";
-    let lastTriggerCleanIndex = -1;
-    let lastTriggerRawIndex = -1;
-    let i = 0;
-
-    while (i < cursorPos) {
-        if (value[i] === TOKEN_PLACEHOLDER) {
-            i += 1;
-            continue;
-        }
-        if (value[i] === TOKEN_SEPARATOR) {
-            i += 1;
-            continue;
-        }
-        const ch = value[i];
-        if (ch === triggerChar) {
-            lastTriggerCleanIndex = cleaned.length;
-            lastTriggerRawIndex = i;
-        }
-        cleaned += ch;
-        i += 1;
-    }
-
-    if (lastTriggerCleanIndex === -1) return null;
-    const textAfterTrigger = cleaned.slice(lastTriggerCleanIndex + 1);
-    if (textAfterTrigger.includes(" ") || textAfterTrigger.includes("\n")) return null;
-    return { rawIndex: lastTriggerRawIndex, filter: textAfterTrigger };
-}
-
-function countPlaceholders(value: string, endIndex = value.length) {
-    let count = 0;
-    let inRun = false;
-    for (let i = 0; i < endIndex; i += 1) {
-        const isPlaceholder = value[i] === TOKEN_PLACEHOLDER;
-        if (isPlaceholder && !inRun) {
-            count += 1;
-        }
-        inRun = isPlaceholder;
-    }
-    return count;
-}
-
-function getPlaceholderRuns(value: string) {
-    const runs: number[] = [];
-    let currentRun = 0;
-    for (let i = 0; i < value.length; i += 1) {
-        if (value[i] === TOKEN_PLACEHOLDER) {
-            currentRun += 1;
-        } else if (currentRun > 0) {
-            runs.push(currentRun);
-            currentRun = 0;
-        }
-    }
-    if (currentRun > 0) runs.push(currentRun);
-    return runs;
-}
-
-// Singleton canvas for text measurement to avoid expensive DOM creation
-let sharedCanvas: HTMLCanvasElement | null = null;
-let sharedContext: CanvasRenderingContext2D | null = null;
-
-function getSharedContext(): CanvasRenderingContext2D | null {
-    if (!sharedCanvas) {
-        sharedCanvas = document.createElement("canvas");
-        sharedContext = sharedCanvas.getContext("2d");
-    }
-    return sharedContext;
-}
-
-function measureAverageCharWidth(element: HTMLElement) {
-    const context = getSharedContext();
-    if (!context) return null;
-
-    const style = getComputedStyle(element);
-    const font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} / ${style.lineHeight} ${style.fontFamily}`;
-
-    context.font = font;
-    const sample = "mmmmmmmmmm";
-    return context.measureText(sample).width / sample.length;
-}
-
-function measureCharWidth(element: HTMLElement, character: string) {
-    const context = getSharedContext();
-    if (!context) return null;
-
-    const style = getComputedStyle(element);
-    const font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} / ${style.lineHeight} ${style.fontFamily}`;
-
-    context.font = font;
-    return context.measureText(character).width;
-}
-
-function measurePlaceholderCharWidthDom(element: HTMLElement) {
-    const style = getComputedStyle(element);
-    const span = document.createElement("span");
-    span.style.position = "absolute";
-    span.style.visibility = "hidden";
-    span.style.whiteSpace = "pre";
-    span.style.font = `${style.fontStyle} ${style.fontVariant} ${style.fontWeight} ${style.fontSize} / ${style.lineHeight} ${style.fontFamily}`;
-    span.style.letterSpacing = style.letterSpacing;
-    const sampleCount = 10;
-    span.textContent = TOKEN_PLACEHOLDER.repeat(sampleCount);
-    document.body.appendChild(span);
-    const width = span.getBoundingClientRect().width;
-    document.body.removeChild(span);
-    return width / sampleCount;
-}
-
-function replacePlaceholderRuns(value: string, desiredRuns: number[]) {
-    let result = "";
-    let runIndex = 0;
-    let i = 0;
-    while (i < value.length) {
-        if (value[i] === TOKEN_PLACEHOLDER) {
-            const start = i;
-            while (i < value.length && value[i] === TOKEN_PLACEHOLDER) {
-                i += 1;
-            }
-            const currentLength = i - start;
-            const nextLength = desiredRuns[runIndex] ?? currentLength;
-            result += TOKEN_PLACEHOLDER.repeat(nextLength);
-            runIndex += 1;
-            continue;
-        }
-        result += value[i];
-        i += 1;
-    }
-    return { nextValue: result, runCount: runIndex };
-}
-
-function removePlaceholderBeforeCursor(value: string, cursorPos: number) {
-    if (cursorPos <= 0) return null;
-    if (value[cursorPos - 1] !== TOKEN_PLACEHOLDER) return null;
-    let startIndex = cursorPos - 1;
-    while (startIndex > 0 && value[startIndex - 1] === TOKEN_PLACEHOLDER) {
-        startIndex -= 1;
-    }
-    let endIndex = cursorPos;
-    while (endIndex < value.length && value[endIndex] === TOKEN_PLACEHOLDER) {
-        endIndex += 1;
-    }
-    if (startIndex > 0 && value[startIndex - 1] === TOKEN_SEPARATOR) {
-        startIndex -= 1;
-    }
-    if (endIndex < value.length && value[endIndex] === TOKEN_SEPARATOR) {
-        endIndex += 1;
-    }
-    return {
-        newValue: value.slice(0, startIndex) + value.slice(endIndex),
-        newCursorPos: startIndex
-    };
-}
-
-function removePlaceholderAtCursor(value: string, cursorPos: number) {
-    if (cursorPos >= value.length) return null;
-    if (value[cursorPos] !== TOKEN_PLACEHOLDER) return null;
-    let startIndex = cursorPos;
-    while (startIndex > 0 && value[startIndex - 1] === TOKEN_PLACEHOLDER) {
-        startIndex -= 1;
-    }
-    let endIndex = cursorPos + 1;
-    while (endIndex < value.length && value[endIndex] === TOKEN_PLACEHOLDER) {
-        endIndex += 1;
-    }
-    if (startIndex > 0 && value[startIndex - 1] === TOKEN_SEPARATOR) {
-        startIndex -= 1;
-    }
-    if (endIndex < value.length && value[endIndex] === TOKEN_SEPARATOR) {
-        endIndex += 1;
-    }
-    return {
-        newValue: value.slice(0, startIndex) + value.slice(endIndex),
-        newCursorPos: startIndex
-    };
-}
-
-function computeDiffRange(prev: string, next: string) {
-    let start = 0;
-    const prevLength = prev.length;
-    const nextLength = next.length;
-    while (start < prevLength && start < nextLength && prev[start] === next[start]) {
-        start += 1;
-    }
-    let endPrev = prevLength - 1;
-    let endNext = nextLength - 1;
-    while (endPrev >= start && endNext >= start && prev[endPrev] === next[endNext]) {
-        endPrev -= 1;
-        endNext -= 1;
-    }
-    return { start, endPrev, endNext };
 }
 
 export function EnhancedPromptInput({
@@ -301,6 +51,7 @@ export function EnhancedPromptInput({
     onSendMessage,
     disabled = false,
     showNewMessageButton = false,
+    showScrollToBottomButton = false,
     onScrollToBottom
 }: EnhancedPromptInputProps) {
     const { t } = useTranslation();
@@ -477,21 +228,21 @@ export function EnhancedPromptInput({
         const titlePrompt = serializePrompt(inputValue, tokens, "title");
         if (!finalPrompt.trim() || !cwd.trim() || pendingStart) return;
 
-        const displayTokens = parseDisplayTokens(inputValue, tokens);
+        const currentDisplayTokens = parseDisplayTokens(inputValue, tokens);
         if (sendEvent) {
             onSendMessage?.();
             promptActions.handleSend({
                 promptOverride: finalPrompt,
                 titleOverride: titlePrompt,
                 displayOverride: titlePrompt,
-                displayTokensOverride: displayTokens
+                displayTokensOverride: currentDisplayTokens
             });
         } else {
             onSendMessage?.();
             onStartSession?.({
                 promptOverride: finalPrompt,
                 titleOverride: titlePrompt,
-                displayTokensOverride: displayTokens
+                displayTokensOverride: currentDisplayTokens
             });
         }
 
@@ -501,24 +252,35 @@ export function EnhancedPromptInput({
         setShowAutocomplete(false);
     }, [inputValue, tokens, cwd, pendingStart, promptActions, onStartSession, onSendMessage, sendEvent, isInputDisabled]);
 
+    /**
+     * Handle token removal for Backspace or Delete key
+     */
+    const handleTokenRemoval = useCallback((
+        e: React.KeyboardEvent<HTMLTextAreaElement>,
+        removal: { newValue: string; newCursorPos: number },
+        tokenIndex: number
+    ) => {
+        e.preventDefault();
+        setTokens((prevTokens) => {
+            const nextTokens = prevTokens.slice();
+            nextTokens.splice(tokenIndex, 1);
+            return nextTokens;
+        });
+        setInputValue(removal.newValue);
+        prevValueRef.current = removal.newValue;
+        requestAnimationFrame(() => {
+            if (!promptRef.current) return;
+            promptRef.current.setSelectionRange(removal.newCursorPos, removal.newCursorPos);
+        });
+    }, []);
+
     const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Backspace' && e.currentTarget.selectionStart === e.currentTarget.selectionEnd) {
             const cursorPos = e.currentTarget.selectionStart ?? 0;
             const removal = removePlaceholderBeforeCursor(inputValue, cursorPos);
             if (removal) {
-                e.preventDefault();
                 const tokenIndex = countPlaceholders(inputValue, cursorPos) - 1;
-                setTokens((prevTokens) => {
-                    const nextTokens = prevTokens.slice();
-                    nextTokens.splice(tokenIndex, 1);
-                    return nextTokens;
-                });
-                setInputValue(removal.newValue);
-                prevValueRef.current = removal.newValue;
-                requestAnimationFrame(() => {
-                    if (!promptRef.current) return;
-                    promptRef.current.setSelectionRange(removal.newCursorPos, removal.newCursorPos);
-                });
+                handleTokenRemoval(e, removal, tokenIndex);
                 return;
             }
         }
@@ -527,19 +289,8 @@ export function EnhancedPromptInput({
             const cursorPos = e.currentTarget.selectionStart ?? 0;
             const removal = removePlaceholderAtCursor(inputValue, cursorPos);
             if (removal) {
-                e.preventDefault();
                 const tokenIndex = countPlaceholders(inputValue, cursorPos);
-                setTokens((prevTokens) => {
-                    const nextTokens = prevTokens.slice();
-                    nextTokens.splice(tokenIndex, 1);
-                    return nextTokens;
-                });
-                setInputValue(removal.newValue);
-                prevValueRef.current = removal.newValue;
-                requestAnimationFrame(() => {
-                    if (!promptRef.current) return;
-                    promptRef.current.setSelectionRange(removal.newCursorPos, removal.newCursorPos);
-                });
+                handleTokenRemoval(e, removal, tokenIndex);
                 return;
             }
         }
@@ -563,7 +314,7 @@ export function EnhancedPromptInput({
             }
             handleSend();
         }
-    }, [showAutocomplete, handleSend, inputValue, isInputDisabled]);
+    }, [showAutocomplete, handleSend, inputValue, isInputDisabled, handleTokenRemoval]);
 
     const handleStop = useCallback(() => {
         promptActions.handleStop();
@@ -587,7 +338,7 @@ export function EnhancedPromptInput({
         }
     }, [inputValue]);
 
-    // 规则: 避免在 useLayoutEffect 中同步调用 setState 防止级联渲染
+    // Synchronize placeholder widths with badge widths
     useLayoutEffect(() => {
         const displayLayer = displayRef.current;
         const textarea = promptRef.current;
@@ -630,8 +381,6 @@ export function EnhancedPromptInput({
         }
     }, [inputValue, displayTokens]);
 
-
-
     const canSend = inputValue.trim() && cwd.trim() && !pendingStart && !isRunning && !isInputDisabled;
 
     return (
@@ -667,6 +416,21 @@ export function EnhancedPromptInput({
                                     <path d="M12 5v14M5 12l7 7 7-7" />
                                 </svg>
                                 <span>{t('common.newMessages', '新消息')}</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Scroll to Bottom Button - Show when not at bottom and no new messages */}
+                    {!showNewMessageButton && showScrollToBottomButton && (
+                        <div className="absolute -top-12 left-0 right-0 flex justify-center pointer-events-none">
+                            <button
+                                onClick={onScrollToBottom}
+                                aria-label={t('common.scrollToBottom', '滚动到底部')}
+                                className="pointer-events-auto flex items-center justify-center w-9 h-9 rounded-full bg-surface border border-ink-900/10 text-ink-600 shadow-lg transition-colors hover:bg-surface-tertiary hover:text-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                            >
+                                <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M12 5v14M5 12l7 7 7-7" />
+                                </svg>
                             </button>
                         </div>
                     )}

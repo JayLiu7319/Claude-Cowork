@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 
 const SCROLL_THRESHOLD = 50;
+const SCROLL_RELEASE_THRESHOLD = 120;
 
 interface UseScrollManagementProps {
     messagesLength: number;
@@ -30,6 +31,8 @@ export function useScrollManagement({
     const scrollHeightBeforeLoadRef = useRef(0);
     const shouldRestoreScrollRef = useRef(false);
     const previousSessionIdRef = useRef<string | null>(activeSessionId);
+    const pendingSessionScrollRef = useRef(false);
+    const lastScrollTopRef = useRef(0);
 
     // Handle scroll events to detect if user scrolled up
     const handleScroll = useCallback(() => {
@@ -37,11 +40,18 @@ export function useScrollManagement({
         if (!container) return;
 
         const { scrollTop, scrollHeight, clientHeight } = container;
-        const isAtBottom = scrollTop + clientHeight >= scrollHeight - SCROLL_THRESHOLD;
+        const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+        const isAtBottom = distanceToBottom <= SCROLL_THRESHOLD;
+        const scrollDelta = scrollTop - lastScrollTopRef.current;
+        const scrollDirection = scrollDelta > 0 ? "down" : scrollDelta < 0 ? "up" : "none";
+        const releaseThreshold = Math.max(SCROLL_RELEASE_THRESHOLD, Math.round(clientHeight * 0.25));
+        const shouldReleaseAuto = scrollDirection === "up" && distanceToBottom > releaseThreshold;
+        const nextShouldAutoScroll = shouldAutoScroll ? !shouldReleaseAuto : isAtBottom;
+        lastScrollTopRef.current = scrollTop;
 
-        if (isAtBottom !== shouldAutoScroll) {
-            setShouldAutoScroll(isAtBottom);
-            if (isAtBottom) {
+        if (nextShouldAutoScroll !== shouldAutoScroll) {
+            setShouldAutoScroll(nextShouldAutoScroll);
+            if (nextShouldAutoScroll) {
                 setHasNewMessages(false);
             }
         }
@@ -96,24 +106,30 @@ export function useScrollManagement({
 
         if (!didChangeSession) return;
 
-        // Reset scroll state
-        setTimeout(() => {
+        // #region agent log
+        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: 'debug-session', runId: 'pre-fix', hypothesisId: 'H1', location: 'useScrollManagement.ts:106', message: 'session changed', data: { previousSessionId, activeSessionId }, timestamp: Date.now() }) }).catch(() => { });
+        // #endregion
+
+        // Reset scroll state - use queueMicrotask to avoid synchronous setState in effect
+        queueMicrotask(() => {
             setShouldAutoScroll(true);
             setHasNewMessages(false);
-            prevMessagesLengthRef.current = 0;
-        }, 0);
+        });
+        prevMessagesLengthRef.current = 0;
+        pendingSessionScrollRef.current = true;
 
         previousSessionIdRef.current = activeSessionId;
-
-        setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-        }, 100);
     }, [activeSessionId]);
 
     // Auto-scroll on new messages
     useEffect(() => {
-        if (shouldAutoScroll) {
-            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (shouldAutoScroll && messagesLength !== prevMessagesLengthRef.current) {
+            if (pendingSessionScrollRef.current) {
+                pendingSessionScrollRef.current = false;
+                messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+            } else {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }
         } else if (messagesLength > prevMessagesLengthRef.current && prevMessagesLengthRef.current > 0) {
             // Only show "new messages" if we actually have new messages (length increased)
             // and it's not the initial load (prev > 0)
