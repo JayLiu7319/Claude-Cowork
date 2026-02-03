@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 import log from "electron-log";
 import { getRunnerErrorDetails } from "./error-handler.js";
 
@@ -84,4 +84,16 @@ export async function tryInstallBundledGit(resourcesPath: string): Promise<boole
             resolve(code === 0);
         });
     });
+}
+
+/**
+ * Check if Git is available on PATH.
+ */
+export function checkGitInstalled(): boolean {
+    try {
+        execSync("git --version", { stdio: "ignore" });
+        return true;
+    } catch {
+        return false;
+    }
 }

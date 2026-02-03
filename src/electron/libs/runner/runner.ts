@@ -6,7 +6,12 @@ import { app } from "electron";
 
 import type { RunnerOptions, RunnerHandle } from "./types.js";
 import { getRunnerErrorDetails } from "./error-handler.js";
-import { findGitBashPath, getBundledGitInstallerPath, tryInstallBundledGit } from "./git-utils.js";
+import {
+    checkGitInstalled,
+    findGitBashPath,
+    getBundledGitInstallerPath,
+    tryInstallBundledGit
+} from "./git-utils.js";
 import { normalizeProxyUrl } from "./proxy-utils.js";
 import { buildFirstMessageSystemContext } from "./system-context.js";
 import { loadPluginConfigs } from "./plugin-loader.js";
@@ -83,8 +88,11 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
                 mergedEnv.Path = mergedEnv.PATH;
             }
 
-            let gitBashPath = mergedEnv.CLAUDE_CODE_GIT_BASH_PATH ?? findGitBashPath();
-            if (!gitBashPath && app.isPackaged && process.platform === "win32") {
+            const isWindows = process.platform === "win32";
+            let gitBashPath = isWindows
+                ? mergedEnv.CLAUDE_CODE_GIT_BASH_PATH ?? findGitBashPath()
+                : null;
+            if (!gitBashPath && app.isPackaged && isWindows) {
                 const resourcesPathForInstall = getResourcesPath();
                 if (!getBundledGitInstallerPath(resourcesPathForInstall)) {
                     onEvent({
@@ -131,15 +139,31 @@ export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
                     return;
                 }
             }
-            if (gitBashPath) {
+            if (isWindows && gitBashPath) {
                 mergedEnv.CLAUDE_CODE_GIT_BASH_PATH = gitBashPath;
                 const gitBinDir = path.dirname(gitBashPath);
                 if (mergedEnv.PATH && !mergedEnv.PATH.includes(gitBinDir)) {
-                    mergedEnv.PATH = `${gitBinDir};${mergedEnv.PATH}`;
+                    mergedEnv.PATH = `${gitBinDir}${path.delimiter}${mergedEnv.PATH}`;
                 } else if (!mergedEnv.PATH) {
                     mergedEnv.PATH = gitBinDir;
                 }
                 mergedEnv.Path = mergedEnv.PATH;
+            }
+            if (!isWindows && !checkGitInstalled()) {
+                onEvent({
+                    type: "runner.error",
+                    payload: { sessionId: session.id, message: t("git.required") }
+                });
+                onEvent({
+                    type: "session.status",
+                    payload: {
+                        sessionId: session.id,
+                        status: "error",
+                        title: session.title,
+                        error: t("git.required")
+                    }
+                });
+                return;
             }
             const normalizedHttpProxy = normalizeProxyUrl(
                 mergedEnv.HTTP_PROXY ?? mergedEnv.http_proxy

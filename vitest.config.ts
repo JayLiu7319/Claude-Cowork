@@ -30,6 +30,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@ui': path.resolve(__dirname, './src/ui'),
+      '@shared': path.resolve(__dirname, './src/shared'),
+      '@electron': path.resolve(__dirname, './src/electron'),
     },
   },
 });
