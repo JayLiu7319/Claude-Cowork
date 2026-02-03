@@ -1,14 +1,7 @@
 import { memo, useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useElectronBridge } from "@ui/hooks/useElectronBridge";
-
-// Directory entry type from file system
-export type DirectoryEntry = {
-    name: string;
-    path: string;
-    isDirectory: boolean;
-    children?: DirectoryEntry[];
-};
+import type { DirectoryEntry } from "@ui/types";
 
 type DirectorySectionProps = {
     sessionCwd?: string;

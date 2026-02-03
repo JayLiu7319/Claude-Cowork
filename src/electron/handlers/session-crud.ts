@@ -3,9 +3,7 @@ import type { ClientEvent } from "../types.js";
 import { getSessionStore, getRunnerHandles } from "../libs/session-instance.js";
 import { emit } from "../services/server-event-emitter.js";
 import { cancelRightPanelUpdate } from "../aggregators/right-panel-aggregator.js";
-import { aggregateTodos } from "../libs/todo-extractor.js";
-import { aggregateFileChanges } from "../libs/file-change-extractor.js";
-import { updateFileTreeWithOperations } from "../libs/file-tree-builder.js";
+import { aggregateTodos, aggregateFileChanges, updateFileTreeWithOperations } from "../../shared/index.js";
 
 export function handleListSessions() {
   const sessions = getSessionStore();

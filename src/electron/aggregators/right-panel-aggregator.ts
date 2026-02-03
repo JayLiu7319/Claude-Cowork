@@ -1,8 +1,6 @@
 import { getSessionStore } from "../libs/session-instance.js";
 import { broadcast } from "../services/broadcast-service.js";
-import { aggregateTodos } from "../libs/todo-extractor.js";
-import { aggregateFileChanges } from "../libs/file-change-extractor.js";
-import { updateFileTreeWithOperations } from "../libs/file-tree-builder.js";
+import { aggregateTodos, aggregateFileChanges, updateFileTreeWithOperations } from "../../shared/index.js";
 
 const rightPanelUpdateTimers = new Map<string, NodeJS.Timeout>();
 
