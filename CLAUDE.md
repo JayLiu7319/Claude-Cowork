@@ -20,78 +20,98 @@ The application is built with:
 
 ```
 Claude-Cowork/
-├── .claude/                          # Claude configuration
-│   └── settings.local.json
+├── .agent/                           # Agent configuration
+│   └── skills/                       # AI skill definitions
 ├── assets/                           # Static assets
-│   └── partners/                     # Partner resources
+├── brands/                           # Brand specific configurations
+│   ├── business.json
+│   └── bio-research.json
 ├── docs/                             # Documentation
-│   └── plans/                        # Implementation plans
-│       ├── 2025-01-21-i18n-design.md
-│       └── 2025-01-21-i18n-implementation.md
 ├── locales/                          # Internationalization resources
 │   ├── en/                           # English translations
 │   │   ├── common.json
 │   │   ├── main.json
 │   │   └── ui.json
 │   ├── zh-CN/                        # Simplified Chinese translations
-│   │   ├── common.json
-│   │   ├── main.json
-│   │   └── ui.json
 │   └── index.ts                      # i18n resource loader
 ├── patches/                          # NPM package patches
-│   └── @anthropic-ai%2Fclaude-agent-sdk@0.2.6.patch
 ├── resources/                        # Build-time resources
-│   └── builtin-plugins/              # Bundled plugins
-│       ├── startup-business-analyst/ # Business consulting plugin
-│       ├── core-skills/              # Core skills (docx, pptx)
-│       └── claude-scientific-skills/ # Scientific research plugin (auto-cloned)
+├── scripts/                          # Build and dev scripts
+│   ├── dev-runner.ts                 # Development runner
+│   ├── setup-plugins.ts              # Plugin setup script
+│   ├── write-brand-info.ts           # Brand info writer
+│   └── validate-icon.cjs             # Icon validation
 ├── src/                              # Source code
 │   ├── electron/                     # Main process (Node.js)
+│   │   ├── aggregators/              # Data aggregation services
+│   │   ├── handlers/                 # IPC event handlers modules
+│   │   │   ├── index.ts              # ClientEvent dispatcher
+│   │   │   ├── file-handlers.ts
+│   │   │   ├── session-crud.ts
+│   │   │   ├── session-lifecycle.ts
+│   │   │   └── session-permissions.ts
 │   │   ├── libs/                     # Core libraries
-│   │   │   ├── claude-settings.ts    # Claude settings reader
-│   │   │   ├── config-store.ts       # Configuration persistence
-│   │   │   ├── runner.ts             # Claude SDK executor
-│   │   │   ├── session-store.ts      # SQLite session storage
-│   │   │   └── util.ts               # Utility functions
+│   │   │   ├── config/               # Configuration management
+│   │   │   ├── features/             # Feature modules (commands, skills)
+│   │   │   ├── session/              # Session store and management
+│   │   │   │   └── runner/           # Claude SDK runner logic
+│   │   │   └── utils/                # Shared utilities
+│   │   ├── services/                 # Backend services
+│   │   │   ├── broadcast-service.ts
+│   │   │   ├── server-event-emitter.ts
+│   │   │   └── session-state-updater.ts
+│   │   ├── dev-utils.ts              # Development utilities
 │   │   ├── i18n.ts                   # Main process i18n setup
-│   │   ├── ipc-handlers.ts           # IPC event handlers
+│   │   ├── ipc-registry.ts           # Central IPC registration
+│   │   ├── lifecycle.ts              # App lifecycle management
 │   │   ├── main.ts                   # Application entry point
-│   │   ├── pathResolver.ts           # Path resolution utilities
-│   │   ├── preload.cts               # Preload script (context bridge)
-│   │   ├── types.ts                  # TypeScript type definitions
-│   │   └── util.ts                   # Main process utilities
+│   │   ├── preload.cts               # Preload script
+│   │   └── window-manager.ts         # Window creation and management
+│   ├── shared/                       # Shared types (Main/Renderer)
+│   │   ├── types/                    # Cross-boundary type definitions
+│   │   │   └── index.ts              # Single source of truth for types
+│   │   ├── extractors/               # Data extraction utilities
+│   │   └── index.ts                  # Barrel export
 │   └── ui/                           # Renderer process (React)
 │       ├── assets/                   # UI assets
-│       ├── components/               # React components
-│       │   ├── DecisionPanel.tsx     # Permission decision UI
-│       │   ├── EventCard.tsx         # Message event display
-│       │   ├── PromptInput.tsx       # User input component
-│       │   ├── SettingsModal.tsx     # Settings dialog
-│       │   ├── Sidebar.tsx           # Session list sidebar
-│       │   └── StartSessionModal.tsx # New session dialog
+│       ├── components/               # React components (Atomic/Modular)
+│       │   ├── ChatView/             # Chat interface components
+│       │   ├── EventCard/            # Message event display
+│       │   ├── RightPanel/           # Right side info panel
+│       │   ├── Sidebar/              # Session list sidebar
+│       │   ├── WelcomePage/          # Welcome screen
+│       │   └── EnhancedPromptInput/  # Rich text input component
 │       ├── hooks/                    # Custom React hooks
+│       │   ├── index.ts              # Barrel export
+│       │   ├── useAppSelectors.ts    # Zustand selector hooks
+│       │   ├── useBrandTheme.ts      # Brand theming hook
+│       │   ├── useElectronBridge.ts  # Electron bridge context
 │       │   ├── useIPC.ts             # IPC communication hook
-│       │   └── useMessageWindow.ts   # Message window hook
-│       ├── render/                   # Rendering utilities
-│       │   └── markdown.tsx          # Markdown renderer
-│       ├── store/                    # State management
-│       │   └── useAppStore.ts        # Zustand global store
+│       │   ├── useMessageWindow.ts   # Message windowing hook
+│       │   ├── usePartialMessage.ts  # Streaming message hook
+│       │   ├── usePromptActions.ts   # Prompt action handlers
+│       │   ├── useResponsiveLayout.ts # Responsive layout logic
+│       │   └── useScrollManagement.ts # Scroll behavior hook
+│       ├── providers/                # Context providers
+│       │   ├── AppProviders.tsx      # Combined app providers
+│       │   └── ElectronBridgeProvider.tsx
+│       ├── services/                 # Frontend services
+│       │   ├── electron-bridge.ts    # IPC bridge service
+│       │   └── error-service.ts      # Error handling service
+│       ├── store/                    # Zustand global store
+│       │   └── useAppStore.ts        # Central state store
+│       ├── utils/                    # UI utility functions
+│       │   ├── index.ts              # Barrel export
+│       │   ├── formatters.ts
+│       │   ├── markdownUtils.ts
+│       │   ├── textMeasurement.ts
+│       │   └── tokenUtils.ts
 │       ├── App.tsx                   # Root React component
-│       ├── i18n.ts                   # Renderer process i18n setup
-│       ├── main.tsx                  # React entry point
-│       └── types.ts                  # UI type definitions
-├── dist-react/                       # Vite build output (gitignored)
-├── dist-electron/                    # Transpiled Electron code (gitignored)
-├── out/                              # electron-builder output (gitignored)
-├── electron-builder.json             # Electron packaging config
+│       └── main.tsx                  # React entry point
+├── dist-react/                       # Vite build output
+├── dist-electron/                    # Transpiled Electron code
 ├── package.json                      # Project dependencies
-├── tsconfig.json                     # Root TypeScript config
-├── tsconfig.app.json                 # UI TypeScript config
-├── tsconfig.node.json                # Node TypeScript config
-├── vite.config.ts                    # Vite configuration
-├── CLAUDE.md                         # This file
-├── README.md                         # English README
-└── README_ZH.md                      # Chinese README
+└── vite.config.ts                    # Vite configuration
 ```
 
 ## Development Commands
@@ -110,6 +130,10 @@ bun run dev:electron
 
 # Transpile Electron TypeScript code
 bun run transpile:electron
+
+# Run with specific brand configuration
+bun run dev:business
+bun run dev:bio
 ```
 
 ### Building and Distribution
@@ -118,11 +142,19 @@ bun run transpile:electron
 # Type check and build React app
 bun run build
 
+# Build with specific brand
+bun run build:business
+bun run build:bio
+
 # Build production binaries
-bun run dist:mac-arm64    # macOS Apple Silicon (M1/M2/M3)
+bun run dist:mac-arm64    # macOS Apple Silicon
 bun run dist:mac-x64      # macOS Intel
 bun run dist:win          # Windows x64
 bun run dist:linux        # Linux x64
+
+# Build branded binaries (examples)
+bun run dist:business:mac-arm64
+bun run dist:bio:win
 ```
 
 ### Code Quality
@@ -133,263 +165,136 @@ bun run lint
 
 # Rebuild native modules (better-sqlite3)
 bun run rebuild
+
+# Run tests
+bun run test
+
+# Run tests with UI
+bun run test:ui
+
+# Run tests with coverage
+bun run test:coverage
+```
+
+### Plugin Management
+
+```bash
+# Setup plugins (runs automatically in dev/build)
+bun run setup-plugins
+
+# Update plugins
+bun run setup-plugins:update
 ```
 
 ## Architecture
 
-### Dual-Process Architecture
+### Modular Main Process
 
-The application follows Electron's main/renderer process architecture:
+The Main Process (`src/electron/`) has been refactored into a modular architecture:
 
-**Main Process** (`src/electron/`):
-- `main.ts` - Application entry point, window creation, IPC setup
-- `ipc-handlers.ts` - Client event routing and session orchestration
-- `libs/runner.ts` - Claude Agent SDK integration and execution
-- `libs/session-store.ts` - SQLite-based session persistence
-- `libs/claude-settings.ts` - Reads `~/.claude/settings.json` for API configuration
-- `libs/config-store.ts` - Saves API configuration to user data directory
-- `preload.cts` - Bridge between main and renderer processes
-- `i18n.ts` - i18next setup for main process
+- **Entry Point** (`main.ts`): Orchestrates initialization, i18n, and lifecycle events (~30 lines).
+- **IPC Registry** (`ipc-registry.ts`): Centralizes the registration of all IPC handlers.
+- **Handlers** (`handlers/`): Specific logic for IPC events, split by domain:
+  - `index.ts`: ClientEvent dispatcher
+  - `session-crud.ts`: Session CRUD operations
+  - `session-lifecycle.ts`: Session start/continue/stop
+  - `session-permissions.ts`: Permission handling
+  - `file-handlers.ts`: File operations
+- **Libraries** (`libs/`): Core logic grouped by functional area:
+  - `config/`: Configuration persistence and management
+  - `session/`: SQLite session storage and state management
+    - `runner/`: Claude SDK runner with plugin loading
+  - `features/`: Slash commands and skills loading
+  - `utils/`: Common helpers (file operations, title generation)
+- **Services** (`services/`): Broadcast and state update services
+- **Window Management** (`window-manager.ts`): Handles browser window creation and configuration.
 
-**Renderer Process** (`src/ui/`):
-- `App.tsx` - Main React application component
-- `store/useAppStore.ts` - Zustand store handling all UI state and server events
-- `hooks/useIPC.ts` - IPC communication abstraction
-- `components/` - React components for UI elements
-- `i18n.ts` - i18next setup for renderer process
+### Shared Types
+
+The `src/shared/` directory contains the single source of truth for all cross-boundary types used by both Main and Renderer processes. Key types include:
+
+- `SessionInfo`, `SessionStatus`: Session metadata
+- `StreamMessage`, `UserPromptMessage`: Message types
+- `ServerEvent`, `ClientEvent`: IPC event types
+- `BrandConfig`, `ApiConfig`: Configuration types
+- `EventPayloadMapping`, `IpcArgsMapping`: Type-safe IPC definitions
+
+### Enhanced Renderer Process
+
+The Renderer Process (`src/ui/`) follows a feature-based and hook-centric architecture:
+
+- **Providers** (`providers/`): Context providers for app-wide services (e.g., `ElectronBridgeProvider`, `AppProviders`).
+- **Services** (`services/`): Singleton services for communication and error handling.
+- **Components** (`components/`): Large components are split into directories with dedicated sub-components.
+- **Hooks** (`hooks/`): Complex logic extracted into custom hooks with barrel export via `index.ts`.
+- **State** (`store/`): Zustand store (`useAppStore.ts`) handles global UI state and server events.
+- **Utils** (`utils/`): Utility functions with barrel export via `index.ts`.
 
 ### Event Flow
 
-1. **User Action** → UI component dispatches IPC event via `window.electron.send()`
-2. **Client Event** → Main process receives event in `ipc-handlers.ts`
-3. **Session Management** → `SessionStore` creates/updates/deletes sessions in SQLite
-4. **Claude Execution** → `runner.ts` invokes Claude Agent SDK with proper configuration
-5. **Server Events** → Stream events are broadcast to all renderer windows
-6. **State Update** → `useAppStore` handles server events and updates UI state
-
-### Session Management
-
-Sessions are persisted in SQLite (`sessions.db` in userData directory) with:
-- Session metadata (id, title, status, cwd, timestamps)
-- Message history (streamed SDK messages)
-- Claude session IDs for resume capability
-- Pending permission requests
-
-### API Configuration
-
-The app supports two configuration sources (priority order):
-1. User-provided config saved in `config-store.ts` (stored in userData)
-2. Claude Code settings from `~/.claude/settings.json`
-
-Configuration includes:
-- API key
-- Model selection
-- Base URL (for custom endpoints)
-
-### Permission Handling
-
-The app uses `bypassPermissions` mode but intercepts `AskUserQuestion` tool calls to show permission dialogs. Other tools are auto-approved. Permission requests are stored in session state and resolved when user responds.
-
-### Internationalization (i18n)
-
-The application supports multiple languages using i18next:
-- **Main Process**: Uses `i18next` with filesystem backend to load translations
-- **Renderer Process**: Uses `react-i18next` with HTTP backend
-- **Translation Files**: Organized in `locales/[language]/` directories
-- **Supported Languages**: English (en), Simplified Chinese (zh-CN)
-- **Namespaces**: `common` (shared), `main` (main process), `ui` (renderer process)
-
-## Plugin Configuration
-
-### Brand-Specific Plugins
-
-The application supports loading different plugin sets based on the active brand:
-
-**Configuration Location:** `brands/[brand-id].json`
-
-```json
-{
-  "plugins": ["plugin-name-1", "plugin-name-2"]
-}
-```
-
-**Default Behavior:** If `plugins` field is not specified, defaults to `["core-skills"]`.
-
-### Plugin Loading Flow
-
-1. **Brand Detection** - `brand-config.ts` reads brand ID from `.brand` file or environment
-2. **Config Loading** - Loads brand configuration JSON file
-3. **Plugin Resolution** - Reads `plugins` array from config
-4. **Path Mapping** - Maps plugin names to `resources/builtin-plugins/[name]`
-5. **SDK Integration** - Passes plugin paths to Claude Agent SDK
-
-### Automatic Plugin Setup
-
-The `scripts/setup-plugins.ts` script automatically manages external plugins:
-
-- **Runs Before:** `dev` and `build` commands
-- **Purpose:** Ensures `claude-scientific-skills` is available for bio-research brand
-- **Behavior:** Clones from GitHub if missing, optionally updates if `--update` flag passed
-- **Environment Control:** `SKIP_PLUGIN_SETUP=1` to skip (for CI or offline development)
-
-### Plugin Structure
-
-Supported plugin structures:
-
-**Standard Structure** (startup-business-analyst, core-skills):
-```
-plugin-name/
-├── .claude-plugin/
-│   └── plugin.json
-├── commands/           # Slash commands
-│   └── *.md
-└── skills/             # Claude skills
-    └── */
-        └── SKILL.md
-```
-
-**Scientific Structure** (claude-scientific-skills):
-```
-claude-scientific-skills/
-├── .claude-plugin/
-│   └── marketplace.json    # Uses marketplace.json instead of plugin.json
-└── scientific-skills/      # 140+ scientific skills
-    └── */
-        ├── SKILL.md
-        └── references/
-```
-
-**Note:** claude-scientific-skills has no `commands/` directory.
+1. **Frontend Action** → UI Component calls hook → `window.electron` bridge.
+2. **IPC Bridge** → `preload.cts` → `ipcMain` in Main Process.
+3. **Routing** → `ipc-registry.ts` or `handlers/index.ts` routes to specific handler.
+4. **Processing** → Handler invokes `libs/*` or `services/*` logic.
+5. **Feedback** → Result returned to UI or `server-event` broadcast to all windows.
 
 ## Coding Standards and Rules
 
 ### 🎯 Core Principles
 
-1. **Frontend Development**
-   - **MANDATORY**: All frontend modifications MUST use the `vercel-react-best-practices` skill
-   - This ensures optimal React performance patterns, proper hook usage, and adherence to Next.js/React best practices
-   - Before making any changes to React components, hooks, or UI code, invoke the skill
+1.  **Strict Modularization**
+    *   **Max 800 Lines**: No file should exceed 800 lines. Refactor immediately if approached.
+    *   **Directory-first**: Prefer creating a directory for a component (`Button/index.tsx`, `Button/styles.css`) over a single huge file if it grows.
 
-2. **File and Folder Management**
-   - **Code architecture is primarily reflected in the file tree structure**
-   - A well-organized, scalable codebase MUST have a clean and clear directory structure
-   - Folder organization is the CORE of global code management
-   - Group related files together (components, hooks, utilities, types)
-   - Follow the principle of "locality of behavior" - related code should be physically close
+2.  **Frontend Development**
+    *   **MANDATORY**: Use the `vercel-react-best-practices` skill for all UI changes (located in `.agent/skills/`).
+    *   **Hooks**: Extract logic into custom hooks (`src/ui/hooks/`) to keep components presentational.
+    *   **Composition**: Use component composition over complex prop drilling.
 
-3. **File Size Limits**
-   - **Single file MUST NOT exceed 800 lines of code**
-   - When a file approaches or exceeds 800 lines, consider refactoring:
-     - Extract reusable components into separate files
-     - Split large components into smaller, focused components
-     - Move utility functions to dedicated utility files
-     - Separate type definitions into `types.ts` files
-     - Apply proper component composition and separation of concerns
-   - This rule ensures:
-     - Better code readability and maintainability
-     - Easier code reviews
-     - Improved reusability
-     - Clearer separation of concerns
+3.  **Type Safety**
+    *   **Shared Types**: Use types from `src/shared/types/` for cross-boundary communication.
+    *   **Explicit Imports**: Implementation files should export what is needed; use `index.ts` for clean public APIs of modules.
 
-### 📁 File Organization Guidelines
+4.  **File Organization**
+    *   **Locality of Behavior**: Keep related code close.
+    *   **Barrel Exports**: Use `index.ts` files for clean module APIs (see `hooks/index.ts`, `utils/index.ts`).
 
-- **Group by feature/domain** rather than by file type when it makes sense
-- **Keep related files close**: A component and its tests, styles, and types should be nearby
-- **Use index files** for cleaner imports where appropriate
-- **Naming conventions**:
-  - Components: PascalCase (e.g., `SettingsModal.tsx`)
-  - Hooks: camelCase with `use` prefix (e.g., `useIPC.ts`)
-  - Utilities: camelCase (e.g., `util.ts`)
-  - Types: PascalCase for types/interfaces, files can be `types.ts`
+### 🚀 Performance
 
-### 🚀 Performance and Quality
-
-- Prefer composition over inheritance
-- Keep components focused and single-purpose
-- Use TypeScript strict mode
-- Avoid prop drilling - use context or state management when needed
-- Memoize expensive computations
-- Lazy load components when appropriate
-
-## Key Technical Details
-
-### Build Output Structure
-
-- `dist-react/` - Vite build output (React app)
-- `dist-electron/` - Transpiled Electron code
-- Both are bundled by electron-builder into final application
-
-### Patches
-
-The project uses a patched version of `@anthropic-ai/claude-agent-sdk@0.2.6` (see `patches/` directory). This is applied during installation.
-
-### Native Dependencies
-
-`better-sqlite3` requires native compilation. After installation or Node version changes, run `bun run rebuild` to recompile for the current Electron version.
-
-### Development Server Port
-
-The Vite dev server port is configured via the `PORT` environment variable (case-sensitive, must be lowercase in code). Default development workflow kills existing processes on that port before starting.
-
-### Window Management
-
-- Main window uses `hiddenInset` title bar style for macOS integration
-- Global shortcut `Cmd/Ctrl+Q` for quit
-- All sessions are properly cleaned up on app quit to prevent orphaned processes
+*   Use `React.memo` and `useCallback` judiciously to prevent unnecessary re-renders.
+*   Virtualize long lists in the UI (e.g., chat history).
+*   Offload heavy fs/processing to the Main Process.
 
 ## Common Workflows
 
-### Adding a New Server Event Type
-
-1. Add type to `src/electron/types.ts` (ServerEvent union)
-2. Add corresponding UI type to `src/ui/types.ts` if needed
-3. Emit event from `ipc-handlers.ts` using `emit()` function
-4. Handle in `useAppStore.ts` `handleServerEvent()` switch statement
-
 ### Adding a New IPC Handler
 
-1. Add client event type to `src/electron/types.ts`
-2. Add handler case in `ipc-handlers.ts` `handleClientEvent()`
-3. Add corresponding UI hook/function in `src/ui/hooks/useIPC.ts`
-4. Use in components via the hook
+1.  Define the handler logic in a new or existing file in `src/electron/handlers/`.
+2.  If it's a ClientEvent, add the case to `handlers/index.ts`.
+3.  If it's a direct invoke, register in `src/electron/ipc-registry.ts`.
+4.  Add the corresponding types in `src/shared/types/index.ts`.
+5.  Expose via `preload.cts` and update `src/ui/services/electron-bridge.ts`.
 
-### Modifying Claude SDK Configuration
+### Adding a New UI Feature
 
-Edit `src/electron/libs/runner.ts` `runClaude()` function where the `query()` call is made. Configuration options include:
-- `cwd` - Working directory
-- `resume` - Session ID for continuation
-- `env` - Environment variables
-- `permissionMode` - Permission handling strategy
-- `canUseTool` - Custom tool permission handler
+1.  Create a directory in `src/ui/components/[FeatureName]/`.
+2.  Implement the UI using sub-components.
+3.  Create a custom hook in `src/ui/hooks/use[FeatureName].ts` for logic.
+4.  Export from `src/ui/hooks/index.ts`.
+5.  If global state is needed, add to `src/ui/store/useAppStore.ts`.
+6.  Use `useTranslation` for all text.
 
-### Adding New UI Components
+### Internationalization
 
-**IMPORTANT**: Before creating or modifying React components, use the `vercel-react-best-practices` skill.
+*   **Main Process**: Use `i18n.t(key)` from `src/electron/i18n.ts`.
+*   **Renderer**: Use `const { t } = useTranslation([namespace])`.
+*   **Files**: Update `locales/{en,zh-CN}/{common,main,ui}.json`.
 
-1. Create component file in `src/ui/components/`
-2. Use TypeScript with proper prop types
-3. Follow React hooks best practices
-4. Consider component composition
-5. Keep components under 800 lines - split if necessary
-6. Use i18n for all user-facing strings via `useTranslation()` hook
+### Multi-Brand Builds
 
-### Adding Translations
+The project supports multiple brand configurations:
 
-1. Add translation keys to `locales/[language]/[namespace].json`
-   - `common.json` - Shared translations
-   - `main.json` - Main process specific
-   - `ui.json` - UI specific
-2. Use `useTranslation()` hook in React components
-3. Use `i18next.t()` in main process
-4. Maintain consistency across all supported languages
-
-## Important Notes
-
-- The app reuses Claude Code's settings file (`~/.claude/settings.json`) - do not create a separate authentication system
-- Session IDs are UUIDs generated by the app; `claudeSessionId` is the SDK's session identifier used for resume
-- The main process broadcasts all events to all windows (future-proofing for multi-window support)
-- SQLite database uses WAL mode for better concurrency
-- All user prompts are recorded in session history for replay/debugging
-- **Always check file size before committing** - enforce the 800-line limit
-- **Think about folder structure first** when adding new features
-- **Use the vercel-react-best-practices skill** for all React/UI work
+1.  **Brand Config Files**: Located in `brands/` (e.g., `business.json`, `bio-research.json`).
+2.  **Environment Variable**: Set `BRAND=business` or `BRAND=bio-research`.
+3.  **Build Commands**: Use `bun run dist:business:*` or `bun run dist:bio:*`.
+4.  **Config Loading**: `src/electron/libs/config/brand-config.ts` loads the appropriate config.
