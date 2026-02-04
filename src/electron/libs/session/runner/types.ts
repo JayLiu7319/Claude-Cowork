@@ -23,6 +23,7 @@ export type RunnerOptions = {
     prompt: string;
     session: Session;
     resumeSessionId?: string;
+    planMode?: boolean;
     onEvent: (event: ServerEvent) => void;
     onSessionUpdate?: (updates: Partial<Session>) => void;
 };

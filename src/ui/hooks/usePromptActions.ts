@@ -28,6 +28,7 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
     const cwd = useAppStore((state) => state.cwd);
     const activeSessionId = useAppStore((state) => state.activeSessionId);
     const sessions = useAppStore((state) => state.sessions);
+    const planMode = useAppStore((state) => state.planMode);
     const setPrompt = useAppStore((state) => state.setPrompt);
     const setPendingStart = useAppStore((state) => state.setPendingStart);
     const setGlobalError = useAppStore((state) => state.setGlobalError);
@@ -57,7 +58,8 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
                     displayPrompt,
                     displayTokens,
                     cwd: cwd.trim() || undefined,
-                    allowedTools: DEFAULT_ALLOWED_TOOLS
+                    allowedTools: DEFAULT_ALLOWED_TOOLS,
+                    planMode
                 }
             });
             (async () => {
@@ -76,10 +78,10 @@ export function usePromptActions(sendEvent: (event: ClientEvent) => void) {
                 setGlobalError(t('promptInput.sessionRunning'));
                 return;
             }
-            sendEvent({ type: "session.continue", payload: { sessionId: activeSessionId, prompt: promptForSend, displayPrompt, displayTokens } });
+            sendEvent({ type: "session.continue", payload: { sessionId: activeSessionId, prompt: promptForSend, displayPrompt, displayTokens, planMode } });
         }
         setPrompt("");
-    }, [activeSession, activeSessionId, bridge, cwd, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
+    }, [activeSession, activeSessionId, bridge, cwd, planMode, prompt, sendEvent, setGlobalError, setPendingStart, setPrompt, t]);
 
     const handleStop = useCallback(() => {
         if (!activeSessionId) return;

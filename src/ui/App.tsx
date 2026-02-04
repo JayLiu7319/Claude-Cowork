@@ -1,28 +1,31 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { PermissionResult, SDKAssistantMessage } from "@anthropic-ai/claude-agent-sdk";
 import { useTranslation } from 'react-i18next';
-import type { i18n } from 'i18next';
-import { useShallow } from 'zustand/shallow';
 import { useIPC } from "./hooks/useIPC";
 import { useMessageWindow } from "./hooks/useMessageWindow";
 import { useBrandTheme } from "./hooks/useBrandTheme";
 import { useAppStore } from "./store/useAppStore";
+import {
+  useSessionState,
+  useUIState,
+  useUIActions,
+  useSessionActions,
+  useActiveSession,
+} from "./hooks/useAppSelectors";
 import type { ServerEvent } from "./types";
 import { Sidebar } from "./components/Sidebar";
 import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
 import { SettingsModal } from "./components/SettingsModal";
-import { EnhancedPromptInput } from "./components/EnhancedPromptInput/EnhancedPromptInput";
+import { ChatView } from "./components/ChatView";
 import { usePromptActions } from "./hooks/usePromptActions";
-import { MessageCard } from "./components/EventCard";
-import MDContent from "./render/markdown";
-import { SkeletonLoader } from "./components/SkeletonLoader";
-import { initI18n } from "./i18n";
 import { AppProviders } from "./providers/AppProviders";
 import { useElectronBridge } from "./hooks/useElectronBridge";
 import { usePartialMessage } from "./hooks/usePartialMessage";
 import { useScrollManagement } from "./hooks/useScrollManagement";
 import { useResponsiveLayout } from "./hooks/useResponsiveLayout";
+import { initI18n } from "./i18n";
+import type { i18n } from 'i18next';
 
 function App() {
   const [i18nReady, setI18nReady] = useState(false);
@@ -55,32 +58,29 @@ function AppShell() {
   const { t } = useTranslation();
   const bridge = useElectronBridge();
 
-  // Merge data selectors with shallow comparison to prevent unnecessary re-renders
-  const { sessions, historyRequested } = useAppStore(
-    useShallow((s) => ({
-      sessions: s.sessions,
-      historyRequested: s.historyRequested
-    }))
-  );
-  const activeSessionId = useAppStore((s) => s.activeSessionId);
-  const showSettingsModal = useAppStore((s) => s.showSettingsModal);
-  const globalError = useAppStore((s) => s.globalError);
-  const cwd = useAppStore((s) => s.cwd);
-  const apiConfigChecked = useAppStore((s) => s.apiConfigChecked);
-  const lastFileRefresh = useAppStore((s) => s.lastFileRefresh);
+  // Use aggregated selectors
+  const { sessions, activeSessionId, historyRequested } = useSessionState();
+  const { showSettingsModal, globalError, brandConfig, cwd, apiConfigChecked, lastFileRefresh } = useUIState();
+  const {
+    setShowSettingsModal,
+    setGlobalError,
+    setCwd,
+    setApiConfigChecked,
+    setDefaultCwd,
+    setBrandConfig,
+    setRecentFiles,
+  } = useUIActions();
+  const { markHistoryRequested, resolvePermissionRequest, handleServerEvent } = useSessionActions();
 
-  // Separate stable function selectors
-  const setShowSettingsModal = useAppStore((s) => s.setShowSettingsModal);
-  const setGlobalError = useAppStore((s) => s.setGlobalError);
-  const markHistoryRequested = useAppStore((s) => s.markHistoryRequested);
-  const resolvePermissionRequest = useAppStore((s) => s.resolvePermissionRequest);
-  const handleServerEvent = useAppStore((s) => s.handleServerEvent);
-  const setCwd = useAppStore((s) => s.setCwd);
-  const setApiConfigChecked = useAppStore((s) => s.setApiConfigChecked);
-  const setDefaultCwd = useAppStore((s) => s.setDefaultCwd);
-  const setBrandConfig = useAppStore((s) => s.setBrandConfig);
-  const setRecentFiles = useAppStore((s) => s.setRecentFiles);
-  const brandConfig = useAppStore((s) => s.brandConfig);
+  // Derived state from active session
+  const {
+    activeSession,
+    messages,
+    permissionRequests,
+    isRunning,
+    rightPanelTodos,
+    rightPanelFileChanges,
+  } = useActiveSession();
 
   // Apply brand theme
   useBrandTheme(brandConfig);
@@ -91,13 +91,6 @@ function AppShell() {
     window.matchMedia('(prefers-reduced-motion: reduce)').matches,
     []
   );
-
-  const activeSession = activeSessionId ? sessions[activeSessionId] : undefined;
-  const messages = useMemo(() => activeSession?.messages ?? [], [activeSession?.messages]);
-  const permissionRequests = activeSession?.permissionRequests ?? [];
-  const isRunning = activeSession?.status === "running";
-  const rightPanelTodos = activeSession?.todos ?? [];
-  const rightPanelFileChanges = activeSession?.fileChanges ?? [];
 
   const {
     visibleMessages,
@@ -148,8 +141,6 @@ function AppShell() {
     toggleSidebar,
     toggleRightPanel
   } = useResponsiveLayout();
-
-  const titlebarRightPadding = isWindows && !isRightPanelOpen ? '160px' : undefined;
 
   // Combined event handler
   const onEvent = useCallback((event: ServerEvent) => {
@@ -316,169 +307,35 @@ function AppShell() {
           isSidebarOpen={isSidebarOpen}
         />
       ) : (
-        <main className="flex flex-1 flex-col min-w-0 bg-surface-cream relative transition-[margin,width] duration-300">
-          <div className="flex flex-col">
-            <div
-              className={`relative flex items-center justify-between h-12 border-b border-ink-900/10 bg-surface-cream select-none px-4 ${isWindows && !isRightPanelOpen ? 'pr-[160px]' : ''}`}
-              style={{ WebkitAppRegion: 'drag', paddingRight: titlebarRightPadding } as React.CSSProperties}
-            >
-              {/* Left Sidebar Toggle */}
-              <div className="flex items-center z-10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                <button
-                  onClick={toggleSidebar}
-                  className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isSidebarOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
-                  aria-label={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
-                >
-                  <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <line x1="9" y1="3" x2="9" y2="21" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Centered Title */}
-              <div
-                className="absolute top-0 bottom-0 flex items-center justify-center pointer-events-none transition-[left,right] duration-300"
-                style={{
-                  left: '60px',
-                  right: isWindows && !isRightPanelOpen ? '190px' : '60px'
-                }}
-              >
-                <span
-                  className="text-sm font-medium text-ink-700 truncate max-w-full"
-                  title={activeSession?.title || "Agent Cowork"}
-                >
-                  {activeSession?.title || "Agent Cowork"}
-                </span>
-              </div>
-
-              {/* Right Panel Toggle */}
-              <div className="flex items-center z-10" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                <button
-                  onClick={toggleRightPanel}
-                  className={`p-1.5 rounded-lg hover:bg-ink-900/5 ${!isRightPanelOpen ? 'text-ink-400' : 'text-accent bg-accent/5'} transition-colors`}
-                  aria-label={isRightPanelOpen ? "Close Info Panel" : "Open Info Panel"}
-                >
-                  <svg className="w-5 h-5" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <line x1="15" y1="3" x2="15" y2="21" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div className="h-0.5 bg-accent/50 transition-transform duration-300" />
-          </div>
-
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 md:px-8 pb-40 pt-6"
-          >
-            <div className="mx-auto max-w-3xl w-full transition-[max-width,width] duration-300" style={{ contentVisibility: 'auto' }}>
-              <div ref={topSentinelRef} className="h-1" />
-
-              {!hasMoreHistory && totalMessages > 0 && (
-                <div className="flex items-center justify-center py-4 mb-4">
-                  <div className="flex items-center gap-2 text-xs text-muted">
-                    <div className="h-px w-12 bg-ink-900/10" />
-                    <span>{t('sidebar.beginningOfConversation')}</span>
-                    <div className="h-px w-12 bg-ink-900/10" />
-                  </div>
-                </div>
-              )}
-
-              {isLoadingHistory && (
-                <div className="flex items-center justify-center py-4 mb-4" role="status" aria-live="polite">
-                  <div className="flex items-center gap-2 text-xs text-muted">
-                    <svg aria-hidden="true" className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>{t('common.loading')}</span>
-                  </div>
-                </div>
-              )}
-
-              {visibleMessages.length === 0 ? (
-                (activeSession && !activeSession.hydrated) ? (
-                  <SkeletonLoader />
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-                    <h2 className="text-xl font-semibold text-ink-700 mb-2">
-                      {t('emptyState.title')}
-                    </h2>
-                    <p className="text-sm text-muted">
-                      {t('emptyState.description')}
-                    </p>
-                  </div>
-                )
-              ) : (
-                visibleMessages.map((item, idx) => {
-                  return (
-                    <div key={`${activeSessionId}-msg-${item.originalIndex}`} data-message-index={item.originalIndex}>
-                      <MessageCard
-                        message={item.message}
-                        allMessages={messages}
-                        isLast={idx === visibleMessages.length - 1}
-                        isRunning={isRunning}
-                        permissionRequest={permissionRequests[0]}
-                        onPermissionResult={handlePermissionResult}
-                        prefersReducedMotion={prefersReducedMotion}
-                      />
-                    </div>
-                  );
-                })
-              )
-              }
-
-              {/* Partial message display with skeleton loading */}
-              <div className="partial-message">
-                <MDContent text={partialMessage} />
-                {showSkeleton && (
-                  <div className="mt-3 flex flex-col gap-2 px-1">
-                    <div className="relative h-3 w-2/12 overflow-hidden rounded-full bg-ink-900/10">
-                      {!prefersReducedMotion && (
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                      )}
-                    </div>
-                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                      {!prefersReducedMotion && (
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                      )}
-                    </div>
-                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                      {!prefersReducedMotion && (
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                      )}
-                    </div>
-                    <div className="relative h-3 w-full overflow-hidden rounded-full bg-ink-900/10">
-                      {!prefersReducedMotion && (
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                      )}
-                    </div>
-                    <div className="relative h-3 w-4/12 overflow-hidden rounded-full bg-ink-900/10">
-                      {!prefersReducedMotion && (
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-ink-900/30 to-transparent animate-shimmer" />
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          <EnhancedPromptInput
-            sendEvent={sendEvent}
-            onSendMessage={handleSendMessage}
-            disabled={visibleMessages.length === 0}
-            showNewMessageButton={hasNewMessages && !shouldAutoScroll}
-            showScrollToBottomButton={!shouldAutoScroll && !hasNewMessages}
-            onScrollToBottom={scrollToBottom}
-          />
-
-        </main>
+        <ChatView
+          activeSession={activeSession}
+          activeSessionId={activeSessionId!}
+          messages={messages}
+          permissionRequests={permissionRequests}
+          isRunning={isRunning}
+          visibleMessages={visibleMessages}
+          hasMoreHistory={hasMoreHistory}
+          isLoadingHistory={isLoadingHistory}
+          totalMessages={totalMessages}
+          scrollContainerRef={scrollContainerRef}
+          messagesEndRef={messagesEndRef}
+          topSentinelRef={topSentinelRef}
+          shouldAutoScroll={shouldAutoScroll}
+          hasNewMessages={hasNewMessages}
+          handleScroll={handleScroll}
+          scrollToBottom={scrollToBottom}
+          partialMessage={partialMessage}
+          showSkeleton={showSkeleton}
+          isWindows={isWindows}
+          isSidebarOpen={isSidebarOpen}
+          isRightPanelOpen={isRightPanelOpen}
+          prefersReducedMotion={prefersReducedMotion}
+          toggleSidebar={toggleSidebar}
+          toggleRightPanel={toggleRightPanel}
+          sendEvent={sendEvent}
+          onPermissionResult={handlePermissionResult}
+          onSendMessage={handleSendMessage}
+        />
       )}
 
       <RightPanel

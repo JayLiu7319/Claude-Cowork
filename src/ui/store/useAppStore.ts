@@ -46,6 +46,21 @@ interface AppState {
   brandConfig: BrandConfig | null;
   lastFileRefresh: number;
 
+  // Layout state
+  isSidebarOpen: boolean;
+  isRightPanelOpen: boolean;
+  isMobile: boolean;
+
+  // Panel expanded state
+  panelExpanded: {
+    tasks: boolean;
+    files: boolean;
+    directory: boolean;
+  };
+
+  // IPC connection state
+  ipcConnected: boolean;
+
   setPrompt: (prompt: string) => void;
   setCwd: (cwd: string) => void;
   setDefaultCwd: (cwd: string) => void;
@@ -65,6 +80,20 @@ interface AppState {
   resolvePermissionRequest: (sessionId: string, toolUseId: string) => void;
   toggleFolderExpanded: (sessionId: string, folderPath: string) => void;
   handleServerEvent: (event: ServerEvent) => void;
+
+  // Layout actions
+  setSidebarOpen: (open: boolean) => void;
+  setRightPanelOpen: (open: boolean) => void;
+  setIsMobile: (mobile: boolean) => void;
+  toggleSidebar: () => void;
+  toggleRightPanel: () => void;
+
+  // Panel expanded actions
+  setPanelExpanded: (panel: 'tasks' | 'files' | 'directory', value: boolean) => void;
+  togglePanelExpanded: (panel: 'tasks' | 'files' | 'directory') => void;
+
+  // IPC connection actions
+  setIpcConnected: (connected: boolean) => void;
 }
 
 function createSession(id: string): SessionView {
@@ -103,6 +132,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   brandConfig: null,
   lastFileRefresh: 0,
 
+  // Layout state
+  isSidebarOpen: true,
+  isRightPanelOpen: true,
+  isMobile: false,
+
+  // Panel expanded state
+  panelExpanded: {
+    tasks: true,
+    files: true,
+    directory: true,
+  },
+
+  // IPC connection state
+  ipcConnected: false,
+
   setPrompt: (prompt) => set({ prompt }),
   setCwd: (cwd) => set({ cwd }),
   setDefaultCwd: (defaultCwd) => set({ defaultCwd }),
@@ -118,6 +162,24 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAvailableSkills: (availableSkills) => set({ availableSkills }),
   setRecentFiles: (recentFiles) => set({ recentFiles }),
   setBrandConfig: (brandConfig) => set({ brandConfig }),
+
+  // Layout actions
+  setSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
+  setRightPanelOpen: (isRightPanelOpen) => set({ isRightPanelOpen }),
+  setIsMobile: (isMobile) => set({ isMobile }),
+  toggleSidebar: () => set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
+  toggleRightPanel: () => set((state) => ({ isRightPanelOpen: !state.isRightPanelOpen })),
+
+  // Panel expanded actions
+  setPanelExpanded: (panel, value) => set((state) => ({
+    panelExpanded: { ...state.panelExpanded, [panel]: value }
+  })),
+  togglePanelExpanded: (panel) => set((state) => ({
+    panelExpanded: { ...state.panelExpanded, [panel]: !state.panelExpanded[panel] }
+  })),
+
+  // IPC connection actions
+  setIpcConnected: (ipcConnected) => set({ ipcConnected }),
 
   markHistoryRequested: (sessionId) => {
     set((state) => {

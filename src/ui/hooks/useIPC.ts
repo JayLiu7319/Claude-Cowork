@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { ServerEvent, ClientEvent } from "@ui/types";
 import { useElectronBridge } from "@ui/hooks/useElectronBridge";
+import { useIpcConnectionState } from "@ui/hooks/useAppSelectors";
 import { errorService } from "@ui/services/error-service";
 
 export function useIPC(onEvent: (event: ServerEvent) => void) {
-  const [connected, setConnected] = useState(false);
+  const { ipcConnected, setIpcConnected } = useIpcConnectionState();
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const bridge = useElectronBridge();
 
@@ -15,16 +16,16 @@ export function useIPC(onEvent: (event: ServerEvent) => void) {
     });
 
     unsubscribeRef.current = unsubscribe;
-    setTimeout(() => setConnected(true), 0);
+    setTimeout(() => setIpcConnected(true), 0);
 
     return () => {
       if (unsubscribeRef.current) {
         unsubscribeRef.current();
         unsubscribeRef.current = null;
       }
-      setConnected(false);
+      setIpcConnected(false);
     };
-  }, [onEvent, bridge]);
+  }, [onEvent, bridge, setIpcConnected]);
 
   const sendEvent = useCallback((event: ClientEvent) => {
     try {
@@ -34,6 +35,5 @@ export function useIPC(onEvent: (event: ServerEvent) => void) {
     }
   }, [bridge]);
 
-  return { connected, sendEvent };
+  return { connected: ipcConnected, sendEvent };
 }
-

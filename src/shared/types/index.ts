@@ -193,9 +193,9 @@ export type ServerEvent =
 // ============================================================
 
 export type ClientEvent =
-  | { type: "session.start"; payload: { title: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[]; cwd?: string; allowedTools?: string } }
+  | { type: "session.start"; payload: { title: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[]; cwd?: string; allowedTools?: string; planMode?: boolean } }
   | { type: "session.rename"; payload: { sessionId: string; title: string } }
-  | { type: "session.continue"; payload: { sessionId: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[] } }
+  | { type: "session.continue"; payload: { sessionId: string; prompt: string; displayPrompt?: string; displayTokens?: InputToken[]; planMode?: boolean } }
   | { type: "session.stop"; payload: { sessionId: string } }
   | { type: "file.open"; payload: { sessionId: string; path: string } }
   | { type: "session.delete"; payload: { sessionId: string } }

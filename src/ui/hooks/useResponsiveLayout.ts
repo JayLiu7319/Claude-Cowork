@@ -1,13 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
+import { useLayoutState, useLayoutActions } from './useAppSelectors';
 
+/**
+ * 响应式布局 Hook - 使用 Zustand store 管理状态
+ * 监听窗口大小变化，自动切换移动端/桌面端布局
+ */
 export function useResponsiveLayout() {
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
-    const [isRightPanelOpen, setRightPanelOpen] = useState(true);
-    const [isMobile, setIsMobile] = useState(false);
+    const { isSidebarOpen, isRightPanelOpen, isMobile } = useLayoutState();
+    const {
+        setSidebarOpen,
+        setRightPanelOpen,
+        setIsMobile,
+        toggleSidebar,
+        toggleRightPanel
+    } = useLayoutActions();
 
-    // Windows specific titlebar padding logic could be handled here or in the component
-    // We'll stick to core layout state here
-
+    // 窗口大小监听
     useEffect(() => {
         const checkMobile = () => {
             const mobile = window.innerWidth < 768; // Tailwind md breakpoint
@@ -24,14 +32,12 @@ export function useResponsiveLayout() {
         checkMobile();
         window.addEventListener('resize', checkMobile, { passive: true });
         return () => window.removeEventListener('resize', checkMobile);
-    }, []);
+    }, [setIsMobile, setSidebarOpen, setRightPanelOpen]);
 
-    const toggleSidebar = useCallback(() => setSidebarOpen(prev => !prev), []);
-    const toggleRightPanel = useCallback(() => setRightPanelOpen(prev => !prev), []);
     const closeBoth = useCallback(() => {
         setSidebarOpen(false);
         setRightPanelOpen(false);
-    }, []);
+    }, [setSidebarOpen, setRightPanelOpen]);
 
     return {
         isSidebarOpen,

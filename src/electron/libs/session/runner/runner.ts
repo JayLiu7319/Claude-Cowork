@@ -27,14 +27,14 @@ const DEFAULT_CWD = process.cwd();
  * Returns a handle that can be used to abort the session.
  */
 export async function runClaude(options: RunnerOptions): Promise<RunnerHandle> {
-    const { prompt, session, resumeSessionId, onEvent, onSessionUpdate } = options;
+    const { prompt, session, resumeSessionId, planMode, onEvent, onSessionUpdate } = options;
     const abortController = new AbortController();
 
     // For the first message in a new conversation (no resumeSessionId),
     // prepend system context about the working directory
     const cwd = session.cwd ?? DEFAULT_CWD;
     const effectivePrompt = !resumeSessionId
-        ? buildFirstMessageSystemContext(cwd) + prompt
+        ? buildFirstMessageSystemContext(cwd, planMode) + prompt
         : prompt;
 
     const sendMessage = (message: SDKMessage) => {

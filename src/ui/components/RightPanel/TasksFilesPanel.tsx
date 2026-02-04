@@ -1,6 +1,6 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TodoItemData, FileChangeData } from "@ui/types";
+import { usePanelExpandedState } from "@ui/hooks/useAppSelectors";
 import { TasksSection } from "./TasksSection";
 import { FileChangesSection } from "./FileChangesSection";
 import { DirectorySection } from "./DirectorySection";
@@ -27,25 +27,24 @@ export function TasksFilesPanel({
   lastFileRefresh
 }: TasksFilesPanelProps) {
   useTranslation("ui");
-  const [tasksExpanded, setTasksExpanded] = useState(true);
-  const [filesExpanded, setFilesExpanded] = useState(true);
-  const [directoryExpanded, setDirectoryExpanded] = useState(true);
+  const { panelExpanded, togglePanelExpanded } = usePanelExpandedState();
+
 
   return (
     <div className="flex flex-col gap-0 h-full overflow-y-auto px-4 pb-4">
       <TasksSection
         todos={todos}
         stats={taskStats}
-        isExpanded={tasksExpanded}
-        onToggleExpand={() => setTasksExpanded(!tasksExpanded)}
+        isExpanded={panelExpanded.tasks}
+        onToggleExpand={() => togglePanelExpanded('tasks')}
         onScrollToMessage={onScrollToMessage}
       />
       <div className="h-px bg-ink-900/5" />
       <FileChangesSection
         fileChanges={fileChanges}
         stats={fileStats}
-        isExpanded={filesExpanded}
-        onToggleExpand={() => setFilesExpanded(!filesExpanded)}
+        isExpanded={panelExpanded.files}
+        onToggleExpand={() => togglePanelExpanded('files')}
         sessionCwd={sessionCwd}
         onScrollToMessage={onScrollToMessage}
         onOpenFile={onOpenFile}
@@ -53,8 +52,8 @@ export function TasksFilesPanel({
       <div className="h-px bg-ink-900/5" />
       <DirectorySection
         sessionCwd={sessionCwd}
-        isExpanded={directoryExpanded}
-        onToggleExpand={() => setDirectoryExpanded(!directoryExpanded)}
+        isExpanded={panelExpanded.directory}
+        onToggleExpand={() => togglePanelExpanded('directory')}
         onOpenFile={onOpenFile}
         lastFileRefresh={lastFileRefresh}
       />

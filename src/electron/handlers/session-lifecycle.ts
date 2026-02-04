@@ -41,6 +41,7 @@ export function handleSessionStart(event: Extract<ClientEvent, { type: "session.
     prompt: event.payload.prompt,
     session,
     resumeSessionId: session.claudeSessionId,
+    planMode: event.payload.planMode,
     onEvent: emit,
     onSessionUpdate: (updates) => {
       sessions.updateSession(session.id, updates);
@@ -110,6 +111,7 @@ export function handleSessionContinue(event: Extract<ClientEvent, { type: "sessi
     prompt: event.payload.prompt,
     session,
     resumeSessionId: session.claudeSessionId,
+    planMode: event.payload.planMode,
     onEvent: emit,
     onSessionUpdate: (updates) => {
       sessions.updateSession(session.id, updates);
