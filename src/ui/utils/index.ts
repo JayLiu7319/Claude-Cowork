@@ -15,41 +15,6 @@ export {
     formatPathForDisplay,
 } from './formatters';
 
-// Text measurement utilities
-export {
-    getSharedContext,
-    measureAverageCharWidth,
-    measureCharWidth,
-    measurePlaceholderCharWidthDom,
-} from './textMeasurement';
-
-// Token utilities
-export {
-    TOKEN_PLACEHOLDER,
-    TOKEN_PADDING_CHARS,
-    TOKEN_SEPARATOR,
-    createTokenId,
-    createTokenPlaceholder,
-    parseDisplayTokens,
-    serializePrompt,
-    findTrigger,
-    countPlaceholders,
-    getPlaceholderRuns,
-    replacePlaceholderRuns,
-    removePlaceholderBeforeCursor,
-    removePlaceholderAtCursor,
-    computeDiffRange,
-} from './tokenUtils';
-
-// Token utility types
-export type {
-    TokenRegistryItem,
-    TriggerResult,
-    ReplacePlaceholderResult,
-    PlaceholderRemovalResult,
-    DiffRange,
-} from './tokenUtils';
-
 // Markdown utilities
 export { isMarkdown } from './markdownUtils';
 
