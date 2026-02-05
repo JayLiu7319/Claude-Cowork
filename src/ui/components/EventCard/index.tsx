@@ -1,6 +1,7 @@
-// Main exports
+// Component exports only for Fast Refresh compliance
 export { MessageCard } from "./MessageCard";
 export { MessageCard as EventCard } from "./MessageCard";
+export { StatusDot } from "./StatusDot";
 
 // Type exports
 export type {
@@ -11,12 +12,3 @@ export type {
     AskUserQuestionInput,
     StatusDotProps
 } from "./types";
-
-// Component exports for direct usage
-export { StatusDot } from "./StatusDot";
-
-// Hook exports
-export { useToolStatus } from "./hooks";
-
-// Utility exports
-export { setToolStatus, buildToolResultMap } from "./utils";
