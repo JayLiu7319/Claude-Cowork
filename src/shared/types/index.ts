@@ -219,6 +219,7 @@ export type EventPayloadMapping = {
   "save-api-config": { success: boolean; error?: string };
   "check-api-config": { hasConfig: boolean; config: ApiConfig | null };
   "get-language": string;
+  "set-language": { success: boolean; error?: string };
   "load-commands": Command[];
   "read-command-content": string | null;
   "load-skills": SkillMetadata[];
@@ -246,6 +247,7 @@ export type IpcArgsMapping = {
   "save-api-config": [config: ApiConfig];
   "check-api-config": [];
   "get-language": [];
+  "set-language": [language: string];
   "load-commands": [];
   "read-command-content": [filePath: string];
   "load-skills": [];

@@ -4,15 +4,50 @@ import { getStaticData, pollResources } from "./test.js";
 import { handleClientEvent } from "./handlers/index.js";
 import { getSessionStore } from "./libs/session/index.js";
 import { generateSessionTitle, listFilesInDirectory, getRecentFiles, addRecentFile, readDirectoryTree } from "./libs/utils/index.js";
-import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, type ApiConfig, getCurrentApiConfig, loadBrandConfig } from "./libs/config/index.js";
+import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, type ApiConfig, getCurrentApiConfig, loadBrandConfig, loadAppConfig, saveAppConfig } from "./libs/config/index.js";
 import { loadGlobalCommands, readCommandContent, loadGlobalSkills, readSkillContent } from "./libs/features/index.js";
-import { getLanguage } from "./i18n.js";
+import { getLanguage, changeLanguage } from "./i18n.js";
 import { ClientEvent } from "./types.js";
 
 export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {
     const brandConfig = loadBrandConfig();
 
+    // Initialize language from config or system default
+    const appConfig = loadAppConfig();
+    const initialLang = appConfig?.language;
+    if (initialLang) {
+        changeLanguage(initialLang);
+    }
+
     pollResources(mainWindow);
+
+    // ... existing code ...
+
+    // Handle language request from renderer process
+    ipcMainHandle("get-language", () => {
+        // Try config first
+        const config = loadAppConfig();
+        if (config?.language) {
+            return config.language;
+        }
+        return getLanguage();
+    });
+
+    // Handle changing language
+    ipcMainHandle("set-language", (_: IpcMainInvokeEvent, language: string) => {
+        try {
+            // Update in-memory i18n
+            changeLanguage(language);
+
+            // Persist to config
+            saveAppConfig({ language });
+
+            return { success: true };
+        } catch (error) {
+            console.error("Failed to set language:", error);
+            throw error;
+        }
+    });
 
     ipcMainHandle("getStaticData", () => {
         return getStaticData();
@@ -73,10 +108,6 @@ export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {
         }
     });
 
-    // Handle language request from renderer process
-    ipcMainHandle("get-language", () => {
-        return getLanguage();
-    });
 
     // Handle brand config request from renderer process
     ipcMainHandle("get-brand-config", () => {

@@ -7,7 +7,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const bridge = useElectronBridge();
   const [apiKey, setApiKey] = useState("");
   const [baseURL, setBaseURL] = useState("");
@@ -115,6 +115,29 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           </div>
         ) : (
           <div className="mt-5 grid gap-4">
+            <label className="grid gap-1.5">
+              <span className="text-xs font-medium text-muted">{t('settings.language')}</span>
+              <div className="relative">
+                <select
+                  className="w-full appearance-none rounded-xl border border-ink-900/10 bg-surface-secondary px-4 py-2.5 text-sm text-ink-800 focus:border-accent focus:outline-none focus:ring-1 focus-visible:ring-accent/20 transition-colors"
+                  value={i18n.language.startsWith('zh') ? 'zh-CN' : 'en'}
+                  onChange={async (e) => {
+                    const newLang = e.target.value;
+                    await i18n.changeLanguage(newLang);
+                    await bridge.setLanguage(newLang);
+                  }}
+                >
+                  <option value="en">English</option>
+                  <option value="zh-CN">简体中文</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-muted">
+                  <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </label>
+
             <label className="grid gap-1.5">
               <span className="text-xs font-medium text-muted">{t('settings.baseUrl')}</span>
               <input

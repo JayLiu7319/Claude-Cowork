@@ -62,6 +62,13 @@ export function getLanguage(): string {
 }
 
 /**
+ * Change the language of the i18next instance
+ */
+export function changeLanguage(language: string): void {
+  getI18n().changeLanguage(language);
+}
+
+/**
  * Translate a key using i18next (convenience function)
  */
 export function t(key: string, options?: TOptions): string {

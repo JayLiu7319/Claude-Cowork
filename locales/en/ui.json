@@ -49,6 +49,7 @@
     "description": "Supports Anthropic's official API as well as third-party APIs compatible with the Anthropic format.",
     "baseUrl": "Base URL",
     "apiKey": "API Key",
+    "language": "Language",
     "modelName": "Model Name",
     "cancel": "Cancel",
     "save": "Save",

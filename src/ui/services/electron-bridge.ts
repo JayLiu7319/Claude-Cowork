@@ -58,6 +58,7 @@ export interface ElectronBridge {
 
     // Localization
     getLanguage(): Promise<string>;
+    setLanguage(lang: string): Promise<void>;
 
     // Commands & Skills
     loadCommands(): Promise<Command[]>;
@@ -103,6 +104,7 @@ export const electronBridge: ElectronBridge = {
 
     // Localization
     getLanguage: () => window.electron.getLanguage(),
+    setLanguage: (lang) => window.electron.setLanguage(lang),
 
     // Commands & Skills
     loadCommands: () => window.electron.loadCommands(),
@@ -149,6 +151,7 @@ export const mockElectronBridge: ElectronBridge = {
 
     // Localization
     getLanguage: () => Promise.resolve('zh-CN'),
+    setLanguage: () => Promise.resolve(),
 
     // Commands & Skills
     loadCommands: () => Promise.resolve([]),

@@ -13,6 +13,7 @@ interface Window {
     saveApiConfig: (config: import('../electron/libs/config-store').ApiConfig) => Promise<{ success: boolean; error?: string }>;
     checkApiConfig: () => Promise<{ hasConfig: boolean; config: import('../electron/libs/config-store').ApiConfig | null }>;
     getLanguage: () => Promise<string>;
+    setLanguage: (lang: string) => Promise<void>;
     // Welcome page APIs
     loadCommands: () => Promise<import('./types').Command[]>;
     readCommandContent: (filePath: string) => Promise<string | null>;

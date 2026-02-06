@@ -49,6 +49,7 @@
     "description": "支持 Anthropic 官方 API 以及兼容 Anthropic 格式的第三方 API。",
     "baseUrl": "Base URL",
     "apiKey": "API Key",
+    "language": "语言",
     "modelName": "模型名称",
     "cancel": "取消",
     "save": "保存",

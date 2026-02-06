@@ -51,6 +51,8 @@ electron.contextBridge.exposeInMainWorld("electron", {
         ipcInvoke("check-api-config"),
     getLanguage: () =>
         ipcInvoke("get-language"),
+    setLanguage: (lang: string) =>
+        ipcInvoke("set-language", lang),
     // New APIs for welcome page
     loadCommands: () =>
         ipcInvoke("load-commands"),
