@@ -2,9 +2,10 @@
  * Unit tests for React hooks
  * Phase 3 of testing implementation plan
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useMessageWindow } from './useMessageWindow';
+import { useScrollManagement } from './useScrollManagement';
 import { useBrandTheme } from './useBrandTheme';
 import type { StreamMessage, BrandConfig } from '@ui/types';
 
@@ -144,6 +145,44 @@ describe('useMessageWindow', () => {
 
             expect(result.current.isAtBeginning).toBe(true);
         });
+
+        it('should guard against duplicate loadMoreMessages calls in same frame', () => {
+            const messages: StreamMessage[] = [];
+            for (let i = 1; i <= 9; i++) {
+                messages.push(createUserMessage(`User ${i}`));
+                messages.push(createAssistantMessage(`Response ${i}`));
+            }
+
+            const rafCallbacks: FrameRequestCallback[] = [];
+            const rafSpy = vi
+                .spyOn(window, 'requestAnimationFrame')
+                .mockImplementation((cb: FrameRequestCallback) => {
+                    rafCallbacks.push(cb);
+                    return 1;
+                });
+
+            const { result } = renderHook(() => useMessageWindow(messages, 'session-1'));
+
+            expect(result.current.visibleUserInputs).toBe(3);
+
+            act(() => {
+                result.current.loadMoreMessages();
+                result.current.loadMoreMessages();
+            });
+
+            expect(result.current.visibleUserInputs).toBe(6);
+
+            act(() => {
+                rafCallbacks.forEach((cb) => cb(0));
+            });
+
+            act(() => {
+                result.current.loadMoreMessages();
+            });
+
+            expect(result.current.visibleUserInputs).toBe(9);
+            rafSpy.mockRestore();
+        });
     });
 
     describe('session change handling', () => {
@@ -200,6 +239,179 @@ describe('useMessageWindow', () => {
 
             expect(result.current.visibleUserInputs).toBe(3);
         });
+    });
+});
+
+// =================================================================
+// useScrollManagement Tests
+// =================================================================
+
+describe('useScrollManagement', () => {
+    type ObserverInstance = {
+        callback: IntersectionObserverCallback;
+        observe: ReturnType<typeof vi.fn>;
+        disconnect: ReturnType<typeof vi.fn>;
+    };
+
+    const observerInstances: ObserverInstance[] = [];
+    const originalIntersectionObserver = globalThis.IntersectionObserver;
+    const originalQueueMicrotask = globalThis.queueMicrotask;
+    const queueMicrotaskPolyfill = (cb: () => void) => Promise.resolve().then(cb);
+
+    function setScrollMetrics(
+        container: HTMLDivElement,
+        metrics: { scrollHeight?: number; clientHeight?: number; scrollTop?: number }
+    ) {
+        if (typeof metrics.scrollHeight === 'number') {
+            Object.defineProperty(container, 'scrollHeight', {
+                configurable: true,
+                value: metrics.scrollHeight,
+            });
+        }
+        if (typeof metrics.clientHeight === 'number') {
+            Object.defineProperty(container, 'clientHeight', {
+                configurable: true,
+                value: metrics.clientHeight,
+            });
+        }
+        if (typeof metrics.scrollTop === 'number') {
+            container.scrollTop = metrics.scrollTop;
+        }
+    }
+
+    beforeEach(() => {
+        observerInstances.length = 0;
+        vi.useFakeTimers();
+        globalThis.queueMicrotask = globalThis.queueMicrotask ?? queueMicrotaskPolyfill;
+        class MockIntersectionObserver {
+            callback: IntersectionObserverCallback;
+            observe = vi.fn();
+            disconnect = vi.fn();
+
+            constructor(callback: IntersectionObserverCallback) {
+                this.callback = callback;
+                observerInstances.push(this as unknown as ObserverInstance);
+            }
+        }
+        globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        globalThis.IntersectionObserver = originalIntersectionObserver;
+        globalThis.queueMicrotask = originalQueueMicrotask;
+    });
+
+    it('should restore scroll position after loading older history', () => {
+        const loadMoreMessages = vi.fn();
+        const { result, rerender } = renderHook(
+            ({ visibleMessagesLength, hasMoreHistory }) =>
+                useScrollManagement({
+                    messagesLength: 10,
+                    visibleMessagesLength,
+                    activeSessionId: 'session-1',
+                    hasMoreHistory,
+                    loadMoreMessages,
+                }),
+            { initialProps: { visibleMessagesLength: 3, hasMoreHistory: false } }
+        );
+
+        const container = document.createElement('div');
+        const sentinel = document.createElement('div');
+        setScrollMetrics(container, { scrollHeight: 1000, clientHeight: 400, scrollTop: 200 });
+
+        act(() => {
+            result.current.scrollContainerRef.current = container;
+            result.current.topSentinelRef.current = sentinel;
+        });
+
+        rerender({ visibleMessagesLength: 3, hasMoreHistory: true });
+        expect(observerInstances.length).toBeGreaterThan(0);
+
+        const latestObserver = observerInstances[observerInstances.length - 1];
+        act(() => {
+            latestObserver.callback([{ isIntersecting: true } as IntersectionObserverEntry], {} as IntersectionObserver);
+        });
+
+        expect(loadMoreMessages).toHaveBeenCalledTimes(1);
+
+        setScrollMetrics(container, { scrollHeight: 1300 });
+        rerender({ visibleMessagesLength: 6, hasMoreHistory: true });
+
+        expect(container.scrollTop).toBe(500);
+    });
+
+    it('should disable auto scroll when user scrolls up and show new-message indicator on incoming messages', () => {
+        const { result, rerender } = renderHook(
+            ({ messagesLength }) =>
+                useScrollManagement({
+                    messagesLength,
+                    visibleMessagesLength: messagesLength,
+                    activeSessionId: 'session-1',
+                    hasMoreHistory: false,
+                    loadMoreMessages: vi.fn(),
+                }),
+            { initialProps: { messagesLength: 5 } }
+        );
+
+        const container = document.createElement('div');
+        const messagesEnd = document.createElement('div');
+        messagesEnd.scrollIntoView = vi.fn();
+        setScrollMetrics(container, { scrollHeight: 2000, clientHeight: 500, scrollTop: 1500 });
+
+        act(() => {
+            result.current.scrollContainerRef.current = container;
+            result.current.messagesEndRef.current = messagesEnd;
+            result.current.handleScroll();
+        });
+
+        expect(result.current.shouldAutoScroll).toBe(true);
+
+        setScrollMetrics(container, { scrollTop: 1200 });
+        act(() => {
+            result.current.handleScroll();
+        });
+
+        expect(result.current.shouldAutoScroll).toBe(false);
+
+        rerender({ messagesLength: 6 });
+        act(() => {
+            vi.runAllTimers();
+        });
+        expect(result.current.hasNewMessages).toBe(true);
+
+        setScrollMetrics(container, { scrollTop: 1500 });
+        act(() => {
+            result.current.handleScroll();
+        });
+
+        expect(result.current.shouldAutoScroll).toBe(true);
+        expect(result.current.hasNewMessages).toBe(false);
+    });
+
+    it('should use instant scroll on first message update after session switch', () => {
+        const { result, rerender } = renderHook(
+            ({ activeSessionId, messagesLength }) =>
+                useScrollManagement({
+                    messagesLength,
+                    visibleMessagesLength: messagesLength,
+                    activeSessionId,
+                    hasMoreHistory: false,
+                    loadMoreMessages: vi.fn(),
+                }),
+            { initialProps: { activeSessionId: 'session-1', messagesLength: 1 } }
+        );
+
+        const messagesEnd = document.createElement('div');
+        messagesEnd.scrollIntoView = vi.fn();
+        act(() => {
+            result.current.messagesEndRef.current = messagesEnd;
+        });
+
+        rerender({ activeSessionId: 'session-2', messagesLength: 1 });
+        rerender({ activeSessionId: 'session-2', messagesLength: 2 });
+
+        expect(messagesEnd.scrollIntoView).toHaveBeenLastCalledWith({ behavior: 'auto' });
     });
 });
 

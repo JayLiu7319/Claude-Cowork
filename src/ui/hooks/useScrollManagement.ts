@@ -1,13 +1,15 @@
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 
 const SCROLL_THRESHOLD = 50;
 const SCROLL_RELEASE_THRESHOLD = 120;
 
 interface UseScrollManagementProps {
+    /** Total message count (from store) — drives auto-scroll on new messages */
     messagesLength: number;
+    /** Visible (windowed) message count — drives scroll restoration on history load */
+    visibleMessagesLength: number;
     activeSessionId: string | null;
     hasMoreHistory: boolean;
-    isLoadingHistory: boolean;
     loadMoreMessages: () => void;
     // Optional: allows partial message updates to affect scroll state
     isStreaming?: boolean;
@@ -15,17 +17,24 @@ interface UseScrollManagementProps {
 
 export function useScrollManagement({
     messagesLength,
+    visibleMessagesLength,
     activeSessionId,
     hasMoreHistory,
-    isLoadingHistory,
     loadMoreMessages,
 }: UseScrollManagementProps) {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const topSentinelRef = useRef<HTMLDivElement>(null);
 
-    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+    const [shouldAutoScroll, _setShouldAutoScroll] = useState(true);
     const [hasNewMessages, setHasNewMessages] = useState(false);
+    const shouldAutoScrollRef = useRef(true);
+
+    // Wrapper that keeps ref and state in sync
+    const setShouldAutoScroll = useCallback((value: boolean) => {
+        shouldAutoScrollRef.current = value;
+        _setShouldAutoScroll(value);
+    }, []);
 
     const prevMessagesLengthRef = useRef(0);
     const scrollHeightBeforeLoadRef = useRef(0);
@@ -35,27 +44,29 @@ export function useScrollManagement({
     const lastScrollTopRef = useRef(0);
 
     // Handle scroll events to detect if user scrolled up
+    // Read from ref (not state) to avoid recreating callback on shouldAutoScroll change
     const handleScroll = useCallback(() => {
         const container = scrollContainerRef.current;
         if (!container) return;
 
         const { scrollTop, scrollHeight, clientHeight } = container;
+        const currentAutoScroll = shouldAutoScrollRef.current;
         const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
         const isAtBottom = distanceToBottom <= SCROLL_THRESHOLD;
         const scrollDelta = scrollTop - lastScrollTopRef.current;
         const scrollDirection = scrollDelta > 0 ? "down" : scrollDelta < 0 ? "up" : "none";
         const releaseThreshold = Math.max(SCROLL_RELEASE_THRESHOLD, Math.round(clientHeight * 0.25));
         const shouldReleaseAuto = scrollDirection === "up" && distanceToBottom > releaseThreshold;
-        const nextShouldAutoScroll = shouldAutoScroll ? !shouldReleaseAuto : isAtBottom;
+        const nextShouldAutoScroll = currentAutoScroll ? !shouldReleaseAuto : isAtBottom;
         lastScrollTopRef.current = scrollTop;
 
-        if (nextShouldAutoScroll !== shouldAutoScroll) {
+        if (nextShouldAutoScroll !== currentAutoScroll) {
             setShouldAutoScroll(nextShouldAutoScroll);
             if (nextShouldAutoScroll) {
                 setHasNewMessages(false);
             }
         }
-    }, [shouldAutoScroll]);
+    }, [setShouldAutoScroll]);
 
     // Infinite scroll: Load more messages when reaching top
     useEffect(() => {
@@ -66,7 +77,7 @@ export function useScrollManagement({
         const observer = new IntersectionObserver(
             (entries) => {
                 const entry = entries[0];
-                if (entry.isIntersecting && hasMoreHistory && !isLoadingHistory) {
+                if (entry.isIntersecting && hasMoreHistory) {
                     scrollHeightBeforeLoadRef.current = container.scrollHeight;
                     shouldRestoreScrollRef.current = true;
                     loadMoreMessages();
@@ -84,11 +95,11 @@ export function useScrollManagement({
         return () => {
             observer.disconnect();
         };
-    }, [hasMoreHistory, isLoadingHistory, loadMoreMessages]);
+    }, [hasMoreHistory, loadMoreMessages]);
 
-    // Restore scroll position after loading history
-    useEffect(() => {
-        if (shouldRestoreScrollRef.current && !isLoadingHistory) {
+    // Restore scroll position after loading history (useLayoutEffect = before paint, no visible jump)
+    useLayoutEffect(() => {
+        if (shouldRestoreScrollRef.current) {
             const container = scrollContainerRef.current;
             if (container) {
                 const newScrollHeight = container.scrollHeight;
@@ -97,7 +108,7 @@ export function useScrollManagement({
             }
             shouldRestoreScrollRef.current = false;
         }
-    }, [messagesLength, isLoadingHistory]);
+    }, [visibleMessagesLength]);
 
     // Reset scroll state on session change
     useEffect(() => {
@@ -106,11 +117,8 @@ export function useScrollManagement({
 
         if (!didChangeSession) return;
 
-        // #region agent log
-        fetch('http://127.0.0.1:7247/ingest/3f669dd6-64da-4cef-a2ef-6b291f75c915', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: 'debug-session', runId: 'pre-fix', hypothesisId: 'H1', location: 'useScrollManagement.ts:106', message: 'session changed', data: { previousSessionId, activeSessionId }, timestamp: Date.now() }) }).catch(() => { });
-        // #endregion
-
         // Reset scroll state - use queueMicrotask to avoid synchronous setState in effect
+        shouldAutoScrollRef.current = true;
         queueMicrotask(() => {
             setShouldAutoScroll(true);
             setHasNewMessages(false);
@@ -121,9 +129,9 @@ export function useScrollManagement({
         previousSessionIdRef.current = activeSessionId;
     }, [activeSessionId]);
 
-    // Auto-scroll on new messages
+    // Auto-scroll on new messages — read from ref to avoid re-running on shouldAutoScroll change
     useEffect(() => {
-        if (shouldAutoScroll && messagesLength !== prevMessagesLengthRef.current) {
+        if (shouldAutoScrollRef.current && messagesLength !== prevMessagesLengthRef.current) {
             if (pendingSessionScrollRef.current) {
                 pendingSessionScrollRef.current = false;
                 messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
@@ -136,7 +144,7 @@ export function useScrollManagement({
             setTimeout(() => setHasNewMessages(true), 0);
         }
         prevMessagesLengthRef.current = messagesLength;
-    }, [messagesLength, shouldAutoScroll]);
+    }, [messagesLength]);
 
     const scrollToBottom = useCallback(() => {
         setShouldAutoScroll(true);
@@ -145,12 +153,12 @@ export function useScrollManagement({
     }, []);
 
     const scrollToBottomIfAuto = useCallback(() => {
-        if (shouldAutoScroll) {
+        if (shouldAutoScrollRef.current) {
             messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
         } else {
             setHasNewMessages(true);
         }
-    }, [shouldAutoScroll]);
+    }, []);
 
     const scrollToMessage = useCallback((messageIndex: number) => {
         setTimeout(() => {

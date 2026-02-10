@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import type { StreamMessage } from "@ui/types";
 
 
@@ -13,7 +13,6 @@ export interface IndexedMessage {
 export interface MessageWindowState {
     visibleMessages: IndexedMessage[];
     hasMoreHistory: boolean;
-    isLoadingHistory: boolean;
     isAtBeginning: boolean;
     loadMoreMessages: () => void;
     resetToLatest: () => void;
@@ -51,19 +50,19 @@ export function useMessageWindow(
     messages: StreamMessage[],
     sessionId: string | null
 ): MessageWindowState {
-    const [visibleUserInputCount, setVisibleUserInputCount] = useState(VISIBLE_WINDOW_SIZE);
-    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-    const [prevSessionId, setPrevSessionId] = useState<string | null>(null);
+    const [windowState, setWindowState] = useState(() => ({
+        sessionId,
+        visibleUserInputCount: VISIBLE_WINDOW_SIZE,
+    }));
+    const loadGuardRef = useRef({ sessionId, isLoading: false });
 
     const userInputIndices = useMemo(() => getUserInputIndices(messages), [messages]);
     const totalUserInputs = userInputIndices.length;
 
-    // Reset window state on session change
-    if (sessionId !== prevSessionId) {
-        setPrevSessionId(sessionId);
-        setVisibleUserInputCount(VISIBLE_WINDOW_SIZE);
-        setIsLoadingHistory(false);
-    }
+    const visibleUserInputCount =
+        windowState.sessionId === sessionId
+            ? windowState.visibleUserInputCount
+            : VISIBLE_WINDOW_SIZE;
 
     const { visibleMessages, visibleStartIndex } = useMemo(() => {
         if (messages.length === 0) {
@@ -85,22 +84,35 @@ export function useMessageWindow(
     const hasMoreHistory = visibleStartIndex > 0;
 
     const loadMoreMessages = useCallback(() => {
-        if (!hasMoreHistory || isLoadingHistory) return;
+        if (loadGuardRef.current.sessionId !== sessionId) {
+            loadGuardRef.current = { sessionId, isLoading: false };
+        }
+        if (!hasMoreHistory || loadGuardRef.current.isLoading) return;
 
-        setIsLoadingHistory(true);
+        loadGuardRef.current.isLoading = true;
+        setWindowState((prev) => {
+            const currentCount =
+                prev.sessionId === sessionId ? prev.visibleUserInputCount : VISIBLE_WINDOW_SIZE;
+            const nextCount = Math.min(currentCount + LOAD_BATCH_SIZE, totalUserInputs);
 
-        requestAnimationFrame(() => {
-            setVisibleUserInputCount((prev) => Math.min(prev + LOAD_BATCH_SIZE, totalUserInputs));
-
-            setTimeout(() => {
-                setIsLoadingHistory(false);
-            }, 100);
+            return {
+                sessionId,
+                visibleUserInputCount: nextCount,
+            };
         });
-    }, [hasMoreHistory, isLoadingHistory, totalUserInputs]);
+        // Reset guard after the current render cycle completes (rAF runs after paint)
+        requestAnimationFrame(() => {
+            loadGuardRef.current.isLoading = false;
+        });
+    }, [hasMoreHistory, sessionId, totalUserInputs]);
 
     const resetToLatest = useCallback(() => {
-        setVisibleUserInputCount(VISIBLE_WINDOW_SIZE);
-    }, []);
+        setWindowState({
+            sessionId,
+            visibleUserInputCount: VISIBLE_WINDOW_SIZE,
+        });
+        loadGuardRef.current = { sessionId, isLoading: false };
+    }, [sessionId]);
 
     const visibleUserInputs = useMemo(() => {
         return visibleMessages.filter((item) => item.message.type === "user_prompt").length;
@@ -109,7 +121,6 @@ export function useMessageWindow(
     return {
         visibleMessages,
         hasMoreHistory,
-        isLoadingHistory,
         isAtBeginning: !hasMoreHistory && messages.length > 0,
         loadMoreMessages,
         resetToLatest,

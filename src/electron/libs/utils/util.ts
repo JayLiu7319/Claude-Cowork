@@ -1,6 +1,7 @@
 import { unstable_v2_prompt } from "@anthropic-ai/claude-agent-sdk";
 import type { SDKResultMessage } from "@anthropic-ai/claude-agent-sdk";
 import { getCurrentApiConfig, buildEnvForConfig, getClaudeCodePath } from "../config/claude-settings.js";
+import { getLanguage } from "../../i18n.js";
 import { app } from "electron";
 import log from "electron-log";
 
@@ -32,11 +33,23 @@ export const generateSessionTitle = async (userIntent: string | null) => {
   const currentEnv = getEnhancedEnv();
 
   try {
+    const language = getLanguage();
+    const isChinese = language.startsWith('zh');
+    const langInstruction = isChinese ? "Answer in Chinese." : "Answer in English.";
+
+    // Ensure userIntent is not empty
+    const promptContent = userIntent.trim() || "New Session";
+
     const result: SDKResultMessage = await unstable_v2_prompt(
-      `please analynis the following user input to generate a short but clearly title to identify this conversation theme:
-      ${userIntent}
-      directly output the title, do not include any other content`, {
-      model: getCurrentApiConfig()?.model || "claude-sonnet",
+      `Please analyze the following user input to generate a short, clear title to identify this conversation theme.
+      User Input: "${promptContent}"
+      
+      Instructions:
+      1. ${langInstruction}
+      2. Directly output the title only.
+      3. Do not include any other content, explanations, or quotes.
+      4. Keep it concise (under 10 words).`, {
+      model: getCurrentApiConfig()?.model || "claude-3-5-sonnet-20241022",
       env: currentEnv,
       pathToClaudeCodeExecutable: claudeCodePath,
     });

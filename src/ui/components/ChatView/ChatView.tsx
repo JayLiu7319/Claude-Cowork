@@ -19,7 +19,6 @@ export function ChatView({
     isRunning,
     visibleMessages,
     hasMoreHistory,
-    isLoadingHistory,
     totalMessages,
     scrollContainerRef,
     messagesEndRef,
@@ -57,8 +56,9 @@ export function ChatView({
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 className="flex-1 overflow-y-auto px-4 md:px-8 pb-40 pt-6"
+                style={{ overflowAnchor: 'none' }}
             >
-                <div className="mx-auto max-w-3xl w-full transition-[max-width,width] duration-300" style={{ contentVisibility: 'auto' }}>
+                <div className="mx-auto max-w-3xl w-full transition-[max-width,width] duration-300">
                     <div ref={topSentinelRef} className="h-1" />
 
                     {!hasMoreHistory && totalMessages > 0 && (
@@ -67,18 +67,6 @@ export function ChatView({
                                 <div className="h-px w-12 bg-ink-900/10" />
                                 <span>{t('sidebar.beginningOfConversation')}</span>
                                 <div className="h-px w-12 bg-ink-900/10" />
-                            </div>
-                        </div>
-                    )}
-
-                    {isLoadingHistory && (
-                        <div className="flex items-center justify-center py-4 mb-4" role="status" aria-live="polite">
-                            <div className="flex items-center gap-2 text-xs text-muted">
-                                <svg aria-hidden="true" className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                </svg>
-                                <span>{t('common.loading')}</span>
                             </div>
                         </div>
                     )}

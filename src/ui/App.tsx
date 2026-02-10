@@ -95,7 +95,6 @@ function AppShell() {
   const {
     visibleMessages,
     hasMoreHistory,
-    isLoadingHistory,
     loadMoreMessages,
     resetToLatest,
     totalMessages,
@@ -114,9 +113,9 @@ function AppShell() {
     scrollToMessage
   } = useScrollManagement({
     messagesLength: messages.length,
+    visibleMessagesLength: visibleMessages.length,
     activeSessionId,
     hasMoreHistory,
-    isLoadingHistory,
     loadMoreMessages,
   });
 
@@ -315,7 +314,6 @@ function AppShell() {
           isRunning={isRunning}
           visibleMessages={visibleMessages}
           hasMoreHistory={hasMoreHistory}
-          isLoadingHistory={isLoadingHistory}
           totalMessages={totalMessages}
           scrollContainerRef={scrollContainerRef}
           messagesEndRef={messagesEndRef}

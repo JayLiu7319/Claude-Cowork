@@ -24,7 +24,6 @@ export interface MessageListProps {
     isRunning: boolean;
     permissionRequest: PermissionRequest | undefined;
     hasMoreHistory: boolean;
-    isLoadingHistory: boolean;
     totalMessages: number;
     prefersReducedMotion: boolean;
     partialMessage: string;
@@ -47,7 +46,6 @@ export interface ChatViewProps {
     // Message window
     visibleMessages: Array<{ message: StreamMessage; originalIndex: number }>;
     hasMoreHistory: boolean;
-    isLoadingHistory: boolean;
     totalMessages: number;
 
     // Scroll management
