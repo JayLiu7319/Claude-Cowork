@@ -77,7 +77,11 @@ electron.contextBridge.exposeInMainWorld("electron", {
     getBrandConfig: () =>
         ipcInvoke("get-brand-config"),
     getLogPath: () =>
-        ipcInvoke("get-log-path")
+        ipcInvoke("get-log-path"),
+    readFileForPreview: (filePath: string) =>
+        ipcInvoke("read-file-for-preview", filePath),
+    setPreviewTitlebarStyle: (mode: "default" | "preview") =>
+        ipcInvoke("set-preview-titlebar-style", mode)
 })
 
 /**

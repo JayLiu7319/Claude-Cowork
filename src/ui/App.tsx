@@ -18,12 +18,14 @@ import { RightPanel } from "./components/RightPanel";
 import { WelcomePage } from "./components/WelcomePage";
 import { SettingsModal } from "./components/SettingsModal";
 import { ChatView } from "./components/ChatView";
+import { FilePreviewModal } from "./components/FilePreviewModal";
 import { usePromptActions } from "./hooks/usePromptActions";
 import { AppProviders } from "./providers/AppProviders";
 import { useElectronBridge } from "./hooks/useElectronBridge";
 import { usePartialMessage } from "./hooks/usePartialMessage";
 import { useScrollManagement } from "./hooks/useScrollManagement";
 import { useResponsiveLayout } from "./hooks/useResponsiveLayout";
+import { useFilePreview } from "./hooks/useFilePreview";
 import { initI18n } from "./i18n";
 import type { i18n } from 'i18next';
 
@@ -141,6 +143,26 @@ function AppShell() {
     toggleRightPanel
   } = useResponsiveLayout();
 
+  // File Preview
+  const {
+    previewFile,
+    previewData,
+    isLoading: previewLoading,
+    error: previewError,
+    openPreview,
+    closePreview,
+    isOpen: isPreviewOpen,
+  } = useFilePreview();
+
+  useEffect(() => {
+    if (!isWindows) {
+      return;
+    }
+    bridge.setPreviewTitlebarStyle(isPreviewOpen ? "preview" : "default").catch((err) => {
+      console.error("Failed to sync preview titlebar style:", err);
+    });
+  }, [bridge, isPreviewOpen, isWindows]);
+
   // Combined event handler
   const onEvent = useCallback((event: ServerEvent) => {
     handleServerEvent(event);
@@ -240,6 +262,14 @@ function AppShell() {
       sendEvent({ type: "file.open", payload: { sessionId: activeSessionId, path } });
     }
   }, [activeSessionId, sendEvent]);
+
+  const handlePreviewFile = useCallback(async (path: string) => {
+    const opened = await openPreview(path);
+    if (!opened) {
+      // Not previewable, fallback to opening in folder
+      handleOpenFile(path);
+    }
+  }, [openPreview, handleOpenFile]);
 
   const showSkeleton = useMemo(() => {
     if (showPartialMessage) return true;
@@ -342,6 +372,7 @@ function AppShell() {
         sessionCwd={activeSession?.cwd || cwd}
         onScrollToMessage={handleScrollToMessageCallback}
         onOpenFile={handleOpenFile}
+        onPreviewFile={handlePreviewFile}
         lastFileRefresh={lastFileRefresh}
         className={`
           ${isMobile ? 'fixed inset-y-0 right-0 z-40 w-[280px] shadow-2xl' : 'w-[280px] shrink-0'}
@@ -350,6 +381,18 @@ function AppShell() {
         `}
         onClose={() => setRightPanelOpen(false)}
       />
+
+      {/* File Preview Modal */}
+      {isPreviewOpen && previewFile && (
+        <FilePreviewModal
+          fileName={previewFile.name}
+          previewData={previewData}
+          isLoading={previewLoading}
+          error={previewError}
+          isWindows={isWindows}
+          onClose={closePreview}
+        />
+      )}
 
       {showSettingsModal && (
         <SettingsModal onClose={() => setShowSettingsModal(false)} />

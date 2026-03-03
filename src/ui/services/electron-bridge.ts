@@ -20,6 +20,7 @@ import type {
     RecentFile,
     DirectoryEntry,
     BrandConfig,
+    FilePreviewResult,
     UnsubscribeFunction,
 } from "@ui/types";
 
@@ -68,6 +69,10 @@ export interface ElectronBridge {
 
     // Brand Configuration
     getBrandConfig(): Promise<BrandConfig>;
+
+    // File Preview
+    readFileForPreview(filePath: string): Promise<FilePreviewResult>;
+    setPreviewTitlebarStyle(mode: "default" | "preview"): Promise<void>;
 }
 
 /**
@@ -114,6 +119,10 @@ export const electronBridge: ElectronBridge = {
 
     // Brand Configuration
     getBrandConfig: () => window.electron.getBrandConfig(),
+
+    // File Preview
+    readFileForPreview: (filePath) => window.electron.readFileForPreview(filePath),
+    setPreviewTitlebarStyle: (mode) => window.electron.setPreviewTitlebarStyle(mode),
 };
 
 /**
@@ -169,4 +178,8 @@ export const mockElectronBridge: ElectronBridge = {
         colors: { accent: '#000', accentHover: '#111', accentLight: '#222', accentSubtle: '#333' },
         icons: { app: '', logo: '' },
     }),
+
+    // File Preview
+    readFileForPreview: () => Promise.resolve({ type: 'unsupported' as const }),
+    setPreviewTitlebarStyle: () => Promise.resolve(),
 };

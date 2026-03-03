@@ -98,6 +98,16 @@ export type DirectoryEntry = {
 };
 
 // ============================================================
+// File Preview Types
+// ============================================================
+
+export type FilePreviewResult =
+  | { type: 'image'; mimeType: string; filePath: string; dataUrl: string }
+  | { type: 'pdf'; mimeType: 'application/pdf'; filePath: string; fileSize: number; base64Data: string }
+  | { type: 'unsupported' }
+  | { type: 'error'; message: string };
+
+// ============================================================
 // Right Panel Data Types
 // ============================================================
 
@@ -134,7 +144,7 @@ export type FileTreeNode = {
 // ============================================================
 
 export interface BrandConfig {
-  id: "business" | "bio-research";
+  id: "business" | "bio-research" | "forensic";
   name: string;
   displayName: string;
   appTitle: string;
@@ -232,6 +242,8 @@ export type EventPayloadMapping = {
   "read-directory-tree": DirectoryEntry[];
   "get-brand-config": BrandConfig;
   "get-log-path": string;
+  "read-file-for-preview": FilePreviewResult;
+  "set-preview-titlebar-style": void;
 };
 
 // ============================================================
@@ -260,6 +272,8 @@ export type IpcArgsMapping = {
   "read-directory-tree": [dirPath: string, depth?: number];
   "get-brand-config": [];
   "get-log-path": [];
+  "read-file-for-preview": [filePath: string];
+  "set-preview-titlebar-style": [mode: "default" | "preview"];
 };
 
 // ============================================================

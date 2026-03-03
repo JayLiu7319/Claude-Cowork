@@ -4,10 +4,12 @@ import { getStaticData, pollResources } from "./test.js";
 import { handleClientEvent } from "./handlers/index.js";
 import { getSessionStore } from "./libs/session/index.js";
 import { generateSessionTitle, listFilesInDirectory, getRecentFiles, addRecentFile, readDirectoryTree } from "./libs/utils/index.js";
+import { readFileForPreview } from "./libs/utils/filePreviewUtils.js";
 import { saveApiConfig, loadDefaultCwd, saveDefaultCwd, type ApiConfig, getCurrentApiConfig, loadBrandConfig, loadAppConfig, saveAppConfig } from "./libs/config/index.js";
 import { loadGlobalCommands, readCommandContent, loadGlobalSkills, readSkillContent } from "./libs/features/index.js";
 import { getLanguage, changeLanguage } from "./i18n.js";
 import { ClientEvent } from "./types.js";
+import { setTitleBarOverlayMode } from "./window-manager.js";
 
 export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {
     const brandConfig = loadBrandConfig();
@@ -159,6 +161,15 @@ export function registerAllIpcHandlers(mainWindow: BrowserWindow): void {
     // Handle reading directory tree for right panel
     ipcMainHandle("read-directory-tree", async (_: IpcMainInvokeEvent, dirPath: string, depth: number = 2) => {
         return await readDirectoryTree(dirPath, depth);
+    });
+
+    // Handle file preview (images and PDFs)
+    ipcMainHandle("read-file-for-preview", (_: IpcMainInvokeEvent, filePath: string) => {
+        return readFileForPreview(filePath);
+    });
+
+    ipcMainHandle("set-preview-titlebar-style", (_: IpcMainInvokeEvent, mode: "default" | "preview") => {
+        setTitleBarOverlayMode(mode);
     });
 }
 

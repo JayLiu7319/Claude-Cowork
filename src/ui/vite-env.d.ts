@@ -26,5 +26,7 @@ interface Window {
     setDefaultCwd: (cwd: string) => Promise<void>;
     readDirectoryTree: (dirPath: string, depth?: number) => Promise<import('../electron/types').DirectoryEntry[]>;
     getBrandConfig: () => Promise<import('./types').BrandConfig>;
+    readFileForPreview: (filePath: string) => Promise<import('./types').FilePreviewResult>;
+    setPreviewTitlebarStyle: (mode: "default" | "preview") => Promise<void>;
   };
 }
