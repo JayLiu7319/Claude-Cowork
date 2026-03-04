@@ -2,12 +2,14 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import type { FileChangeData } from "@ui/types";
 import { formatPathForDisplay } from "@ui/utils/formatters";
+import { isPreviewableFile } from "@ui/hooks/useFilePreview";
 
 type FileChangeItemProps = {
   change: FileChangeData;
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  onPreviewFile: (path: string) => void;
 };
 
 const getOperationIcon = (type: "create" | "modify" | "delete") => {
@@ -43,12 +45,14 @@ export const FileChangeItem = memo(function FileChangeItem({
   change,
   sessionCwd,
   onScrollToMessage,
-  onOpenFile
+  onOpenFile,
+  onPreviewFile
 }: FileChangeItemProps) {
   const { t } = useTranslation("ui");
   const icon = getOperationIcon(change.operationType);
   const displayPath = formatPathForDisplay(change.filePath, sessionCwd);
   const fileName = displayPath.split('/').pop() || displayPath;
+  const canPreview = isPreviewableFile(change.filePath);
 
   return (
     <div className="group flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent/5 transition-colors text-left text-xs text-ink-700">
@@ -63,6 +67,22 @@ export const FileChangeItem = memo(function FileChangeItem({
           <div className="text-xs text-ink-500 truncate">{displayPath}</div>
         </div>
       </button>
+      {/* Preview button for images/PDFs */}
+      {canPreview && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPreviewFile(change.filePath);
+          }}
+          className="flex-shrink-0 p-1 hover:bg-accent/10 rounded transition-all text-ink-400 hover:text-accent"
+          title={t("filePreview.preview") || "Preview"}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      )}
       <button
         onClick={(e) => {
           e.stopPropagation();

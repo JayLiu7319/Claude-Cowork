@@ -13,6 +13,7 @@ type TasksFilesPanelProps = {
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  onPreviewFile: (path: string) => void;
   lastFileRefresh?: number;
 };
 
@@ -24,6 +25,7 @@ export function TasksFilesPanel({
   sessionCwd,
   onScrollToMessage,
   onOpenFile,
+  onPreviewFile,
   lastFileRefresh
 }: TasksFilesPanelProps) {
   useTranslation("ui");
@@ -48,6 +50,7 @@ export function TasksFilesPanel({
         sessionCwd={sessionCwd}
         onScrollToMessage={onScrollToMessage}
         onOpenFile={onOpenFile}
+        onPreviewFile={onPreviewFile}
       />
       <div className="h-px bg-ink-900/5" />
       <DirectorySection
@@ -55,9 +58,9 @@ export function TasksFilesPanel({
         isExpanded={panelExpanded.directory}
         onToggleExpand={() => togglePanelExpanded('directory')}
         onOpenFile={onOpenFile}
+        onPreviewFile={onPreviewFile}
         lastFileRefresh={lastFileRefresh}
       />
     </div>
   );
 }
-

@@ -34,6 +34,12 @@
 		"dist:bio:mac-x64": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --mac --x64 --config electron-builder.bio.json",
 		"dist:bio:win": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --win --x64 --config electron-builder.bio.json",
 		"dist:bio:linux": "cross-env BRAND=bio-research bun run transpile:electron && cross-env BRAND=bio-research bun run scripts/write-brand-info.ts && cross-env BRAND=bio-research bun run build && electron-builder --linux --x64 --config electron-builder.bio.json",
+		"dev:forensic": "cross-env BRAND=forensic bun run dev",
+		"build:forensic": "cross-env BRAND=forensic bun run build",
+		"dist:forensic:mac-arm64": "cross-env BRAND=forensic bun run transpile:electron && cross-env BRAND=forensic bun run scripts/write-brand-info.ts && cross-env BRAND=forensic bun run build && electron-builder --mac --arm64 --config electron-builder.forensic.json",
+		"dist:forensic:mac-x64": "cross-env BRAND=forensic bun run transpile:electron && cross-env BRAND=forensic bun run scripts/write-brand-info.ts && cross-env BRAND=forensic bun run build && electron-builder --mac --x64 --config electron-builder.forensic.json",
+		"dist:forensic:win": "cross-env BRAND=forensic bun run transpile:electron && cross-env BRAND=forensic bun run scripts/write-brand-info.ts && cross-env BRAND=forensic bun run build && electron-builder --win --x64 --config electron-builder.forensic.json",
+		"dist:forensic:linux": "cross-env BRAND=forensic bun run transpile:electron && cross-env BRAND=forensic bun run scripts/write-brand-info.ts && cross-env BRAND=forensic bun run build && electron-builder --linux --x64 --config electron-builder.forensic.json",
 		"prepare": "husky",
 		"lint-staged": "lint-staged"
 	},

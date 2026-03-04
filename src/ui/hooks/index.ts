@@ -14,6 +14,7 @@ export { useResponsiveLayout } from './useResponsiveLayout';
 export { usePromptActions } from './usePromptActions';
 export { useBrandTheme } from './useBrandTheme';
 export { useElectronBridge } from './useElectronBridge';
+export { useFilePreview, isPreviewableFile } from './useFilePreview';
 export {
     useSessionState,
     useUIState,

@@ -1,12 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import { app } from 'electron';
-import { fileURLToPath } from 'url';
 import type { BrandConfig } from "../../types.js";
 
 let cachedBrandId: string | null = null;
 let cachedConfig: BrandConfig | null = null;
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 
 function getBrandId(): string {
   if (cachedBrandId) {
@@ -25,7 +23,7 @@ function getBrandId(): string {
 
   // Production builds: read from .brand file
   try {
-    const brandFilePath = path.join(moduleDir, '../../../.brand');
+    const brandFilePath = path.join(app.getAppPath(), 'dist-electron', '.brand');
     if (fs.existsSync(brandFilePath)) {
       cachedBrandId = fs.readFileSync(brandFilePath, 'utf-8').trim();
       console.log(`Brand ID loaded from .brand file: ${cachedBrandId}`);

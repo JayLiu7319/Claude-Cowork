@@ -11,6 +11,7 @@ type FileChangesSectionProps = {
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  onPreviewFile: (path: string) => void;
 };
 
 export const FileChangesSection = memo(function FileChangesSection({
@@ -20,7 +21,8 @@ export const FileChangesSection = memo(function FileChangesSection({
   onToggleExpand,
   sessionCwd,
   onScrollToMessage,
-  onOpenFile
+  onOpenFile,
+  onPreviewFile
 }: FileChangesSectionProps) {
   const { t } = useTranslation("ui");
 
@@ -71,6 +73,7 @@ export const FileChangesSection = memo(function FileChangesSection({
                 sessionCwd={sessionCwd}
                 onScrollToMessage={onScrollToMessage}
                 onOpenFile={onOpenFile}
+                onPreviewFile={onPreviewFile}
               />
             ))
           )}

@@ -9,6 +9,7 @@ type RightPanelProps = {
   sessionCwd?: string;
   onScrollToMessage: (index: number) => void;
   onOpenFile: (path: string) => void;
+  onPreviewFile: (path: string) => void;
   lastFileRefresh?: number;
   className?: string;
   onClose?: () => void;
@@ -20,6 +21,7 @@ export const RightPanel = memo(function RightPanel({
   sessionCwd,
   onScrollToMessage,
   onOpenFile,
+  onPreviewFile,
   lastFileRefresh,
   className = "",
   onClose
@@ -71,10 +73,10 @@ export const RightPanel = memo(function RightPanel({
           sessionCwd={sessionCwd}
           onScrollToMessage={onScrollToMessage}
           onOpenFile={onOpenFile}
+          onPreviewFile={onPreviewFile}
           lastFileRefresh={lastFileRefresh}
         />
       </div>
     </aside>
   );
 });
-

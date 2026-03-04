@@ -1,6 +1,7 @@
 import { memo, useState, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useElectronBridge } from "@ui/hooks/useElectronBridge";
+import { isPreviewableFile } from "@ui/hooks/useFilePreview";
 import type { DirectoryEntry } from "@ui/types";
 
 type DirectorySectionProps = {
@@ -8,6 +9,7 @@ type DirectorySectionProps = {
     isExpanded: boolean;
     onToggleExpand: () => void;
     onOpenFile: (path: string) => void;
+    onPreviewFile: (path: string) => void;
     lastFileRefresh?: number;
 };
 
@@ -55,16 +57,19 @@ const DirectoryTreeNode = memo(function DirectoryTreeNode({
     depth,
     expandedPaths,
     onTogglePath,
-    onOpenFile
+    onOpenFile,
+    onPreviewFile
 }: {
     entry: DirectoryEntry;
     depth: number;
     expandedPaths: Set<string>;
     onTogglePath: (path: string) => void;
     onOpenFile: (path: string) => void;
+    onPreviewFile: (path: string) => void;
 }) {
     const isExpanded = expandedPaths.has(entry.path);
     const hasChildren = entry.isDirectory && entry.children && entry.children.length > 0;
+    const canPreview = !entry.isDirectory && isPreviewableFile(entry.name);
 
     // Sort children: directories first, then files, alphabetically
     const sortedChildren = useMemo(() => {
@@ -80,6 +85,9 @@ const DirectoryTreeNode = memo(function DirectoryTreeNode({
     const handleClick = () => {
         if (entry.isDirectory) {
             onTogglePath(entry.path);
+        } else if (canPreview) {
+            // Previewable files open in preview modal
+            onPreviewFile(entry.path);
         } else {
             onOpenFile(entry.path);
         }
@@ -91,8 +99,9 @@ const DirectoryTreeNode = memo(function DirectoryTreeNode({
         <div className="flex flex-col">
             <button
                 onClick={handleClick}
-                className="flex items-center gap-1.5 py-1.5 rounded-md hover:bg-accent/5 transition-colors text-left text-xs text-ink-700 hover:text-ink-900 group"
+                className={`flex items-center gap-1.5 py-1.5 rounded-md hover:bg-accent/5 transition-colors text-left text-xs text-ink-700 hover:text-ink-900 group ${canPreview ? 'cursor-pointer' : ''}`}
                 style={{ paddingLeft: `${depth * 14 + 4}px` }}
+                title={canPreview ? `🔍 ${entry.name}` : entry.name}
             >
                 {/* Elegant expand/collapse indicator - using plus/minus instead of triangles */}
                 {entry.isDirectory && (
@@ -112,6 +121,15 @@ const DirectoryTreeNode = memo(function DirectoryTreeNode({
 
                 <span className="flex-shrink-0 text-sm">{icon}</span>
                 <span className="flex-1 truncate">{entry.name}</span>
+                {/* Preview indicator for previewable files */}
+                {canPreview && (
+                    <span className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-accent">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                    </span>
+                )}
             </button>
 
             {/* Animated children container */}
@@ -130,6 +148,7 @@ const DirectoryTreeNode = memo(function DirectoryTreeNode({
                             expandedPaths={expandedPaths}
                             onTogglePath={onTogglePath}
                             onOpenFile={onOpenFile}
+                            onPreviewFile={onPreviewFile}
                         />
                     ))}
                 </div>
@@ -143,6 +162,7 @@ export const DirectorySection = memo(function DirectorySection({
     isExpanded,
     onToggleExpand,
     onOpenFile,
+    onPreviewFile,
     lastFileRefresh
 }: DirectorySectionProps) {
     const { t } = useTranslation("ui");
@@ -250,6 +270,7 @@ export const DirectorySection = memo(function DirectorySection({
                                 expandedPaths={expandedPaths}
                                 onTogglePath={handleTogglePath}
                                 onOpenFile={onOpenFile}
+                                onPreviewFile={onPreviewFile}
                             />
                         ))
                     )}

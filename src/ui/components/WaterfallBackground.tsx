@@ -39,7 +39,7 @@ export function WaterfallBackground({ items, enabled = true }: WaterfallBackgrou
   if (!enabled || columns.length === 0 || items.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0 opacity-[0.06]">
+    <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0 opacity-[0.10]">
       <style>
         {`
           @keyframes waterfall-scroll {

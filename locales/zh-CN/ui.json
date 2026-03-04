@@ -126,6 +126,17 @@
     "showInFolder": "在文件夹中显示",
     "noFileTree": "文件树不可用"
   },
+  "filePreview": {
+    "preview": "预览",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "resetZoom": "重置缩放",
+    "close": "关闭",
+    "loading": "正在加载预览...",
+    "error": "无法加载文件预览",
+    "fileTooLarge": "文件过大，无法预览",
+    "unsupported": "不支持预览此文件类型"
+  },
   "common": {
     "loading": "加载中...",
     "newMessages": "新消息"

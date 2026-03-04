@@ -1,0 +1,31 @@
+{
+    "appId": "com.devagentforge.agentcowork.forensic",
+    "productName": "法医鉴识Cowork",
+    "files": [
+        "dist-electron",
+        "dist-react",
+        "brands",
+        "assets"
+    ],
+    "extraResources": [
+        "dist-electron/preload.cjs",
+        "assets/icons/forensic/app-icon.png",
+        "resources"
+    ],
+    "asarUnpack": [
+        "node_modules/@anthropic-ai/claude-agent-sdk/**/*"
+    ],
+    "icon": "./assets/icons/forensic/app-icon.png",
+    "mac": {
+        "target": "dmg"
+    },
+    "linux": {
+        "target": "AppImage",
+        "category": "Utility"
+    },
+    "win": {
+        "target": [
+            "portable"
+        ]
+    }
+}
